@@ -14,30 +14,29 @@ export default function PetDisplay({ timeOfDay, weather }) {
   const getWeatherIcon = () => {
     if (weather === "sunny")
       return timeOfDay === "day" ? (
-        <Sun className="w-8 h-8 text-yellow-300" />
+        <Sun className="w-8 h-8 text-yellow-300 drop-shadow" />
       ) : (
-        <Moon className="w-8 h-8 text-blue-300" />
+        <Moon className="w-8 h-8 text-blue-300 drop-shadow" />
       );
-    if (weather === "cloudy") return <Cloud className="w-8 h-8 text-gray-400" />;
-    if (weather === "rainy") return <CloudRain className="w-8 h-8 text-blue-400" />;
+    if (weather === "cloudy") return <Cloud className="w-8 h-8 text-gray-400 drop-shadow" />;
+    if (weather === "rainy") return <CloudRain className="w-8 h-8 text-blue-400 drop-shadow" />;
   };
 
   return (
-    <div className="relative bg-gradient-to-b p-6 rounded-3xl shadow-lg flex flex-col items-center justify-center overflow-hidden from-sky-100 to-sky-200">
+    <div className="relative bg-gradient-to-b p-8 rounded-3xl shadow-lg flex flex-col items-center justify-center overflow-hidden border border-blue-100">
       {/* Background based on time */}
-      <div className={`absolute inset-0 bg-gradient-to-b ${bgGradient} opacity-50`} />
+      <div className={`absolute inset-0 bg-gradient-to-b ${bgGradient} opacity-60`} />
 
       {/* Weather */}
-      <div className="absolute top-4 right-4">{getWeatherIcon()}</div>
+      <div className="absolute top-6 right-6 z-10">{getWeatherIcon()}</div>
 
       {/* Pet Image Placeholder */}
-      <div className="relative w-60 h-60 bg-white/30 backdrop-blur-lg rounded-full flex items-center justify-center shadow-xl">
-        {/* Insert your gif here later */}
-        <span className="text-6xl">🐾</span>
+      <div className="relative w-64 h-64 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white z-10">
+        <span className="text-7xl">🐾</span>
       </div>
 
       {/* Label */}
-      <div className="mt-6 text-gray-700 font-semibold text-lg">
+      <div className="mt-8 text-blue-900 font-extrabold text-xl z-10 drop-shadow">
         Your Pet is Waiting!
       </div>
     </div>

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import PetDisplay from "../components/PetDisplay";
 import HabitTracker from "../components/HabitTracker";
 import NavBar from "../components/NavBar";
-import { ProSidebarProvider } from "react-pro-sidebar";
-
 export default function Dashboard() {
   const [timeOfDay, setTimeOfDay] = useState("day");
   const [weather, setWeather] = useState("sunny");
@@ -26,7 +24,6 @@ export default function Dashboard() {
   const backgroundColor = timeOfDay === "day" ? "bg-blue-50" : "bg-indigo-950";
 
   return (
-    <ProSidebarProvider>
       <div className={`relative min-h-screen ${backgroundColor}`}>
         <NavBar />
         <main className="p-6">
@@ -41,6 +38,5 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-    </ProSidebarProvider>
   );
 }
