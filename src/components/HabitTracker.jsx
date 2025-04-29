@@ -4,11 +4,12 @@ import { CheckCircle, Circle } from "lucide-react";
 
 export default function HabitTracker({ habits, completedCount, totalCount, streakCount }) {
   const completionPercent = (completedCount / totalCount) * 100;
+  const MAX_VISIBLE = 8;
 
   return (
-    <div className="flex flex-col bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-lg border border-blue-100">
+    <div className="flex flex-col bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-blue-100">
       {/* Today's Progress */}
-      <div className="mb-8">
+      <div className="mb-5">
         <h2 className="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">Today's Progress</h2>
         <ProgressBar value={completionPercent} />
         <div className="text-right text-sm text-gray-500 mt-2 font-medium">
@@ -17,7 +18,12 @@ export default function HabitTracker({ habits, completedCount, totalCount, strea
       </div>
 
       {/* Habit Cards */}
-      <div className="flex-1 space-y-4 overflow-y-auto">
+      <div
+        className="flex-1 space-y-4 overflow-y-auto"
+        style={{
+          maxHeight: `${MAX_VISIBLE * 54}px`,
+        }}
+      >
         {habits.map((habit, idx) => (
           <div
             key={idx}
