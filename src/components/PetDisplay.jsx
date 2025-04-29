@@ -1,17 +1,9 @@
 import React from "react";
 import { Sun, Cloud, CloudRain, Moon } from "lucide-react";
 import MetricBars from "../components/MetricBars";
+import meadowDay from "../assets/pet_bg/meadow_day.png"; // Import the meadow image
 
 export default function PetDisplay({ timeOfDay, weather }) {
-  const bgGradient =
-    timeOfDay === "day"
-      ? weather === "sunny"
-        ? "from-sky-300 to-sky-100"
-        : weather === "cloudy"
-          ? "from-gray-300 to-blue-100"
-          : "from-gray-400 to-gray-200"
-      : "from-indigo-800 to-purple-900";
-
   const getWeatherIcon = () => {
     if (weather === "sunny")
       return timeOfDay === "day" ? (
@@ -26,23 +18,35 @@ export default function PetDisplay({ timeOfDay, weather }) {
   return (
     <div className="flex flex-col">
       <div
-        className="relative bg-gradient-to-b p-8 rounded-3xl shadow-lg flex flex-col items-center justify-start overflow-hidden border border-blue-100"
-        style={{ height: 600 }}
+        className="relative p-8 rounded-3xl shadow-lg flex flex-col items-center justify-center overflow-hidden border border-blue-100"
+        style={{
+          height: 600, // Fixed height
+          maxWidth: 950, // Fixed width
+        }}
       >
-        {/* Background based on time */}
-        <div className={`absolute inset-0 bg-gradient-to-b ${bgGradient} opacity-60`} />
+        {/* Image with padding and border */}
+        <div className="absolute inset-0 p-2 border-2 border-white rounded-3xl overflow-hidden">
+          <img
+            src={meadowDay}
+            alt="Background"
+            className="w-full h-full object-cover rounded-2xl"
+          />
+        </div>
+
+        {/* Background overlay */}
+        <div className="absolute inset-0 bg-black/20 opacity-60" />
 
         {/* Weather */}
         <div className="absolute top-6 right-6 z-10">{getWeatherIcon()}</div>
 
-        {/* Pet Image Placeholder */}
-        <div className="relative w-64 h-64 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white z-10 mt-8">
-          <span className="text-7xl text-blue-500">🐾</span>
+        {/* Speech Bubble */}
+        <div className="absolute top-10 w-72 bg-white/95 rounded-lg shadow-lg p-4 text-center z-20">
+          <p className="text-sm text-gray-700">Your pet is waiting...</p>
         </div>
 
-        {/* Label */}
-        <div className="mt-8 text-blue-900 font-extrabold text-xl z-10 drop-shadow text-center">
-          Your Pet is Waiting!
+        {/* Pet Image Placeholder */}
+        <div className="relative w-96 h-96 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white z-10">
+          <span className="text-7xl text-blue-500">🐾</span>
         </div>
       </div>
 
