@@ -1,9 +1,17 @@
 import { Sidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Home, User, Menu as MenuIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
+  const [time, setTime] = useState(null);
+
+  useEffect(() => {
+    const updateTime = () => setTime(new Date());
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -21,7 +29,10 @@ export default function NavBar() {
         </h1>
         <div className="flex-1" />
         <span className="hidden sm:inline text-xl md:text-3xl font-mono text-gray-700 mr-2 md:mr-6">
-          {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {time
+          ? time
+              .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+          : ""}
         </span>
         <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-xl md:text-3xl font-bold shadow-inner border-2 border-white mr-2 md:mr-4">
           PFP
