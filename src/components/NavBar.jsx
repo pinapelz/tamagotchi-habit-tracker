@@ -8,24 +8,27 @@ export default function NavBar() {
   return (
     <>
       {/* Header with hamburger */}
-      <header className="relative flex items-center p-4 md:p-6 bg-white/90 shadow-xl rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
+      <header className="relative flex items-center p-3 md:p-6 bg-white/90 shadow-xl rounded-b-[2rem] md:rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
         <button
           onClick={() => setOpen(true)}
-          className="p-2 rounded-lg hover:bg-blue-100 transition mr-3"
+          className="p-2 rounded-lg hover:bg-blue-100 transition mr-2 md:mr-3"
           aria-label="Open menu"
         >
           <MenuIcon size={26} />
         </button>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight drop-shadow-sm">
+        <h1 className="text-lg sm:text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight drop-shadow-sm whitespace-nowrap">
           Tamagotchi Tracker
         </h1>
         <div className="flex-1" />
-        <div className="w-16 h-16 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-inner border-2 border-white mr-4">
+        <span className="hidden sm:inline text-xl md:text-3xl font-mono text-gray-700 mr-2 md:mr-6">
+          {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
+        <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-xl md:text-3xl font-bold shadow-inner border-2 border-white mr-2 md:mr-4">
           PFP
         </div>
-        {/* Cloud SVG at the bottom. Sorry its kinda garbanzo if someone can do a better job */}
+        {/* Cloud SVG at the bottom */}
         <svg
-          className="absolute left-0 bottom-0 w-full h-10"
+          className="absolute left-0 bottom-0 w-full h-6 md:h-10"
           viewBox="0 0 1440 60"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -33,7 +36,7 @@ export default function NavBar() {
           style={{ pointerEvents: "none" }}
         >
           <path
-            d="M0,40 Q360,55 720,40 T1440,40 V60 H0 Z"
+            d="M0,45 Q360,55 720,45 T1440,45 V60 H0 Z"
             fill="#fff"
             opacity="0.92"
           />
