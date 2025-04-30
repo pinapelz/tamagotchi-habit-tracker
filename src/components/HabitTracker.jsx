@@ -1,40 +1,56 @@
 import React from "react";
 import ProgressBar from "./ProgressBar";
+import { CheckCircle, Circle } from "lucide-react";
 
 export default function HabitTracker({ habits, completedCount, totalCount, streakCount }) {
   const completionPercent = (completedCount / totalCount) * 100;
+  const MAX_VISIBLE = 9;
 
   return (
-    <div className="flex flex-col bg-white/70 backdrop-blur-lg p-6 rounded-3xl shadow-lg">
+    <div className="flex flex-col bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-100">
       {/* Today's Progress */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Today's Progress</h2>
+      <div className="mb-5">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">Today's Progress</h2>
         <ProgressBar value={completionPercent} />
-        <div className="text-right text-sm text-gray-600 mt-1">
+        <div className="text-right text-sm text-gray-500 mt-2 font-medium">
           {completedCount}/{totalCount} completed
         </div>
       </div>
 
       {/* Habit Cards */}
-      <div className="flex-1 space-y-4 overflow-y-auto">
+      <div
+        className="flex-1 space-y-4 overflow-y-auto"
+        style={{
+          maxHeight: `${MAX_VISIBLE * 54}px`,
+        }}
+      >
         {habits.map((habit, idx) => (
           <div
             key={idx}
-            className="flex items-center justify-between p-4 bg-white rounded-xl hover:bg-blue-50 transition shadow-sm"
+            className={`flex items-center justify-between p-4 rounded-xl shadow-sm border transition
+              ${habit.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-100 hover:bg-blue-50"}`}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-5 h-5 rounded-full ${habit.completed ? "bg-green-400" : "border-2 border-gray-300"}`} />
-              <span className="font-medium text-gray-700">{habit.name}</span>
+              {habit.completed ? (
+                <CheckCircle className="text-green-500" size={22} />
+              ) : (
+                <Circle className="text-gray-300" size={22} />
+              )}
+              <span className={`font-semibold ${habit.completed ? "text-green-700" : "text-gray-700"}`}>
+                {habit.name}
+              </span>
             </div>
-            <div className="text-xs text-gray-400">{habit.completed ? "Done" : "Pending"}</div>
+            <div className={`text-xs font-semibold ${habit.completed ? "text-green-500" : "text-gray-400"}`}>
+              {habit.completed ? "Done" : "Pending"}
+            </div>
           </div>
         ))}
       </div>
 
       {/* Streak */}
-      <div className="mt-6 text-center">
-        <div className="inline-block bg-yellow-200 px-4 py-1 rounded-full text-sm font-semibold text-yellow-800 shadow-sm animate-pulse">
-          🔥 {streakCount} Day Streak!
+      <div className="mt-8 flex justify-end">
+        <div className="inline-flex items-center gap-2 bg-yellow-100 px-4 py-1.5 rounded-full text-sm font-bold text-yellow-700 shadow animate-pulse">
+          <span role="img" aria-label="fire">🔥</span> {streakCount} Day Streak!
         </div>
       </div>
     </div>
