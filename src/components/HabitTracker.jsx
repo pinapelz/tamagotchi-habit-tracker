@@ -1,10 +1,20 @@
-import React from "react";
+// I've chosen to disallow uncompleting as it will be annoying to reverse metric gain/loss if there was some sort of bonus
 import ProgressBar from "./ProgressBar";
 import { CheckCircle, Circle } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
-export default function HabitTracker({ habits, completedCount, totalCount, streakCount }) {
+export default function HabitTracker({ habits, streakCount, onToggleHabit }) {
+  const [completedCount, setCompletedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    setCompletedCount(habits.filter((h) => h.completed).length);
+    setTotalCount(habits.length);
+  }, [habits]);
+
   const completionPercent = (completedCount / totalCount) * 100;
   const MAX_VISIBLE = 9;
+
 
   return (
     <div className="flex flex-col bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-100">
@@ -21,7 +31,7 @@ export default function HabitTracker({ habits, completedCount, totalCount, strea
       <div
         className="flex-1 space-y-4 overflow-y-auto"
         style={{
-          maxHeight: `${MAX_VISIBLE * 54}px`,
+          maxHeight: `${MAX_VISIBLE * 56}px`,
         }}
       >
         {habits.map((habit, idx) => (
@@ -29,6 +39,8 @@ export default function HabitTracker({ habits, completedCount, totalCount, strea
             key={idx}
             className={`flex items-center justify-between p-4 rounded-xl shadow-sm border transition
               ${habit.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-100 hover:bg-blue-50"}`}
+            onClick={() => !habit.completed && onToggleHabit && onToggleHabit(idx)} // Only allow if not completed
+            style={{ cursor: habit.completed ? "default" : "pointer" }} // Pointer only if clickable
           >
             <div className="flex items-center gap-3">
               {habit.completed ? (
