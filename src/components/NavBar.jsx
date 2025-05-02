@@ -37,21 +37,7 @@ export default function NavBar() {
         <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-xl md:text-3xl font-bold shadow-inner border-2 border-white mr-2 md:mr-4">
           PFP
         </div>
-        {/* Cloud SVG at the bottom */}
-        <svg
-          className="absolute left-0 bottom-0 w-full h-6 md:h-10"
-          viewBox="0 0 1440 60"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          style={{ pointerEvents: "none" }}
-        >
-          <path
-            d="M0,45 Q360,55 720,45 T1440,45 V60 H0 Z"
-            fill="#fff"
-            opacity="0.92"
-          />
-        </svg>
+
       </header>
 
       {/* Backdrop */}

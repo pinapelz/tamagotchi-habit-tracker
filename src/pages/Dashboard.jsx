@@ -8,8 +8,6 @@ import Encouragement from "../components/Encouragement";
 export default function Dashboard() {
   const [timeOfDay, setTimeOfDay] = useState("day");
   const [weather, setWeather] = useState("sunny");
-  const [completedCount, setCompletedCount] = useState(3);
-  const [totalCount, setTotalCount] = useState(5);
   const [streakCount, setStreakCount] = useState(12);
   const [habits, setHabits] = useState([
     { name: "Drink Water", completed: true },
@@ -30,6 +28,14 @@ export default function Dashboard() {
     setTimeOfDay(hour >= 6 && hour < 18 ? "day" : "night");
   }, []);
 
+  const handleCompleteHabit = (idx) => {
+    setHabits((prev) =>
+      prev.map((habit, i) =>
+        i === idx && !habit.completed ? { ...habit, completed: true } : habit
+      )
+    );
+  };
+
   const backgroundColor = timeOfDay === "day" ? "bg-blue-50" : "bg-indigo-950";
 
   return (
@@ -44,9 +50,8 @@ export default function Dashboard() {
           <PetDisplay timeOfDay={timeOfDay} weather={weather} />
           <HabitTracker
             habits={habits}
-            completedCount={completedCount}
-            totalCount={totalCount}
             streakCount={streakCount}
+            onToggleHabit={handleCompleteHabit} // Pass handler
           />
         </div>
       </main>
