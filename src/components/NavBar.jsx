@@ -16,7 +16,7 @@ export default function NavBar() {
   return (
     <>
       {/* Header with hamburger */}
-      <header className="relative flex items-center p-3 md:p-6 bg-white/90 shadow-xl rounded-b-[2rem] md:rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
+      <header className="relative flex items-center p-3 md:p-4 bg-white/90 shadow-xl rounded-b-[2rem] md:rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
         <button
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg hover:bg-blue-100 transition mr-2 md:mr-3"
