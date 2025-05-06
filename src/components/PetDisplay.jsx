@@ -2,25 +2,16 @@ import React from "react";
 import { Sun, Cloud, CloudRain, Moon } from "lucide-react";
 import MetricBars from "../components/MetricBars";
 import meadowDay from "../assets/pet_bg/meadow_day.png"; // Import the meadow image
+import pixelCat from "../assets/pets/pixel-cat.gif"
 
 export default function PetDisplay({ timeOfDay, weather }) {
-  const getWeatherIcon = () => {
-    if (weather === "sunny")
-      return timeOfDay === "day" ? (
-        <Sun className="w-8 h-8 text-yellow-300 drop-shadow" />
-      ) : (
-        <Moon className="w-8 h-8 text-blue-300 drop-shadow" />
-      );
-    if (weather === "cloudy") return <Cloud className="w-8 h-8 text-gray-400 drop-shadow" />;
-    if (weather === "rainy") return <CloudRain className="w-8 h-8 text-blue-400 drop-shadow" />;
-  };
 
   return (
     <div className="flex flex-col">
       <div
-        className="relative p-8 rounded-3xl shadow-lg flex flex-col items-center justify-center overflow-hidden border border-blue-100"
+        className="relative p-8 rounded-3xl flex flex-col items-center justify-between overflow-hidden"
         style={{
-          height: 600, // Fixed height
+          height: 660, // Fixed height
           maxWidth: 950, // Fixed width
         }}
       >
@@ -36,23 +27,28 @@ export default function PetDisplay({ timeOfDay, weather }) {
         {/* Background overlay */}
         <div className="absolute inset-0 bg-black/20 opacity-60" />
 
-        {/* Weather */}
-        <div className="absolute top-6 right-6 z-10">{getWeatherIcon()}</div>
-
-        {/* Speech Bubble */}
-        <div className="absolute top-10 w-72 bg-white/95 rounded-lg shadow-lg p-4 text-center z-20">
-          <p className="text-sm text-gray-700">Your pet is waiting...</p>
+        {/* Top section with pet */}
+        <div className="flex-1 flex items-center justify-center w-full z-10">
+          {/* Pet Image */}
+          <div className="w-96 h-96 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white">
+            <img
+              src={pixelCat}
+              alt="Pixel Cat"
+              className="w-72 h-72 object-contain"
+              draggable={false}
+            />
+          </div>
         </div>
 
-        {/* Pet Image Placeholder */}
-        <div className="relative w-96 h-96 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white z-10">
-          <span className="text-7xl text-blue-500">🐾</span>
+        {/* Speech Bubble - anchored to bottom */}
+        <div className="w-full rounded-lg shadow-lg p-4 text-center z-20 mb-2 mt-2" style={{ backgroundColor: "#DFE8D0" }}>
+          <p className="text-sm text-black">Your pet is waiting...</p>
         </div>
       </div>
 
       {/* Metric Bars - full width with no white space */}
       <div className="mt-3">
-        <div className="bg-white/90 rounded-2xl shadow border border-blue-100 px-8 py-6 w-full">
+        <div className="bg-white/90 rounded-2xl border-blue-100 px-8 py-6 w-full">
           <MetricBars />
         </div>
       </div>
