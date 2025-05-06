@@ -54,21 +54,37 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#def8fb] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 to-sky-200 flex flex-col">
       <div className="container mx-auto px-4">
         <AuthNav />
       </div>
       <main className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute top-[-20px] left-[-20px] z-0">
-          <img src={cloudImage} alt="Pixel cloud" width={120} height={120} className="opacity-80" />
-        </div>
-
-        <div className="absolute bottom-[-30px] left-[-10px] z-0">
-          <img src={cloudImage} alt="Pixel cloud" width={140} height={140} className="opacity-80" />
-        </div>
-
-        <div className="absolute bottom-[-40px] right-[-20px] z-0">
-          <img src={cloudImage} alt="Pixel cloud" width={160} height={160} className="opacity-80" />
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <img
+            src={cloudImage}
+            alt="Pixelated Cloud"
+            className="hidden sm:block absolute top-10 left-[5%] sm:left-10 w-16 sm:w-20 opacity-50 sm:opacity-70 animate-bounce-slow"
+          />
+          <img
+            src={cloudImage}
+            alt="Pixelated Cloud"
+            className="absolute bottom-5 right-[5%] sm:right-5 w-16 sm:w-24 opacity-50 sm:opacity-70 animate-bounce-slow"
+          />
+          <img
+            src={cloudImage}
+            alt="Pixelated Cloud"
+            className="absolute top-[20%] -left-8 sm:left-[-30px] w-16 sm:w-24 opacity-40 sm:opacity-60 animate-bounce-slow"
+          />
+          <img
+            src={cloudImage}
+            alt="Pixelated Cloud"
+            className="absolute bottom-[20%] -right-8 sm:right-[-30px] w-16 sm:w-20 opacity-40 sm:opacity-60 animate-bounce-slow"
+          />
+          <img
+            src={cloudImage}
+            alt="Pixelated Cloud"
+            className="hidden sm:block absolute top-[-5px] right-[25%] w-20 sm:w-32 opacity-40 sm:opacity-60 animate-bounce-slow"
+          />
         </div>
 
         <div className="bg-[#fffde7] rounded-3xl p-4 sm:p-10 w-full max-w-[90%] sm:max-w-md z-10">
