@@ -8,7 +8,7 @@ export default function WelcomeMessage({ name = "User", weather = "cloudy" }) {
   };
 
   return (
-    <div className="flex items-center justify-between bg-white/80 px-6 py-3 rounded-xl shadow mb-4">
+    <div className="flex items-center justify-between bg-white px-6 py-3 rounded-xl mb-4">
       <div>
         <div className="font-bold text-xl">
           Hello, <span className="font-black italic">"{name}"</span>!{" "}
