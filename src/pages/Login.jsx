@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Github, Mail } from "lucide-react"
 import AuthNav from "../components/AuthNav"
-import cloudImage from '../assets/images/cloud.png'
+import cloudImage from '../assets/landing/cloud-pixel.webp'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -132,15 +132,15 @@ export default function LoginPage() {
           <img src={cloudImage} alt="Pixel cloud" width={160} height={160} className="opacity-80" />
         </div>
 
-        <div className="bg-[#fffde7] rounded-3xl p-10 w-full max-w-md z-10">
-          <h2 className="text-center text-2xl md:text-3xl mb-8">Welcome Back!</h2>
+        <div className="bg-[#fffde7] rounded-3xl p-4 sm:p-10 w-full max-w-[90%] sm:max-w-md z-10">
+          <h2 className="text-center text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-8">Welcome Back!</h2>
 
-          <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col gap-2 sm:gap-4 mb-4 sm:mb-8">
             <button
               onClick={loginWithGoogle}
-              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-3 px-4 rounded-full border border-gray-300 transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-2 sm:py-3 px-4 rounded-full border border-gray-300 transition-colors cursor-pointer text-sm sm:text-base"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="w-4 h-4 sm:w-5 sm:h-5">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -162,21 +162,21 @@ export default function LoginPage() {
             </button>
             <button
               onClick={loginWithGithub}
-              className="flex items-center justify-center gap-2 bg-[#24292e] hover:bg-[#1a1e22] text-white py-3 px-4 rounded-full transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-2 bg-[#24292e] hover:bg-[#1a1e22] text-white py-2 sm:py-3 px-4 rounded-full transition-colors cursor-pointer text-sm sm:text-base"
             >
-              <Github className="w-5 h-5" />
+              <Github className="w-4 h-4 sm:w-5 sm:h-5" />
               Log in with GitHub
             </button>
           </div>
 
-          <div className="relative flex items-center justify-center mb-8">
+          <div className="relative flex items-center justify-center mb-4 sm:mb-8">
             <div className="border-t border-gray-300 absolute w-full"></div>
-            <span className="bg-[#fffde7] px-4 relative text-gray-500 text-sm">OR</span>
+            <span className="bg-[#fffde7] px-4 relative text-gray-500 text-xs sm:text-sm">OR</span>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-lg">
+          <form onSubmit={handleLogin} className="space-y-3 sm:space-y-6">
+            <div className="space-y-1 sm:space-y-2">
+              <label htmlFor="email" className="block text-base sm:text-lg">
                 Email
               </label>
               <input
@@ -185,14 +185,14 @@ export default function LoginPage() {
                 name="email"
                 value={loginInfo.email}
                 onChange={handleInputChange}
-                className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-2 px-1"
+                className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-1 sm:py-2 px-1 text-sm sm:text-base"
                 placeholder="Enter your email"
               />
-              {errorMsgs.email && <p className="text-red-500 text-sm">{errorMsgs.email}</p>}
+              {errorMsgs.email && <p className="text-red-500 text-xs sm:text-sm">{errorMsgs.email}</p>}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-lg">
+            <div className="space-y-1 sm:space-y-2">
+              <label htmlFor="password" className="block text-base sm:text-lg">
                 Password
               </label>
               <input
@@ -201,31 +201,31 @@ export default function LoginPage() {
                 name="password"
                 value={loginInfo.password}
                 onChange={handleInputChange}
-                className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-2 px-1"
+                className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-1 sm:py-2 px-1 text-sm sm:text-base"
                 placeholder="Enter your password"
               />
-              {errorMsgs.password && <p className="text-red-500 text-sm">{errorMsgs.password}</p>}
+              {errorMsgs.password && <p className="text-red-500 text-xs sm:text-sm">{errorMsgs.password}</p>}
             </div>
 
             <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-[#e79c2d] hover:underline text-sm">
+              <Link to="/forgot-password" className="text-[#e79c2d] hover:underline text-xs sm:text-sm">
                 Forgot password?
               </Link>
             </div>
 
-            <div className="pt-4 flex justify-center">
+            <div className="pt-2 sm:pt-4 flex justify-center">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-3 px-8 rounded-full text-lg transition-colors flex items-center gap-2"
+                className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-colors flex items-center gap-2"
               >
                 {isLoading ? "Logging In..." : "Log In with Email"}
-                <Mail className="w-5 h-5" />
+                <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </form>
 
-          <p className="text-center mt-6">
+          <p className="text-center mt-4 sm:mt-6 text-sm sm:text-base">
             Don&apos;t have an account?{" "}
             <Link to="/signup" className="text-[#e79c2d] hover:underline">
               Sign up

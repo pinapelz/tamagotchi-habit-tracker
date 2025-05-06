@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowLeft, Mail } from "lucide-react"
 import AuthNav from "../components/AuthNav"
-import cloudImage from '../assets/images/cloud.png'
+import cloudImage from '../assets/landing/cloud-pixel.webp'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -71,22 +71,22 @@ export default function ForgotPasswordPage() {
           <img src={cloudImage} alt="Pixel cloud" width={160} height={160} className="opacity-80" />
         </div>
 
-        <div className="bg-[#fffde7] rounded-3xl p-10 w-full max-w-md z-10">
-          <Link to="/login" className="flex items-center text-[#e79c2d] hover:underline mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+        <div className="bg-[#fffde7] rounded-3xl p-4 sm:p-10 w-full max-w-[90%] sm:max-w-md z-10">
+          <Link to="/login" className="flex items-center text-[#e79c2d] hover:underline mb-4 sm:mb-6 text-sm sm:text-base">
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             Back to Login
           </Link>
 
           {!isSuccess ? (
             <>
-              <h2 className="text-center text-2xl md:text-3xl mb-4">Forgot Password</h2>
-              <p className="text-center text-gray-600 mb-8">
+              <h2 className="text-center text-xl sm:text-2xl md:text-3xl mb-3 sm:mb-4">Forgot Password</h2>
+              <p className="text-center text-gray-600 mb-4 sm:mb-8 text-sm sm:text-base">
                 Enter your email address and we'll send you a link to reset your password.
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-lg">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
+                <div className="space-y-1 sm:space-y-2">
+                  <label htmlFor="email" className="block text-base sm:text-lg">
                     Email
                   </label>
                   <input
@@ -94,60 +94,38 @@ export default function ForgotPasswordPage() {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-2 px-1"
+                    className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-1 sm:py-2 px-1 text-sm sm:text-base"
                     placeholder="Enter your email"
                   />
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  {error && <p className="text-red-500 text-xs sm:text-sm">{error}</p>}
                 </div>
 
-                <div className="pt-4 flex justify-center">
+                <div className="pt-2 sm:pt-4 flex justify-center">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-3 px-8 rounded-full text-lg transition-colors flex items-center gap-2"
+                    className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-colors flex items-center gap-2"
                   >
-                    {isSubmitting ? (
-                      "Sending..."
-                    ) : (
-                      <>
-                        Send Reset Link
-                        <Mail className="w-5 h-5" />
-                      </>
-                    )}
+                    {isSubmitting ? "Sending..." : "Send Reset Link"}
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               </form>
             </>
           ) : (
-            <div className="text-center py-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-green-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl mb-4">Check Your Email</h2>
-              <p className="text-gray-600 mb-6">
-                We've sent a password reset link to:
-                <br />
-                <span className="font-medium text-gray-800 block mt-2">{email}</span>
+            <div className="text-center">
+              <h2 className="text-xl sm:text-2xl md:text-3xl mb-3 sm:mb-4">Check Your Email</h2>
+              <p className="text-gray-600 mb-4 sm:mb-8 text-sm sm:text-base">
+                We've sent a password reset link to your email address.
               </p>
-              <p className="text-gray-600 mb-8">
-                Please check your inbox and follow the instructions to reset your password.
-              </p>
-              <div className="space-y-4">
-                <button onClick={handleTryAgain} className="text-[#e79c2d] hover:underline">
+              <div className="space-y-3 sm:space-y-4">
+                <button onClick={handleTryAgain} className="text-[#e79c2d] hover:underline text-sm sm:text-base">
                   Try a different email
                 </button>
                 <div>
                   <Link
                     to="/login"
-                    className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-3 px-8 rounded-full text-lg transition-colors inline-block"
+                    className="bg-[#ffe0b2] hover:bg-[#ffd180] text-black py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-colors inline-block"
                   >
                     Return to Login
                   </Link>
