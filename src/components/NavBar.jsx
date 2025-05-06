@@ -1,5 +1,12 @@
 import { Sidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Home, User, Menu as MenuIcon } from "lucide-react";
+import {
+  Home,
+  User,
+  Menu as MenuIcon,
+  Users,
+  ListOrdered,
+  Cog,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function NavBar() {
@@ -16,7 +23,7 @@ export default function NavBar() {
   return (
     <>
       {/* Header with hamburger */}
-      <header className="relative flex items-center p-3 md:p-6 bg-white/90 shadow-xl rounded-b-[2rem] md:rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
+      <header className="relative flex items-center p-3 md:p-4 bg-white/90 shadow-xl rounded-b-[2rem] md:rounded-b-[3rem] backdrop-blur-md border-b-4 border-blue-100 overflow-hidden">
         <button
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg hover:bg-blue-100 transition mr-2 md:mr-3"
@@ -30,14 +37,16 @@ export default function NavBar() {
         <div className="flex-1" />
         <span className="hidden sm:inline text-xl md:text-3xl font-mono text-gray-700 mr-2 md:mr-6">
           {time
-          ? time
-              .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
-          : ""}
+            ? time.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })
+            : ""}
         </span>
         <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white text-xl md:text-3xl font-bold shadow-inner border-2 border-white mr-2 md:mr-4">
           PFP
         </div>
-
       </header>
 
       {/* Backdrop */}
@@ -66,13 +75,78 @@ export default function NavBar() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Menu>
+          <Menu
+            menuItemStyles={{
+              button: {
+                "&:hover": {
+                  backgroundColor: "rgba(59, 130, 246, 0.08)",
+                  borderRadius: "0.5rem",
+                  color: "#3b82f6",
+                  transition: "all 0.2s ease-in-out",
+                  transform: "translateX(3px)",
+                },
+              },
+            }}
+          >
             <div className="my-2 border-b border-gray-200" />
             <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
               Main
             </div>
-            <MenuItem icon={<Home size={18} />}>Dashboard</MenuItem>
-            <MenuItem icon={<User size={18} />}>Profile</MenuItem>
+            <MenuItem
+              icon={
+                <Home
+                  size={18}
+                  className="group-hover:text-blue-500 transition-colors"
+                />
+              }
+              className="group hover:font-medium"
+            >
+              Dashboard
+            </MenuItem>
+            <MenuItem
+              icon={
+                <User
+                  size={18}
+                  className="group-hover:text-blue-500 transition-colors"
+                />
+              }
+              className="group hover:font-medium"
+            >
+              Profile
+            </MenuItem>
+            <MenuItem
+              icon={
+                <Users
+                  size={18}
+                  className="group-hover:text-blue-500 transition-colors"
+                />
+              }
+              className="group hover:font-medium"
+            >
+              Friends
+            </MenuItem>
+            <MenuItem
+              icon={
+                <ListOrdered
+                  size={18}
+                  className="group-hover:text-blue-500 transition-colors"
+                />
+              }
+              className="group hover:font-medium"
+            >
+              Leaderboard
+            </MenuItem>
+            <MenuItem
+              icon={
+                <Cog
+                  size={18}
+                  className="group-hover:text-blue-500 transition-colors"
+                />
+              }
+              className="group hover:font-medium"
+            >
+              Settings
+            </MenuItem>
           </Menu>
         </Sidebar>
       </div>

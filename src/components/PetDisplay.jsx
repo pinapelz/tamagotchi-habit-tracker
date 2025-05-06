@@ -36,9 +36,6 @@ export default function PetDisplay({ timeOfDay, weather }) {
         {/* Background overlay */}
         <div className="absolute inset-0 bg-black/20 opacity-60" />
 
-        {/* Weather */}
-        <div className="absolute top-6 right-6 z-10">{getWeatherIcon()}</div>
-
         {/* Speech Bubble */}
         <div className="absolute top-10 w-72 bg-white/95 rounded-lg shadow-lg p-4 text-center z-20">
           <p className="text-sm text-gray-700">Your pet is waiting...</p>
