@@ -36,10 +36,8 @@ export default function Dashboard() {
     );
   };
 
-  const backgroundColor = timeOfDay === "day" ? "bg-blue-50" : "bg-indigo-950";
-
   return (
-    <div className={`relative min-h-screen ${backgroundColor}`}>
+    <div className={`relative min-h-screen bg-blue-50`}>
       <NavBar />
       <main className="mt-2 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
