@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Github, Mail } from "lucide-react"
+import { Mail } from "lucide-react"
+import { FaGithub } from "react-icons/fa"
 import AuthNav from "../components/AuthNav"
 import cloudImage from '../assets/landing/cloud-pixel.webp'
 
@@ -180,7 +181,7 @@ export default function LoginPage() {
               onClick={loginWithGithub}
               className="flex items-center justify-center gap-2 bg-[#24292e] hover:bg-[#1a1e22] text-white py-2 sm:py-3 px-4 rounded-full transition-colors cursor-pointer text-sm sm:text-base"
             >
-              <Github className="w-4 h-4 sm:w-5 sm:h-5" />
+              <FaGithub className="w-4 h-4 sm:w-5 sm:h-5" />
               Log in with GitHub
             </button>
           </div>
