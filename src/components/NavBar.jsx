@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export default function NavBar() {
+export default function NavBar({ enableMenu = true }) {
   const [open, setOpen] = useState(false);
   const [time, setTime] = useState(null);
 
@@ -24,13 +24,15 @@ export default function NavBar() {
     <>
       {/* Header with hamburger */}
       <header className="relative flex items-center p-3 md:p-4 bg-white/80 backdrop-blur-md overflow-hidden">
-        <button
-          onClick={() => setOpen(true)}
-          className="p-2 rounded-lg hover:bg-blue-100 transition mr-2 md:mr-3"
-          aria-label="Open menu"
-        >
-          <MenuIcon size={26} />
-        </button>
+        {enableMenu && (
+          <button
+            onClick={() => setOpen(true)}
+            className="p-2 rounded-lg hover:bg-blue-100 transition mr-2 md:mr-3"
+            aria-label="Open menu"
+          >
+            <MenuIcon size={26} />
+          </button>
+        )}
         <h1 className="text-lg sm:text-xl md:text-3xl font-extrabold text-gray-900 tracking-tight drop-shadow-sm whitespace-nowrap">
           Tamagotchi Tracker
         </h1>
@@ -50,7 +52,7 @@ export default function NavBar() {
       </header>
 
       {/* Backdrop */}
-      {open && (
+      {enableMenu && open && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
           onClick={() => setOpen(false)}
@@ -58,98 +60,100 @@ export default function NavBar() {
       )}
 
       {/* Sidebar overlay */}
-      <div
-        className={`fixed top-0 left-0 h-full z-50 transition-transform duration-300 ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
-        style={{ width: 260, pointerEvents: open ? "auto" : "none" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Sidebar
-          backgroundColor="rgba(248,250,252,0.95)"
-          rootStyles={{
-            height: "100vh",
-            boxShadow: "2px 0 16px 0 rgba(0,0,0,0.08)",
-            borderTopRightRadius: "1rem",
-            borderBottomRightRadius: "1rem",
-          }}
+      {enableMenu && (
+        <div
+          className={`fixed top-0 left-0 h-full z-50 transition-transform duration-300 ${
+            open ? "translate-x-0" : "-translate-x-full"
+          }`}
+          style={{ width: 260, pointerEvents: open ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Menu
-            menuItemStyles={{
-              button: {
-                "&:hover": {
-                  backgroundColor: "rgba(59, 130, 246, 0.08)",
-                  borderRadius: "0.5rem",
-                  color: "#3b82f6",
-                  transition: "all 0.2s ease-in-out",
-                  transform: "translateX(3px)",
-                },
-              },
+          <Sidebar
+            backgroundColor="rgba(248,250,252,0.95)"
+            rootStyles={{
+              height: "100vh",
+              boxShadow: "2px 0 16px 0 rgba(0,0,0,0.08)",
+              borderTopRightRadius: "1rem",
+              borderBottomRightRadius: "1rem",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="my-2 border-b border-gray-200" />
-            <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
-              Main
-            </div>
-            <MenuItem
-              icon={
-                <Home
-                  size={18}
-                  className="group-hover:text-blue-500 transition-colors"
-                />
-              }
-              className="group hover:font-medium"
+            <Menu
+              menuItemStyles={{
+                button: {
+                  "&:hover": {
+                    backgroundColor: "rgba(59, 130, 246, 0.08)",
+                    borderRadius: "0.5rem",
+                    color: "#3b82f6",
+                    transition: "all 0.2s ease-in-out",
+                    transform: "translateX(3px)",
+                  },
+                },
+              }}
             >
-              Dashboard
-            </MenuItem>
-            <MenuItem
-              icon={
-                <User
-                  size={18}
-                  className="group-hover:text-blue-500 transition-colors"
-                />
-              }
-              className="group hover:font-medium"
-            >
-              Profile
-            </MenuItem>
-            <MenuItem
-              icon={
-                <Users
-                  size={18}
-                  className="group-hover:text-blue-500 transition-colors"
-                />
-              }
-              className="group hover:font-medium"
-            >
-              Friends
-            </MenuItem>
-            <MenuItem
-              icon={
-                <ListOrdered
-                  size={18}
-                  className="group-hover:text-blue-500 transition-colors"
-                />
-              }
-              className="group hover:font-medium"
-            >
-              Leaderboard
-            </MenuItem>
-            <MenuItem
-              icon={
-                <Cog
-                  size={18}
-                  className="group-hover:text-blue-500 transition-colors"
-                />
-              }
-              className="group hover:font-medium"
-            >
-              Settings
-            </MenuItem>
-          </Menu>
-        </Sidebar>
-      </div>
+              <div className="my-2 border-b border-gray-200" />
+              <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-widest">
+                Main
+              </div>
+              <MenuItem
+                icon={
+                  <Home
+                    size={18}
+                    className="group-hover:text-blue-500 transition-colors"
+                  />
+                }
+                className="group hover:font-medium"
+              >
+                Dashboard
+              </MenuItem>
+              <MenuItem
+                icon={
+                  <User
+                    size={18}
+                    className="group-hover:text-blue-500 transition-colors"
+                  />
+                }
+                className="group hover:font-medium"
+              >
+                Profile
+              </MenuItem>
+              <MenuItem
+                icon={
+                  <Users
+                    size={18}
+                    className="group-hover:text-blue-500 transition-colors"
+                  />
+                }
+                className="group hover:font-medium"
+              >
+                Friends
+              </MenuItem>
+              <MenuItem
+                icon={
+                  <ListOrdered
+                    size={18}
+                    className="group-hover:text-blue-500 transition-colors"
+                  />
+                }
+                className="group hover:font-medium"
+              >
+                Leaderboard
+              </MenuItem>
+              <MenuItem
+                icon={
+                  <Cog
+                    size={18}
+                    className="group-hover:text-blue-500 transition-colors"
+                  />
+                }
+                className="group hover:font-medium"
+              >
+                Settings
+              </MenuItem>
+            </Menu>
+          </Sidebar>
+        </div>
+      )}
     </>
   );
 }
