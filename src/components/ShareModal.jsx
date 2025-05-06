@@ -8,20 +8,18 @@ export default function ShareModal({ show, onClose }) {
     <>
       {/* Dimmed background */}
       <div
-        className="fixed inset-0 bg-opacity-40 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
         onClick={onClose}
       />
       {/* Main Modal */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-      >
+      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div
-          className="bg-[#fdfbef] rounded-xl shadow-xl p-6 max-w-md w-full relative pointer-events-auto"
+          className="bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-xl w-full relative pointer-events-auto shadow-xl border border-gray-100"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
             onClick={onClose}
             aria-label="Close"
           >
@@ -29,7 +27,7 @@ export default function ShareModal({ show, onClose }) {
           </button>
 
           {/* Title */}
-          <h3 className="text-xl font-bold mb-6 text-[#486085]">Share with</h3>
+          <h3 className="text-xl font-sniglet mb-6 text-gray-800">Share with</h3>
 
           {/* Share buttons in circular layout */}
           <div className="flex justify-between items-start mb-8 px-2">
