@@ -12,7 +12,7 @@ export default function MetricBars({ health = 70, xp = 45 }) {
                         style={{ width: `${health}%` }} // Dynamic health percentage
                     />
                 </div>
-                <span className="font-semibold text-red-700 flex-shrink-0">{health}/100 HP</span>
+                <span className="text-red-700 flex-shrink-0">{health}/100 HP</span>
             </div>
             {/* XP Bar */}
             <div className="flex items-center gap-3 w-full">
@@ -23,7 +23,7 @@ export default function MetricBars({ health = 70, xp = 45 }) {
                         style={{ width: `${xp}%` }} // Dynamic XP percentage
                     />
                 </div>
-                <span className="font-semibold text-yellow-700 flex-shrink-0">{xp}/100 XP</span>
+                <span className="text-yellow-700 flex-shrink-0">{xp}/100 XP</span>
             </div>
         </div>
     );

@@ -22,7 +22,7 @@ export default function HabitTracker({ habits, streakCount, onToggleHabit }) {
     <div className="flex flex-col p-6 rounded-xl border border-blue-100" style={{ backgroundColor: "#F0E8FF" }}>
       {/* Today's Progress */}
       <div className="mb-5">
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-3 tracking-tight">Today's Progress</h2>
+        <h2 className="text-2xl text-gray-900 mb-3 tracking-tight">Today's Progress</h2>
         <ProgressBar value={completionPercent} />
         <div className="text-right text-sm text-gray-500 mt-2 font-medium">
           {completedCount}/{totalCount} completed
@@ -50,11 +50,11 @@ export default function HabitTracker({ habits, streakCount, onToggleHabit }) {
               ) : (
                 <Circle className="text-black" size={22} />
               )}
-              <span className={`font-semibold ${habit.completed ? "text-green-700" : "text-gray-700"}`}>
+              <span className={`${habit.completed ? "text-green-700" : "text-gray-700"}`}>
                 {habit.name}
               </span>
             </div>
-            <div className={`text-xs font-semibold ${habit.completed ? "text-green-500" : "text-gray-400"}`}>
+            <div className={`text-xs ${habit.completed ? "text-green-500" : "text-gray-400"}`}>
               {habit.completed ? "Done" : "Pending"}
             </div>
           </div>
@@ -65,13 +65,13 @@ export default function HabitTracker({ habits, streakCount, onToggleHabit }) {
       <div className="mt-8 flex justify-between items-center">
         {/* Share Button */}
         <button
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500 text-white font-semibold shadow hover:bg-purple-600 transition"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500 text-white shadow hover:bg-purple-600 transition"
           onClick={() => setShowModal(true)}
         >
           <FaShareAlt /> Share
         </button>
         {/* Streak */}
-        <div className="inline-flex items-center gap-2 bg-yellow-100 px-4 py-1.5 rounded-full text-sm font-bold text-yellow-700 shadow animate-pulse">
+        <div className="inline-flex items-center gap-2 bg-yellow-100 px-4 py-1.5 rounded-full text-sm text-yellow-700 shadow animate-pulse">
           <span role="img" aria-label="fire">🔥</span> {streakCount} Day Streak!
         </div>
       </div>
