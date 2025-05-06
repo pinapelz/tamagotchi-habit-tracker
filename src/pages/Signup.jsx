@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Github, Mail } from "lucide-react"
-import Navbar from "../components/Navbar"
+import AuthNav from "../components/AuthNav"
 import cloudImage from '../assets/images/cloud.png'
 
 export default function SignupPage() {
@@ -120,7 +120,9 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#def8fb] flex flex-col">
-      <Navbar />
+      <div className="container mx-auto px-4">
+        <AuthNav />
+      </div>
       <main className="flex-1 flex flex-col items-center justify-center px-4 relative overflow-hidden">
         <div className="absolute top-[-20px] left-[-20px] z-0">
           <img src={cloudImage} alt="Pixel cloud" width={120} height={120} className="opacity-80" />
