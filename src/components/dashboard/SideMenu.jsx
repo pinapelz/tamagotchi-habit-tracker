@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from 'react'
 import { Menu, Home, Settings, User, LogOut, HelpCircle, Bell, Users, Trophy } from 'lucide-react'
 import PropTypes from 'prop-types'

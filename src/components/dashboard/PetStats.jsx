@@ -1,5 +1,3 @@
-"use client"
-
 import { Heart, Zap, Coffee } from "lucide-react"
 import PropTypes from 'prop-types'
 

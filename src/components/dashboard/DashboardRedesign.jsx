@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import PropTypes from 'prop-types'
 import SettingsModal from "../SettingsModal"
