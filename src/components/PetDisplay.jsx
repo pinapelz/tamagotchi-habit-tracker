@@ -2,6 +2,7 @@ import React from "react";
 import { Sun, Cloud, CloudRain, Moon } from "lucide-react";
 import MetricBars from "../components/MetricBars";
 import meadowDay from "../assets/pet_bg/meadow_day.png"; // Import the meadow image
+import pixelCat from "../assets/pets/pixel-cat.gif"
 
 export default function PetDisplay({ timeOfDay, weather }) {
 
@@ -28,9 +29,14 @@ export default function PetDisplay({ timeOfDay, weather }) {
 
         {/* Top section with pet */}
         <div className="flex-1 flex items-center justify-center w-full z-10">
-          {/* Pet Image Placeholder */}
+          {/* Pet Image */}
           <div className="w-96 h-96 bg-white/40 backdrop-blur-2xl rounded-full flex items-center justify-center shadow-xl border-4 border-white">
-            <span className="text-7xl text-blue-500">🐾</span>
+            <img
+              src={pixelCat}
+              alt="Pixel Cat"
+              className="w-72 h-72 object-contain"
+              draggable={false}
+            />
           </div>
         </div>
 
