@@ -4,9 +4,11 @@ export default function AuthNav() {
   return (
     <header className="flex items-center justify-between py-4">
       <div className="flex items-center gap-2">
-        <h1 className="text-xl font-normal text-sky-950">
-          Tamagotchi Tracker
-        </h1>
+        <Link to="/" className="hover:opacity-80 transition">
+          <h1 className="text-xl font-normal text-sky-950">
+            Tamagotchi Tracker
+          </h1>
+        </Link>
       </div>
       <nav className="flex gap-4">
         <Link
