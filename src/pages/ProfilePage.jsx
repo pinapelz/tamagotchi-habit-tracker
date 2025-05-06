@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import LoadingPage from "./Loading";
-import { fetchUserProfile } from "../utils/profileHelpers";
-import snow from "../assets/pet_bg/snow.png";
+import { fetchUserProfile, getHashedBackgroundValue } from "../utils/profileHelpers";
 
-export default function ProfilePage({ userId, backgroundImage }) {
+import snowBg from "../assets/pet_bg/snow.png";
+import meadowBg from "../assets/pet_bg/meadow_day.png";
+
+export default function ProfilePage({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const backgrounds = [snowBg, meadowBg];
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -44,13 +47,20 @@ export default function ProfilePage({ userId, backgroundImage }) {
     userProfile.bio ||
     "Hi! I'm building good habits with my Tamagotchi. Let's grow together!";
 
+  // Fix: Validate the index before accessing the backgrounds array
+  const backgroundIndex = getHashedBackgroundValue(userId, backgrounds.length);
+  const backgroundImage =
+    backgroundIndex >= 0 && backgroundIndex < backgrounds.length
+      ? backgrounds[backgroundIndex]
+      : null;
+
   return (
     <>
       <NavBar />
       <div
         className="min-h-screen font-sniglet pt-12"
         style={{
-          backgroundImage: `url(${backgroundImage || snow})`,
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none",
           backgroundSize: "cover",
           backgroundPosition: "center",
           opacity: 0.9,

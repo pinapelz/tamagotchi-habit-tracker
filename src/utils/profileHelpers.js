@@ -17,3 +17,15 @@ export async function fetchUserProfile(userId) {
     }, 500);
   });
 }
+
+export function getHashedBackgroundValue(input, upper_bound) {
+  if (typeof input !== "string" || !input.length || typeof upper_bound !== "number" || upper_bound <= 0) {
+    return 0;
+  }
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash) + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % upper_bound);
+}
