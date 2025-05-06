@@ -142,7 +142,7 @@ export default function SignupPage() {
           <div className="flex flex-col gap-4 mb-8">
             <button
               onClick={handleGoogleSignup}
-              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-3 px-4 rounded-full border border-gray-300 transition-colors"
+              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-3 px-4 rounded-full border border-gray-300 transition-colors cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="w-5 h-5">
                 <path
@@ -166,7 +166,7 @@ export default function SignupPage() {
             </button>
             <button
               onClick={handleGithubSignup}
-              className="flex items-center justify-center gap-2 bg-[#24292e] hover:bg-[#1a1e22] text-white py-3 px-4 rounded-full transition-colors"
+              className="flex items-center justify-center gap-2 bg-[#24292e] hover:bg-[#1a1e22] text-white py-3 px-4 rounded-full transition-colors cursor-pointer"
             >
               <Github className="w-5 h-5" />
               Sign up with GitHub
