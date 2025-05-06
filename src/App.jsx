@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import Loading from './pages/Loading';
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/loading" element={<Loading />} />
+      <Route path="/profile" element={<ProfilePage/>}/>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
