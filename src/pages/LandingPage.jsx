@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import cloudImage from '../assets/images/cloud.png';
-import slimeGif from '../assets/images/slime.gif';
+import cloudImage from '../assets/landing/cloud-pixel.webp'
+import slimeGif from '../assets/landing/slime.gif'
 
 export default function LandingPage() {
   return (

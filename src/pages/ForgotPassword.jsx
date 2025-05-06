@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowLeft, Mail } from "lucide-react"
 import AuthNav from "../components/AuthNav"
-import cloudImage from '../assets/images/cloud.png'
+import cloudImage from '../assets/landing/cloud-pixel.webp'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
