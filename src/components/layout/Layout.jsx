@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, Settings, Home, User, Users, Trophy, Bell, HelpCircle, LogOut } from 'lucide-react'
 import PropTypes from 'prop-types'
+import SettingsModal from '../SettingsModal'
 
-export default function Layout({ children, userName, onToggleSettings }) {
+export default function Layout({ children, userName }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
+  const [showSettings, setShowSettings] = useState(false)
+  const [theme, setTheme] = useState("light")
 
   // Update time in real-time
   useEffect(() => {
@@ -35,6 +38,20 @@ export default function Layout({ children, userName, onToggleSettings }) {
     { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
   ]
 
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
+  };
+
+  const handleSaveSettings = () => {
+    console.log("Saving settings:", { userName, theme });
+    setShowSettings(false);
+  };
+
+  const handleResetSettings = () => {
+    setTheme("light");
+    setShowSettings(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -54,7 +71,7 @@ export default function Layout({ children, userName, onToggleSettings }) {
           <span className="text-gray-600 font-sniglet text-2xl">{currentTime}</span>
           <button 
             className="p-2 hover:bg-gray-100 rounded-full transition-colors" 
-            onClick={onToggleSettings}
+            onClick={toggleSettings}
           >
             <Settings size={32} className="text-gray-600" />
           </button>
@@ -112,12 +129,23 @@ export default function Layout({ children, userName, onToggleSettings }) {
       <main className="flex-1">
         {children}
       </main>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={toggleSettings}
+        userName={userName}
+        setUserName={() => {}} // This would need to be handled by a parent component or context
+        theme={theme}
+        setTheme={setTheme}
+        onSave={handleSaveSettings}
+        onReset={handleResetSettings}
+      />
     </div>
   )
 }
 
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
-  userName: PropTypes.string.isRequired,
-  onToggleSettings: PropTypes.func.isRequired
+  userName: PropTypes.string.isRequired
 } 
