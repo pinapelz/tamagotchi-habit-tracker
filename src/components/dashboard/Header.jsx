@@ -1,5 +1,3 @@
-"use client"
-
 import { Link } from "react-router-dom"
 import { Settings } from "lucide-react"
 import PropTypes from 'prop-types'

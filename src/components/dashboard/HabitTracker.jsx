@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from 'react'
 import { Pencil, Trash2, Share2, Plus, Check } from "lucide-react"
 import PropTypes from 'prop-types'
@@ -30,7 +28,7 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
 
       {/* Habits List */}
       <div className="h-[180px] mb-4">
-        <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+        <div className="h-full overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
           <ul className="space-y-3">
             {habits.map((habit) => (
               <li 
@@ -85,23 +83,6 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
 
       {/* Share Modal */}
       <ShareModal show={showShareModal} onClose={() => setShowShareModal(false)} />
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #ddd;
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #ccc;
-        }
-      `}</style>
     </div>
   )
 }

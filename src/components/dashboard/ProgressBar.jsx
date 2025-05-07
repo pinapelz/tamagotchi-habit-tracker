@@ -1,5 +1,3 @@
-"use client"
-
 import { Info } from "lucide-react"
 import PropTypes from 'prop-types'
 
