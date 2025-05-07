@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import defaultWeatherBg from '../../assets/pet_bg/rainy.gif'
 
 export default function EnvironmentDisplay({
   timeOfDayIcon,
@@ -12,7 +13,7 @@ export default function EnvironmentDisplay({
     <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative">
       {/* Weather background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-80">
-        <img src={weatherImage || "/assets/pet_bg/rainy.gif"} alt="Weather" className="w-full h-full object-cover" />
+        <img src={weatherImage || defaultWeatherBg} alt="Weather" className="w-full h-full object-cover" />
       </div>
 
       <div className="relative z-10">
@@ -48,5 +49,5 @@ EnvironmentDisplay.propTypes = {
   seasonIcon: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   season: PropTypes.string.isRequired,
   currentWeather: PropTypes.string.isRequired,
-  weatherImage: PropTypes.string.isRequired
+  weatherImage: PropTypes.string
 } 

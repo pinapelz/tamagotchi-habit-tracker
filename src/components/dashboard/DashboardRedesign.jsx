@@ -149,7 +149,7 @@ export default function DashboardRedesign() {
           <div className="flex gap-4">
             {/* Pet Display with Toggle */}
             <PetDisplay 
-              petImage="/src/assets/pets/pixel-cat.gif"
+              petImage={null}
               toggleComponent={toggleComponent}
             />
 
@@ -161,7 +161,7 @@ export default function DashboardRedesign() {
                 seasonIcon={getSeasonIcon(season)}
                 season={season}
                 currentWeather={currentWeather}
-                weatherImage="/src/assets/pet_bg/rainy.gif"
+                weatherImage={null}
               />
             ) : (
               <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
