@@ -8,6 +8,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Loading from './pages/Loading';
 import ProfilePage from './pages/ProfilePage'
 import PetCreation from './pages/PetCreation';
+import FriendsPage from './pages/Friends';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/loading" element={<Loading />} />
       <Route path="/profile" element={<ProfilePage/>}/>
       <Route path="/petcreation" element={<PetCreation/>}/>
+      <Route path="/friends" element={<FriendsPage/>}/>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

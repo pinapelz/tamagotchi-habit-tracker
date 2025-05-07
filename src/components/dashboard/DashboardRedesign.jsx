@@ -150,6 +150,7 @@ export default function DashboardRedesign() {
           {/* Pet Display with Environment or Stats */}
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Pet Display with Toggle */}
+
             <div className="w-full lg:w-1/2 flex items-center justify-center">
               <PetDisplay 
                 petImage={null}
