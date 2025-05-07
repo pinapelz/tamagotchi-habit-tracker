@@ -1,8 +1,47 @@
 import PropTypes from 'prop-types'
-import petBg from '../../assets/pet_bg/meadow_day.png'
 import defaultPet from '../../assets/pets/pixel-cat.gif'
 
-export default function PetDisplay({ petImage, toggleComponent }) {
+// Import time of day backgrounds
+import predawnNight from '../../assets/timeofday/predawn-night.jpg'
+import dawn from '../../assets/timeofday/dawn.png'
+import sunrise from '../../assets/timeofday/sunrise.png'
+import morning from '../../assets/timeofday/morning.webp'
+import noon from '../../assets/timeofday/noon.png'
+import afternoon from '../../assets/timeofday/afternoon.png'
+import evening from '../../assets/timeofday/evening.png'
+import sunset from '../../assets/timeofday/sunset.png'
+import twilight from '../../assets/timeofday/twlight.webp'
+import midnight from '../../assets/timeofday/midnight.webp'
+
+export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
+  const getTimeOfDayBackground = () => {
+    switch (timeOfDay) {
+      case "predawn":
+      case "night":
+        return predawnNight
+      case "dawn":
+        return dawn
+      case "sunrise":
+        return sunrise
+      case "morning":
+        return morning
+      case "noon":
+        return noon
+      case "afternoon":
+        return afternoon
+      case "evening":
+        return evening
+      case "sunset":
+        return sunset
+      case "twilight":
+        return twilight
+      case "midnight":
+        return midnight
+      default:
+        return morning
+    }
+  }
+
   return (
     <div
       className="rounded-3xl flex items-center justify-center relative w-full max-w-[400px] h-[150px] lg:h-[350px] lg:aspect-square"
@@ -10,8 +49,8 @@ export default function PetDisplay({ petImage, toggleComponent }) {
       {/* Background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
         <img 
-          src={petBg} 
-          alt="Meadow Background" 
+          src={getTimeOfDayBackground()} 
+          alt="Time of Day Background" 
           className="w-full h-full object-cover"
         />
       </div>
@@ -27,5 +66,6 @@ export default function PetDisplay({ petImage, toggleComponent }) {
 
 PetDisplay.propTypes = {
   petImage: PropTypes.string,
-  toggleComponent: PropTypes.node
+  toggleComponent: PropTypes.node,
+  timeOfDay: PropTypes.string
 } 

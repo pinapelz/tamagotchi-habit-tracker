@@ -61,7 +61,9 @@ export default function DashboardRedesign() {
       // Update timeOfDay based on current hour
       const currentHour = now.getHours()
 
-      if (currentHour >= 4 && currentHour < 5) {
+      if (currentHour >= 0 && currentHour < 3) {
+        setTimeOfDay("midnight")
+      } else if (currentHour >= 3 && currentHour < 5) {
         setTimeOfDay("predawn")
       } else if (currentHour >= 5 && currentHour < 6) {
         setTimeOfDay("dawn")
@@ -77,12 +79,10 @@ export default function DashboardRedesign() {
         setTimeOfDay("evening")
       } else if (currentHour >= 19 && currentHour < 20) {
         setTimeOfDay("sunset")
-      } else if (currentHour >= 20 && currentHour < 21) {
+      } else if (currentHour >= 20 && currentHour < 22) {
         setTimeOfDay("twilight")
-      } else if (currentHour >= 21 && currentHour < 23) {
-        setTimeOfDay("night")
       } else {
-        setTimeOfDay("midnight")
+        setTimeOfDay("night")
       }
     }
 
@@ -155,6 +155,7 @@ export default function DashboardRedesign() {
               <PetDisplay 
                 petImage={null}
                 toggleComponent={toggleComponent}
+                timeOfDay={timeOfDay}
               />
             </div>
 
