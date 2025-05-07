@@ -27,7 +27,7 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       </div>
 
       {/* Habits List */}
-      <div className="h-[180px] mb-4">
+      <div className="h-[calc(100vh-400px)] min-h-[300px] max-h-[500px] mb-4">
         <div className="h-full overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
           <ul className="space-y-3">
             {habits.map((habit) => (

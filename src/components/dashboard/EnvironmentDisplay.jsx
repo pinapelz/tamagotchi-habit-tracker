@@ -10,7 +10,7 @@ export default function EnvironmentDisplay({
   weatherImage,
 }) {
   return (
-    <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative">
+    <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative w-full max-w-[400px] h-[150px] lg:h-[350px] lg:aspect-square">
       {/* Weather background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-80">
         <img src={weatherImage || defaultWeatherBg} alt="Weather" className="w-full h-full object-cover" />
@@ -18,14 +18,14 @@ export default function EnvironmentDisplay({
 
       <div className="relative z-10">
         <div className="flex justify-between items-start">
-          <div className="bg-white/70 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-2">
-            {timeOfDayIcon}
-            <span className="font-sniglet text-sm capitalize">{timeOfDay}</span>
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-2 rounded-lg flex items-center gap-1.5 min-w-[100px] lg:min-w-[90px] xl:min-w-[110px] justify-center">
+            <div className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center">{timeOfDayIcon}</div>
+            <span className="font-sniglet text-xs lg:text-sm capitalize">{timeOfDay}</span>
           </div>
 
-          <div className="bg-white/70 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <span className="text-lg">{seasonIcon}</span>
-            <span className="font-sniglet text-sm capitalize">{season}</span>
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-2 rounded-lg flex items-center gap-1.5 min-w-[100px] lg:min-w-[90px] xl:min-w-[110px] justify-center">
+            <div className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center text-lg">{seasonIcon}</div>
+            <span className="font-sniglet text-xs lg:text-sm capitalize">{season}</span>
           </div>
         </div>
       </div>
