@@ -127,7 +127,7 @@ export default function DashboardRedesign() {
   const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />
 
   return (
-    <div className="relative min-h-screen" style={{ backgroundColor: "#DEF8FB" }}>
+    <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
       {/* Header */}
       <Header currentTime={currentTime} toggleSettings={toggleSettings} />
 
@@ -135,42 +135,49 @@ export default function DashboardRedesign() {
       <SideMenu userName={userName} />
 
       {/* Main Content */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-[1400px] mx-auto w-full">
         {/* Left Column */}
-        <div className="space-y-5">
+        <div className="flex flex-col">
           {/* Status Card */}
-          <StatusCard
-            userName={userName}
-            weatherIcon={getWeatherIcon(currentWeather)}
-            currentWeather={currentWeather}
-          />
+          <div className="mb-6 lg:-mr-4">
+            <StatusCard
+              userName={userName}
+              weatherIcon={getWeatherIcon(currentWeather)}
+              currentWeather={currentWeather}
+            />
+          </div>
 
           {/* Pet Display with Environment or Stats */}
-          <div className="flex gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Pet Display with Toggle */}
-            <PetDisplay 
-              petImage={null}
-              toggleComponent={toggleComponent}
-            />
+
+            <div className="w-full lg:w-1/2 flex items-center justify-center">
+              <PetDisplay 
+                petImage={null}
+                toggleComponent={toggleComponent}
+              />
+            </div>
 
             {/* Environment Display or Pet Stats based on toggle */}
-            {activeView === "environment" ? (
-              <EnvironmentDisplay
-                timeOfDayIcon={getTimeOfDayIcon(timeOfDay)}
-                timeOfDay={timeOfDay}
-                seasonIcon={getSeasonIcon(season)}
-                season={season}
-                currentWeather={currentWeather}
-                weatherImage={null}
-              />
-            ) : (
-              <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
-            )}
+            <div className="w-full lg:w-1/2 flex items-center justify-center">
+              {activeView === "environment" ? (
+                <EnvironmentDisplay
+                  timeOfDayIcon={getTimeOfDayIcon(timeOfDay)}
+                  timeOfDay={timeOfDay}
+                  seasonIcon={getSeasonIcon(season)}
+                  season={season}
+                  currentWeather={currentWeather}
+                  weatherImage={null}
+                />
+              ) : (
+                <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
+              )}
+            </div>
           </div>
         </div>
 
         {/* Habit tracker and progress */}
-        <div className="space-y-5">
+        <div className="flex flex-col gap-4 lg:max-w-[98%] lg:ml-4">
           {/* Habit Tracker */}
           <HabitTracker
             habits={habits}
