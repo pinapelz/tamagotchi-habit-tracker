@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "../components/NavBar";
+import Layout from "../components/layout/Layout";
+import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
 import { fetchUserProfile, getHashedBackgroundValue } from "../utils/profileHelpers";
 
@@ -10,7 +11,17 @@ export default function ProfilePage({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const backgrounds = [snowBg, meadowBg];
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -54,9 +65,10 @@ export default function ProfilePage({ userId }) {
       ? backgrounds[backgroundIndex]
       : null;
 
+  const LayoutComponent = isMobile ? MobileLayout : Layout;
+
   return (
-    <>
-      <NavBar />
+    <LayoutComponent userName={userProfile.username}>
       <div
         className="min-h-screen font-sniglet pt-12"
         style={{
@@ -156,6 +168,6 @@ export default function ProfilePage({ userId }) {
           </div>
         </div>
       </div>
-    </>
+    </LayoutComponent>
   );
 }

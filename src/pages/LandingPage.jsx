@@ -56,13 +56,13 @@ export default function LandingPage() {
           </nav>
         </header>
 
-        <main className="flex flex-col items-center justify-center py-6 sm:py-8 text-center">
+        <main className="flex flex-col items-center justify-center py-12 sm:py-8 text-center mt-8 sm:mt-0">
           <div className="max-w-2xl px-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal text-sky-950">
               Welcome to Tamagotchi Habit Tracker!
             </h2>
 
-            <div className="my-4 relative">
+            <div className="my-6 sm:my-4 relative">
               <div className="relative inline-block animate-bounce-slow">
                 <img
                   src={slimeGif}
@@ -74,10 +74,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <p className="mt-2 mb-2 text-base sm:text-2xl font-medium text-sky-800 md:text-3xl">
+            <p className="mt-4 mb-3 text-base sm:text-2xl font-medium text-sky-800 md:text-3xl">
               Build good habits. Watch your pet grow 🌱
             </p>
-            <p className="mb-6 text-sm sm:text-base text-sky-700 sm:text-xl text-2xl">
+            <p className="mb-8 sm:mb-6 text-sm sm:text-base text-sky-700 sm:text-xl text-2xl">
               Let the weather outside shape the world in your app.
             </p>
 
