@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import PropTypes from 'prop-types'
 import SettingsModal from "../SettingsModal"
-import Header from "./Header"
 import StatusCard from "./StatusCard"
 import PetDisplay from "./PetDisplay"
 import EnvironmentDisplay from "./EnvironmentDisplay"
@@ -9,7 +8,7 @@ import PetStats from "./PetStats"
 import DisplayToggle from "./DisplayToggle"
 import HabitTracker from "./HabitTracker"
 import ProgressBar from "./ProgressBar"
-import SideMenu from "./SideMenu"
+import Layout from "../layout/Layout"
 import { getTimeOfDayIcon, getWeatherIcon, getSeasonIcon } from "./WeatherUtils"
 
 export default function DashboardRedesign() {
@@ -127,82 +126,77 @@ export default function DashboardRedesign() {
   const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />
 
   return (
-    <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
-      {/* Header */}
-      <Header currentTime={currentTime} toggleSettings={toggleSettings} />
-
-      {/* Side Menu */}
-      <SideMenu userName={userName} />
-
-      {/* Main Content */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-[1400px] mx-auto w-full">
-        {/* Left Column */}
-        <div className="flex flex-col">
-          {/* Status Card */}
-          <div className="mb-6 lg:-mr-4">
-            <StatusCard
-              userName={userName}
-              weatherIcon={getWeatherIcon(currentWeather)}
-              currentWeather={currentWeather}
-            />
-          </div>
-
-          {/* Pet Display with Environment or Stats */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Pet Display with Toggle */}
-
-            <div className="w-full lg:w-1/2 flex items-center justify-center">
-              <PetDisplay 
-                petImage={null}
-                toggleComponent={toggleComponent}
-                timeOfDay={timeOfDay}
+    <Layout userName={userName} onToggleSettings={toggleSettings}>
+      <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
+        {/* Main Content */}
+        <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-[1400px] mx-auto w-full">
+          {/* Left Column */}
+          <div className="flex flex-col">
+            {/* Status Card */}
+            <div className="mb-6 lg:-mr-4">
+              <StatusCard
+                userName={userName}
+                weatherIcon={getWeatherIcon(currentWeather)}
+                currentWeather={currentWeather}
               />
             </div>
 
-            {/* Environment Display or Pet Stats based on toggle */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center">
-              {activeView === "environment" ? (
-                <EnvironmentDisplay
-                  timeOfDayIcon={getTimeOfDayIcon(timeOfDay)}
+            {/* Pet Display with Environment or Stats */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Pet Display with Toggle */}
+              <div className="w-full lg:w-1/2 flex items-center justify-center">
+                <PetDisplay 
+                  petImage={null}
+                  toggleComponent={toggleComponent}
                   timeOfDay={timeOfDay}
-                  seasonIcon={getSeasonIcon(season)}
-                  season={season}
-                  currentWeather={currentWeather}
-                  weatherImage={null}
                 />
-              ) : (
-                <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
-              )}
+              </div>
+
+              {/* Environment Display or Pet Stats based on toggle */}
+              <div className="w-full lg:w-1/2 flex items-center justify-center">
+                {activeView === "environment" ? (
+                  <EnvironmentDisplay
+                    timeOfDayIcon={getTimeOfDayIcon(timeOfDay)}
+                    timeOfDay={timeOfDay}
+                    seasonIcon={getSeasonIcon(season)}
+                    season={season}
+                    currentWeather={currentWeather}
+                    weatherImage={null}
+                  />
+                ) : (
+                  <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Habit tracker and progress */}
-        <div className="flex flex-col gap-4 lg:max-w-[98%] lg:ml-4">
-          {/* Habit Tracker */}
-          <HabitTracker
-            habits={habits}
-            currentDate={currentDate}
-            toggleHabitCompletion={toggleHabitCompletion}
-            deleteHabit={deleteHabit}
-          />
+          {/* Habit tracker and progress */}
+          <div className="flex flex-col gap-4 lg:max-w-[98%] lg:ml-4">
+            {/* Habit Tracker */}
+            <HabitTracker
+              habits={habits}
+              currentDate={currentDate}
+              toggleHabitCompletion={toggleHabitCompletion}
+              deleteHabit={deleteHabit}
+            />
 
-          {/* Progress Section */}
-          <ProgressBar completedHabits={completedHabits} totalHabits={totalHabits} streak={streak} />
-        </div>
-      </main>
+            {/* Progress Section */}
+            <ProgressBar completedHabits={completedHabits} totalHabits={totalHabits} streak={streak} />
+          </div>
+        </main>
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={toggleSettings}
-        userName={userName}
-        setUserName={setUserName}
-        theme={theme}
-        setTheme={setTheme}
-        onSave={handleSaveSettings}
-        onReset={handleResetSettings}
-      />
-    </div>
+        {/* Settings Modal */}
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={toggleSettings}
+          userName={userName}
+          setUserName={setUserName}
+          theme={theme}
+          setTheme={setTheme}
+          onSave={handleSaveSettings}
+          onReset={handleResetSettings}
+        />
+      </div>
+    </Layout>
   )
 } 
