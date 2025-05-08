@@ -9,6 +9,7 @@ import Loading from './pages/Loading';
 import ProfilePage from './pages/ProfilePage'
 import PetCreation from './pages/PetCreation';
 import FriendsPage from './pages/Friends';
+import About from './pages/About';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard/>} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/about" element={<About />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/loading" element={<Loading />} />
       <Route path="/profile" element={<ProfilePage/>}/>
