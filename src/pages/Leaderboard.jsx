@@ -1,8 +1,11 @@
 import React from "react";
-import { useState } from "react";
-import NavBar from "../components/NavBar";
+import { useState, useEffect } from "react";
+import Layout from "../components/layout/Layout";
+import LoadingPage from "./Loading";
 import snowBg from "../assets/pet_bg/snow.png";
 import meadowBg from "../assets/pet_bg/meadow_day.png";
+import { fetchUserProfile } from "../utils/profileHelpers";
+
 
 const mainLeaderboard = [
   { username: "USERNAME", petLevel: 12 },
@@ -25,6 +28,11 @@ const friendsLeaderboard = [
 
 export default function Leaderboard({ userId }) {
     const [mode, setMode] = useState("global");
+    const [userProfile, setUserProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    
 
     const backgrounds = [snowBg, meadowBg];
     const backgroundIndex = userId
@@ -33,12 +41,54 @@ export default function Leaderboard({ userId }) {
         : 0;
     const backgroundImage = backgrounds[backgroundIndex];
 
+    useEffect(() => {
+    const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+    const getUserProfile = async () => {
+        try {
+        const profileData = await fetchUserProfile(userId);
+        setUserProfile(profileData);
+        } catch (err) {
+        setError(err.message);
+        } finally {
+        setLoading(false);
+        }
+    };
+    getUserProfile();
+    }, [userId]);
+
+    if (loading)
+    return (
+        <LoadingPage />
+    );
+    if (error)
+    return (
+        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
+        Error: {error}
+        </div>
+    );
+    if (!userProfile)
+    return (
+        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
+        No profile found.
+        </div>
+    );
+
     const leaderboardData =
       mode === "friends" ? friendsLeaderboard : mainLeaderboard;
+    
+    const LayoutComponent = isMobile ? MobileLayout : Layout;
+      
 
   return (
-    <>
-      <NavBar />
+    <LayoutComponent userName={userProfile.username}>
       <div
         className="min-h-screen font-sniglet pt-12"
         style={{
@@ -118,6 +168,6 @@ export default function Leaderboard({ userId }) {
           </div>
         </div>
       </div>
-    </>
+    </LayoutComponent>
   );
 }
