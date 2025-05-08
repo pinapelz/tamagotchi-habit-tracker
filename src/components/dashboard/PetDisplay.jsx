@@ -54,7 +54,7 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
           className="w-full h-full object-cover"
         />
       </div>
-      {toggleComponent && <div className="absolute top-3 left-0 right-0 flex justify-center z-20">{toggleComponent}</div>}
+      {toggleComponent && <div className="absolute top-3 left-0 right-0 flex justify-center z-20 2xl:scale-150 2xl:pt-2">{toggleComponent}</div>}
       <img 
         src={petImage || defaultPet} 
         alt="Pet" 
