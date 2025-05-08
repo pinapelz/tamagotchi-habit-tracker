@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage'
 import PetCreation from './pages/PetCreation';
 import FriendsPage from './pages/Friends';
 import Leaderboard from './pages/Leaderboard';
+import NotificationsPage from './pages/NotificationsPage';
 
 export default function App() {
   return (
