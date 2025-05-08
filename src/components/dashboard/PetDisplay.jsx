@@ -58,7 +58,7 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
       <img 
         src={petImage || defaultPet} 
         alt="Pet" 
-        className="object-contain z-10 relative w-20 h-20 md:w-24 md:h-24 lg:w-48 lg:h-48 2xl:w-[16vh] 2xl:h-[16vh]" 
+        className="object-contain z-10 relative w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 2xl:w-[16vh] 2xl:h-[16vh]" 
       />
     </div>
   )

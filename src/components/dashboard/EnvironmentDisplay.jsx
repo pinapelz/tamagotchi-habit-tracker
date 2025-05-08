@@ -17,13 +17,13 @@ export default function EnvironmentDisplay({
       </div>
 
       <div className="relative z-10">
-        <div className="flex justify-between items-start">
-          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-4 2xl:py-3 rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-3 min-w-[100px] md:min-w-[90px] lg:min-w-[120px] 2xl:min-w-[160px] justify-center">
+        <div className="flex justify-between items-start gap-4 px-2">
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-4 2xl:py-3 rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-3 min-w-[100px] md:min-w-[90px] lg:min-w-[90px] xl:min-w-[95px] 2xl:min-w-[100px] justify-center">
             <div className="w-5 h-5 md:w-5 md:h-5 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8 flex items-center justify-center">{timeOfDayIcon}</div>
             <span className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-base capitalize">{timeOfDay}</span>
           </div>
 
-          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-4 2xl:py-3 rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-3 min-w-[100px] md:min-w-[90px] lg:min-w-[120px] 2xl:min-w-[160px] justify-center">
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-4 2xl:py-3 rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-3 min-w-[100px] md:min-w-[90px] lg:min-w-[90px] xl:min-w-[95px] 2xl:min-w-[100px] justify-center">
             <div className="w-5 h-5 md:w-5 md:h-5 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8 flex items-center justify-center text-lg">{seasonIcon}</div>
             <span className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-base capitalize">{season}</span>
           </div>
