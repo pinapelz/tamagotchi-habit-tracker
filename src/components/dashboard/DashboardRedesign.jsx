@@ -131,7 +131,7 @@ export default function DashboardRedesign() {
         {/* Main Content */}
         <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-[1400px] mx-auto w-full">
           {/* Left Column */}
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col">
             {/* Status Card */}
             <div className="mb-6 lg:-mr-4">
               <StatusCard
@@ -142,7 +142,7 @@ export default function DashboardRedesign() {
             </div>
 
             {/* Pet Display with Environment or Stats */}
-            <div className="flex flex-col lg:flex-row gap-4 min-h-[400px]">
+            <div className="flex flex-col lg:flex-row gap-4">
               {/* Pet Display with Toggle */}
               <div className="w-full lg:w-1/2 flex items-center justify-center">
                 <PetDisplay 
