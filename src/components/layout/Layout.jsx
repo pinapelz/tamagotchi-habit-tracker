@@ -68,7 +68,7 @@ export default function Layout({ children, userName }) {
           </Link>
         </div>
         <div className="flex items-center gap-4 mr-4">
-          <span className="text-gray-600 font-sniglet text-2xl">{currentTime}</span>
+          <span className="bg-[#f0f9ff] px-4 py-2 rounded-xl text-gray-700 font-sniglet text-2xl lg:text-3xl 2xl:text-4xl">{currentTime}</span>
           <button 
             className="p-2 hover:bg-gray-100 rounded-full transition-colors" 
             onClick={toggleSettings}
