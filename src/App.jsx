@@ -9,6 +9,7 @@ import Loading from './pages/Loading';
 import ProfilePage from './pages/ProfilePage'
 import PetCreation from './pages/PetCreation';
 import FriendsPage from './pages/Friends';
+import Leaderboard from './pages/Leaderboard';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
       <Route path="/petcreation" element={<PetCreation/>}/>
       <Route path="/friends" element={<FriendsPage/>}/>
       <Route path="*" element={<NotFoundPage />} />
+      <Route path="/leaderboard" element={<Leaderboard/>}/>
     </Routes>
   );
 }
