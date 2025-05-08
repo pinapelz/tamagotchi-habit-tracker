@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
+import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
 import snowBg from "../assets/pet_bg/snow.png";
 import meadowBg from "../assets/pet_bg/meadow_day.png";
@@ -42,12 +43,12 @@ export default function Leaderboard({ userId }) {
     const backgroundImage = backgrounds[backgroundIndex];
 
     useEffect(() => {
-    const handleResize = () => {
+        const handleResize = () => {
         setIsMobile(window.innerWidth < 768);
-    };
+        };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     useEffect(() => {
@@ -85,8 +86,8 @@ export default function Leaderboard({ userId }) {
       mode === "friends" ? friendsLeaderboard : mainLeaderboard;
     
     const LayoutComponent = isMobile ? MobileLayout : Layout;
-      
-
+    
+    
   return (
     <LayoutComponent userName={userProfile.username}>
       <div
