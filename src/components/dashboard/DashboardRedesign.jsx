@@ -125,6 +125,7 @@ export default function DashboardRedesign() {
 
   const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />
 
+
   return (
     <Layout userName={userName} onToggleSettings={toggleSettings}>
       <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
@@ -145,7 +146,7 @@ export default function DashboardRedesign() {
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Pet Display with Toggle */}
               <div className="w-full lg:w-1/2 flex items-center justify-center">
-                <PetDisplay 
+                <PetDisplay
                   petImage={null}
                   toggleComponent={toggleComponent}
                   timeOfDay={timeOfDay}
@@ -166,6 +167,32 @@ export default function DashboardRedesign() {
                 ) : (
                   <PetStats petName={petName} petType={petType} petLevel={petLevel} petStats={petStats} />
                 )}
+              </div>
+            </div>
+            {/* Pet Emotion Box */}
+            <div className="relative bg-white/90 rounded-3xl border-blue-100 px-8 py-6 w-full max-w-4xl mx-auto mt-8 shadow-lg">
+              <div className="flex items-center gap-4">
+                {/* Pet avatar/icon */}
+                <div className="w-14 h-14 rounded-full bg-blue-100 flex-shrink-0 border-2 border-blue-300 overflow-hidden">
+                  <img
+                    src={`/assets/pets/${petType.toLowerCase()}-icon.png`}
+                    alt="Emotion"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/assets/pets/default-pet-icon.png';
+                    }}
+                  />
+                </div>
+
+                {/* Speech bubble */}
+                <div className="relative w-full">
+                  <div className="absolute -left-4 top-1/2 transform -translate-y-1/2">
+                  </div>
+                  <div className="w-full h-32 p-5 rounded-2xl bg-blue-50 border border-blue-200 text-gray-700 flex items-center text-lg font-medium shadow-sm">
+                    "I'm feeling happy and energetic today! I love the rainy weather!"
+                  </div>
+                </div>
               </div>
             </div>
           </div>
