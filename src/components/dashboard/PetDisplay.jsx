@@ -44,7 +44,7 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
 
   return (
     <div
-      className="rounded-3xl flex items-center justify-center relative w-full max-w-[400px] h-[150px] lg:h-[350px] lg:aspect-square"
+      className="rounded-3xl flex items-center justify-center relative w-full h-full min-h-[300px] md:min-h-[250px] lg:min-h-[350px] 2xl:h-[55vh]"
     >
       {/* Background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
@@ -58,7 +58,7 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
       <img 
         src={petImage || defaultPet} 
         alt="Pet" 
-        className="object-contain z-10 relative w-16 h-16 md:w-20 md:h-20 lg:w-32 lg:h-32" 
+        className="object-contain z-10 relative w-20 h-20 md:w-24 md:h-24 lg:w-48 lg:h-48 2xl:w-[16vh] 2xl:h-[16vh]" 
       />
     </div>
   )

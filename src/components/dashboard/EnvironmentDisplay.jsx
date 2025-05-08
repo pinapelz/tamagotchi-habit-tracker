@@ -10,7 +10,7 @@ export default function EnvironmentDisplay({
   weatherImage,
 }) {
   return (
-    <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative w-full max-w-[400px] h-[150px] lg:h-[350px] lg:aspect-square">
+    <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative w-full h-full min-h-[300px] md:min-h-[250px] lg:min-h-[350px] 2xl:h-[55vh]">
       {/* Weather background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-80">
         <img src={weatherImage || defaultWeatherBg} alt="Weather" className="w-full h-full object-cover" />
@@ -18,14 +18,14 @@ export default function EnvironmentDisplay({
 
       <div className="relative z-10">
         <div className="flex justify-between items-start">
-          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-2 rounded-lg flex items-center gap-1.5 min-w-[100px] lg:min-w-[90px] xl:min-w-[110px] justify-center">
-            <div className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center">{timeOfDayIcon}</div>
-            <span className="font-sniglet text-xs lg:text-sm capitalize">{timeOfDay}</span>
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-[1.2vh] 2xl:py-[0.8vh] rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-[0.8vh] min-w-[100px] md:min-w-[90px] lg:min-w-[120px] 2xl:min-w-[11vh] justify-center">
+            <div className="w-5 h-5 md:w-5 md:h-5 lg:w-6 lg:h-6 2xl:w-[2.8vh] 2xl:h-[2.8vh] flex items-center justify-center">{timeOfDayIcon}</div>
+            <span className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-[1.3vh] capitalize">{timeOfDay}</span>
           </div>
 
-          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-2 rounded-lg flex items-center gap-1.5 min-w-[100px] lg:min-w-[90px] xl:min-w-[110px] justify-center">
-            <div className="w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center text-lg">{seasonIcon}</div>
-            <span className="font-sniglet text-xs lg:text-sm capitalize">{season}</span>
+          <div className="bg-white/70 backdrop-blur-sm px-2.5 py-1.5 md:px-2 md:py-1 lg:px-3 lg:py-2 2xl:px-[1.2vh] 2xl:py-[0.8vh] rounded-lg flex items-center gap-1.5 md:gap-1 lg:gap-2 2xl:gap-[0.8vh] min-w-[100px] md:min-w-[90px] lg:min-w-[120px] 2xl:min-w-[11vh] justify-center">
+            <div className="w-5 h-5 md:w-5 md:h-5 lg:w-6 lg:h-6 2xl:w-[2.8vh] 2xl:h-[2.8vh] flex items-center justify-center text-lg">{seasonIcon}</div>
+            <span className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-[1.3vh] capitalize">{season}</span>
           </div>
         </div>
       </div>
@@ -33,8 +33,8 @@ export default function EnvironmentDisplay({
       <div className="flex-1"></div>
 
       {/* Weather Message */}
-      <div className="relative z-10 bg-white/70 backdrop-blur-sm px-3 py-2 rounded-lg">
-        <p className="font-sniglet text-xs text-center">
+      <div className="relative z-10 bg-white/70 backdrop-blur-sm px-3 py-2 md:px-3 md:py-1.5 lg:px-4 lg:py-3 2xl:px-[1.6vh] 2xl:py-[1.2vh] rounded-lg">
+        <p className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-[1.5vh] text-center">
           Your pet {currentWeather.toLowerCase().includes("rain") ? "is staying dry during the" : "enjoys the"}{" "}
           {currentWeather.toLowerCase()} weather!
         </p>
