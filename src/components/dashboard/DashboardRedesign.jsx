@@ -129,7 +129,7 @@ export default function DashboardRedesign() {
     <Layout userName={userName} onToggleSettings={toggleSettings}>
       <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
         {/* Main Content */}
-        <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-[1400px] mx-auto w-full">
+        <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-none mx-auto w-full">
           {/* Left Column */}
           <div className="flex flex-col">
             {/* Status Card */}
