@@ -183,7 +183,7 @@ export default function MobileDashboard() {
 
       {/* Slide-out Menu */}
       {showMenu && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowMenu(false)}>
+        <div className="fixed inset-0 z-50 backdrop-blur-md bg-opacity-50" onClick={() => setShowMenu(false)}>
           <div className="w-64 h-full bg-white p-4 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col h-full">
               {/* User Profile Section */}
