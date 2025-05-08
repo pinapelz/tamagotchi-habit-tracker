@@ -41,7 +41,7 @@ export default function ProgressBar({ completedHabits, totalHabits, streak }) {
         </button>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes plantGrow {
           0% {
             transform: scale(1) translateY(0);
