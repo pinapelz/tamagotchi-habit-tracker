@@ -25,6 +25,7 @@ export default function App() {
       <Route path="/friends" element={<FriendsPage/>}/>
       <Route path="*" element={<NotFoundPage />} />
       <Route path="/leaderboard" element={<Leaderboard/>}/>
+      <Route path="/notifications" element={<NotificationsPage />} />
     </Routes>
   );
 }
