@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import PropTypes from 'prop-types'
 import SettingsModal from "../SettingsModal"
 import StatusCard from "./StatusCard"
 import PetDisplay from "./PetDisplay"
