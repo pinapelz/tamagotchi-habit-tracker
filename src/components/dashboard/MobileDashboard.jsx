@@ -80,12 +80,26 @@ export default function MobileDashboard() {
 
       // Update timeOfDay based on current hour
       const currentHour = now.getHours()
-      if (currentHour >= 5 && currentHour < 12) {
+      if (currentHour >= 0 && currentHour < 3) {
+        setTimeOfDay("midnight")
+      } else if (currentHour >= 3 && currentHour < 5) {
+        setTimeOfDay("predawn")
+      } else if (currentHour >= 5 && currentHour < 6) {
+        setTimeOfDay("dawn")
+      } else if (currentHour >= 6 && currentHour < 7) {
+        setTimeOfDay("sunrise")
+      } else if (currentHour >= 7 && currentHour < 11) {
         setTimeOfDay("morning")
-      } else if (currentHour >= 12 && currentHour < 17) {
+      } else if (currentHour >= 11 && currentHour < 13) {
+        setTimeOfDay("noon")
+      } else if (currentHour >= 13 && currentHour < 17) {
         setTimeOfDay("afternoon")
-      } else if (currentHour >= 17 && currentHour < 21) {
+      } else if (currentHour >= 17 && currentHour < 19) {
         setTimeOfDay("evening")
+      } else if (currentHour >= 19 && currentHour < 20) {
+        setTimeOfDay("sunset")
+      } else if (currentHour >= 20 && currentHour < 21) {
+        setTimeOfDay("twilight")
       } else {
         setTimeOfDay("night")
       }

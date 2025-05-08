@@ -77,7 +77,7 @@ export default function DashboardRedesign() {
         setTimeOfDay("evening")
       } else if (currentHour >= 19 && currentHour < 20) {
         setTimeOfDay("sunset")
-      } else if (currentHour >= 20 && currentHour < 22) {
+      } else if (currentHour >= 20 && currentHour < 21) {
         setTimeOfDay("twilight")
       } else {
         setTimeOfDay("night")
