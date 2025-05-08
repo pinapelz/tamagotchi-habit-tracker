@@ -63,6 +63,8 @@ export default function MobileDashboard() {
   })
   const [season, setSeason] = useState("spring")
   const [showShareModal, setShowShareModal] = useState(false)
+  const [newHabitName, setNewHabitName] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
 
   // Update time in real-time
   useEffect(() => {
@@ -105,6 +107,14 @@ export default function MobileDashboard() {
 
   const deleteHabit = (id) => {
     setHabits(habits.filter((habit) => habit.id !== id))
+  }
+
+  const addHabit = (newHabit) => {
+    setHabits([...habits, newHabit]);
+  }
+  
+  const editHabit = (id, newName) => {
+    setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
   }
 
   const getWeatherIcon = () => {
@@ -394,7 +404,15 @@ export default function MobileDashboard() {
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button className="p-1 hover:bg-gray-100 rounded-full">
+                      <button 
+                        className="p-1 hover:bg-gray-100 rounded-full"
+                        onClick={() => {
+                          const newName = prompt("Edit habit name:", habit.name);
+                          if (newName !== null && newName.trim() !== "") {
+                            editHabit(habit.id, newName);
+                          }
+                        }}
+                      >
                         <Pencil size={16} />
                       </button>
                       <button 
@@ -408,10 +426,50 @@ export default function MobileDashboard() {
                 ))}
               </div>
 
-              <button className="w-full bg-[#f8ffea] border border-gray-300 text-black py-2 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center justify-center gap-1">
-                <Plus size={16} />
-                Add Habit
-              </button>
+              <div className="w-full">
+                {isAdding ? (
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={newHabitName}
+                      onChange={(e) => setNewHabitName(e.target.value)}
+                      placeholder="Enter habit name"
+                      className="border border-gray-300 rounded px-3 py-1 text-sm w-full"
+                    />
+                    <button
+                      onClick={() => {
+                        if (newHabitName.trim() !== "") {
+                          const newHabit = {
+                            id: Date.now().toString(),
+                            name: newHabitName,
+                            completed: false
+                          };
+                          addHabit(newHabit);
+                          setNewHabitName("");
+                          setIsAdding(false);
+                        }
+                      }}
+                      className="bg-green-500 text-white px-3 py-1 rounded"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => setIsAdding(false)}
+                      className="text-gray-500 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="w-full bg-[#f8ffea] border border-gray-300 text-black py-2 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center justify-center gap-1"
+                    onClick={() => setIsAdding(true)}
+                  >
+                    <Plus size={16} />
+                    Add Habit
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Quick Stats */}

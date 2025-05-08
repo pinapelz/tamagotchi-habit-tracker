@@ -103,6 +103,14 @@ export default function DashboardRedesign() {
     setHabits(habits.filter((habit) => habit.id !== id))
   }
 
+  const addHabit = (newHabit) => {
+    setHabits([...habits, newHabit]);
+  }
+  
+  const editHabit = (id, newName) => {
+    setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
+  }
+
   const toggleSettings = () => {
     setShowSettings(!showSettings)
   }
@@ -177,6 +185,8 @@ export default function DashboardRedesign() {
               currentDate={currentDate}
               toggleHabitCompletion={toggleHabitCompletion}
               deleteHabit={deleteHabit}
+              addHabit={addHabit}
+              editHabit={editHabit}
             />
 
             {/* Progress Section */}

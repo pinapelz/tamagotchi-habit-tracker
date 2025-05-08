@@ -3,8 +3,10 @@ import { Pencil, Trash2, Share2, Plus, Check } from "lucide-react"
 import PropTypes from 'prop-types'
 import ShareModal from '../ShareModal'
 
-export default function HabitTracker({ habits, currentDate, toggleHabitCompletion, deleteHabit }) {
+export default function HabitTracker({ habits, currentDate, toggleHabitCompletion, deleteHabit, addHabit, editHabit }) {
   const [showShareModal, setShowShareModal] = useState(false)
+  const [newHabitName, setNewHabitName] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
 
   const toggleHabit = (id) => {
     toggleHabitCompletion(id)
@@ -54,7 +56,15 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                     </span>
                   </button>
                   <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <button 
+                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      onClick={() => {
+                        const newName = prompt("Edit habit name:", habit.name);
+                        if (newName != null && newName.trim() !== "") {
+                          editHabit(habit.id, newName);
+                        }
+                      }}
+                    >
                       <Pencil size={16} className="text-gray-600" />
                     </button>
                     <button 
@@ -75,10 +85,45 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       </div>
 
       <div className="flex justify-center">
-        <button className="bg-[#f8ffea] border border-gray-300 text-black px-3.5 py-1.5 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center">
-          <Plus size={16} className="mr-1.5" />
-          Add Habit
-        </button>
+        {isAdding ? (
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              value={newHabitName}
+              onChange={(e) => setNewHabitName(e.target.value)}
+              placeholder="Enter habit name"
+              className="border border-gray-300 rounded px-3 py-1 text-sm"
+            />
+            <button
+              onClick={() => {
+                if (newHabitName.trim() !== "") {
+                  const newHabit = {
+                    id: Date.now().toString(),
+                    name: newHabitName,
+                    completed: false
+                  };
+                  addHabit(newHabit);
+                  setNewHabitName("");
+                  setIsAdding(false);
+                }
+              }}
+              className="bg-green-500 text-white px-3 py-1 rounded"
+            >
+              Add
+            </button>
+            <button onClick={() => setIsAdding(false)} className="text-gray-500 text-sm">
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            className="bg-[#f8ffea] border border-gray-300 text-black px-3.5 py-1.5 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center"
+            onClick={() => setIsAdding(true)}
+          >
+            <Plus size={16} className="mr-1.5" />
+            Add Habit
+          </button>
+        )}
       </div>
 
       {/* Share Modal */}
@@ -97,5 +142,7 @@ HabitTracker.propTypes = {
   ).isRequired,
   currentDate: PropTypes.string.isRequired,
   toggleHabitCompletion: PropTypes.func.isRequired,
-  deleteHabit: PropTypes.func.isRequired
+  deleteHabit: PropTypes.func.isRequired,
+  addHabit: PropTypes.func.isRequired,
+  editHabit: PropTypes.func.isRequired
 } 
