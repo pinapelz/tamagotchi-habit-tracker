@@ -28,11 +28,24 @@ import {
   Share2,
   Check,
   Pencil,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 
 // Import images
 import catGif from "../../assets/pets/pixel-cat.gif"
 import rainyBg from "../../assets/pet_bg/rainy.gif"
+// Import time of day backgrounds
+import predawnNight from "../../assets/timeofday/predawn-night.jpg"
+import dawn from "../../assets/timeofday/dawn.png"
+import sunrise from "../../assets/timeofday/sunrise.png"
+import morning from "../../assets/timeofday/morning.webp"
+import noon from "../../assets/timeofday/noon.png"
+import afternoon from "../../assets/timeofday/afternoon.png"
+import evening from "../../assets/timeofday/evening.png"
+import sunset from "../../assets/timeofday/sunset.png"
+import twilight from "../../assets/timeofday/twlight.webp"
+import midnight from "../../assets/timeofday/midnight.webp"
 
 /**
  * @typedef {Object} Habit
@@ -63,6 +76,7 @@ export default function MobileDashboard() {
   })
   const [season, setSeason] = useState("spring")
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showPetStats, setShowPetStats] = useState(true)
 
   // Update time in real-time
   useEffect(() => {
@@ -70,6 +84,7 @@ export default function MobileDashboard() {
       const now = new Date()
       let hours = now.getHours()
       const minutes = now.getMinutes().toString().padStart(2, "0")
+      const seconds = now.getSeconds()
       const ampm = hours >= 12 ? "PM" : "AM"
 
       // Convert to 12-hour format
@@ -103,11 +118,56 @@ export default function MobileDashboard() {
       } else {
         setTimeOfDay("night")
       }
+      
+      // Determine how often to check time based on how close we are to any time transition
+      let nextInterval = 60000; // Default is 1 minute
+      
+      // List of all transition hours
+      const transitions = [0, 3, 5, 6, 7, 11, 13, 17, 19, 20, 21, 23];
+      
+      // Check if we're near any transition (1 minute before or after)
+      const isNearTransition = transitions.some(hour => {
+        // If we're at the transition hour and within first minute
+        if (currentHour === hour && minutes <= 1) return true;
+        
+        // If we're at the hour before transition and within last minute
+        const prevHour = (hour === 0) ? 23 : hour - 1;
+        if (currentHour === prevHour && minutes >= 59) return true;
+        
+        return false;
+      });
+      
+      // Check if we're approaching a transition (10 minutes before or after)
+      const isApproachingTransition = transitions.some(hour => {
+        // If we're at the transition hour and within first 10 minutes
+        if (currentHour === hour && minutes <= 10) return true;
+        
+        // If we're at the hour before transition and within last 10 minutes
+        const prevHour = (hour === 0) ? 23 : hour - 1;
+        if (currentHour === prevHour && minutes >= 50) return true;
+        
+        return false;
+      });
+      
+      if (isNearTransition) {
+        nextInterval = 1000; // Check every second right around transitions
+      } else if (isApproachingTransition) {
+        nextInterval = 5000; // Check every 5 seconds near transitions
+      }
+      
+      return nextInterval;
     }
 
-    updateTime()
-    const intervalId = setInterval(updateTime, 60000)
-    return () => clearInterval(intervalId)
+    // Update time immediately
+    let nextCheckDelay = updateTime()
+    
+    // Use a recursive setTimeout instead of setInterval to allow dynamic timing
+    let timeoutId = setTimeout(function checkTime() {
+      nextCheckDelay = updateTime();
+      timeoutId = setTimeout(checkTime, nextCheckDelay);
+    }, nextCheckDelay);
+
+    return () => clearTimeout(timeoutId);
   }, [])
 
   const completedHabits = habits.filter((habit) => habit.completed).length
@@ -177,6 +237,34 @@ export default function MobileDashboard() {
     { icon: <Settings size={20} />, label: 'Settings', href: '#', action: () => setActiveTab('settings') },
     { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
   ]
+
+  const getTimeOfDayBackground = () => {
+    switch (timeOfDay) {
+      case "predawn":
+      case "night":
+        return predawnNight
+      case "dawn":
+        return dawn
+      case "sunrise":
+        return sunrise
+      case "morning":
+        return morning
+      case "noon":
+        return noon
+      case "afternoon":
+        return afternoon
+      case "evening":
+        return evening
+      case "sunset":
+        return sunset
+      case "twilight":
+        return twilight
+      case "midnight":
+        return midnight
+      default:
+        return afternoon
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#def8fb] flex flex-col">
@@ -250,57 +338,88 @@ export default function MobileDashboard() {
         {activeTab === "home" && (
           <div className="space-y-5">
             {/* Pet Display */}
-            <div className="bg-[#fdffe9] rounded-2xl p-5 flex flex-col items-center">
-              <div className="mb-3">
-                <img src={catGif} alt="Pet" className="w-[100px] h-[100px] object-contain" />
+            <div className="bg-[#fdffe9] rounded-2xl p-5 flex flex-col items-center relative overflow-hidden" style={{ height: "320px" }}>
+              {/* Time of day background */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={getTimeOfDayBackground()}
+                  alt="Time of Day"
+                  className="w-full h-full object-cover"
+                />
               </div>
+              
+              {/* Content overlay */}
+              <div className="relative z-10 flex flex-col items-center w-full h-full">
+                {/* Toggle button */}
+                <button
+                  onClick={() => setShowPetStats(!showPetStats)}
+                  className="absolute top-2 right-2 p-1.5 bg-white/60 backdrop-blur-sm rounded-full hover:bg-white/80 transition-colors z-20"
+                >
+                  {showPetStats ? 
+                    <Eye size={18} className="text-gray-700" /> : 
+                    <EyeOff size={18} className="text-gray-700" />
+                  }
+                </button>
 
-              <div className="w-full bg-white bg-opacity-70 rounded-xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-sniglet text-sm">Whiskers</h3>
-                  <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl 3</span>
+                <div className={`transition-all duration-300 ${!showPetStats ? 'mt-auto mb-8' : 'mb-3'}`}>
+                  <img src={catGif} alt="Pet" className="w-[100px] h-[100px] object-contain" />
                 </div>
 
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        <Heart size={14} className="text-pink-500" />
-                        <span className="text-xs font-sniglet">Happiness</span>
-                      </div>
-                      <span className="text-xs font-sniglet">{petStats.happiness}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-pink-400" style={{ width: `${petStats.happiness}%` }}></div>
-                    </div>
+                {!showPetStats && (
+                  <div className="bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full text-center mb-2">
+                    <h3 className="font-sniglet text-xs">Whiskers · Lvl 3</h3>
                   </div>
+                )}
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        <Zap size={14} className="text-yellow-500" />
-                        <span className="text-xs font-sniglet">Energy</span>
-                      </div>
-                      <span className="text-xs font-sniglet">{petStats.energy}%</span>
+                {showPetStats && (
+                  <div className="w-full bg-white/50 backdrop-blur-sm rounded-xl p-3 transition-opacity duration-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-sniglet text-sm">Whiskers</h3>
+                      <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl 3</span>
                     </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
-                    </div>
-                  </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1">
-                        <Coffee size={14} className="text-green-500" />
-                        <span className="text-xs font-sniglet">Health</span>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
+                            <Heart size={14} className="text-pink-500" />
+                            <span className="text-xs font-sniglet">Happiness</span>
+                          </div>
+                          <span className="text-xs font-sniglet">{petStats.happiness}%</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-pink-400" style={{ width: `${petStats.happiness}%` }}></div>
+                        </div>
                       </div>
-                      <span className="text-xs font-sniglet">{petStats.health}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-400" style={{ width: `${petStats.health}%` }}></div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
+                            <Zap size={14} className="text-yellow-500" />
+                            <span className="text-xs font-sniglet">Energy</span>
+                          </div>
+                          <span className="text-xs font-sniglet">{petStats.energy}%</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
+                            <Coffee size={14} className="text-green-500" />
+                            <span className="text-xs font-sniglet">Health</span>
+                          </div>
+                          <span className="text-xs font-sniglet">{petStats.health}%</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-400" style={{ width: `${petStats.health}%` }}></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 

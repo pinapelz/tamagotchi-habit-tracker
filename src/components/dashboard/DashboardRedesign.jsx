@@ -48,6 +48,7 @@ export default function DashboardRedesign() {
       const now = new Date()
       let hours = now.getHours()
       const minutes = now.getMinutes().toString().padStart(2, "0")
+      const seconds = now.getSeconds()
       const ampm = hours >= 12 ? "PM" : "AM"
 
       // Convert to 12-hour format
@@ -82,14 +83,56 @@ export default function DashboardRedesign() {
       } else {
         setTimeOfDay("night")
       }
+
+      // Determine how often to check time based on how close we are to any time transition
+      let nextInterval = 60000; // Default is 1 minute
+      
+      // List of all transition hours
+      const transitions = [0, 3, 5, 6, 7, 11, 13, 17, 19, 20, 21, 23];
+      
+      // Check if we're near any transition (1 minute before or after)
+      const isNearTransition = transitions.some(hour => {
+        // If we're at the transition hour and within first minute
+        if (currentHour === hour && minutes <= 1) return true;
+        
+        // If we're at the hour before transition and within last minute
+        const prevHour = (hour === 0) ? 23 : hour - 1;
+        if (currentHour === prevHour && minutes >= 59) return true;
+        
+        return false;
+      });
+      
+      // Check if we're approaching a transition (10 minutes before or after)
+      const isApproachingTransition = transitions.some(hour => {
+        // If we're at the transition hour and within first 10 minutes
+        if (currentHour === hour && minutes <= 10) return true;
+        
+        // If we're at the hour before transition and within last 10 minutes
+        const prevHour = (hour === 0) ? 23 : hour - 1;
+        if (currentHour === prevHour && minutes >= 50) return true;
+        
+        return false;
+      });
+      
+      if (isNearTransition) {
+        nextInterval = 1000; // Check every second right around transitions
+      } else if (isApproachingTransition) {
+        nextInterval = 5000; // Check every 5 seconds near transitions
+      }
+      
+      return nextInterval;
     }
 
     // Update time immediately
-    updateTime()
+    let nextCheckDelay = updateTime()
+    
+    // Use a recursive setTimeout instead of setInterval to allow dynamic timing
+    let timeoutId = setTimeout(function checkTime() {
+      nextCheckDelay = updateTime();
+      timeoutId = setTimeout(checkTime, nextCheckDelay);
+    }, nextCheckDelay);
 
-    const intervalId = setInterval(updateTime, 60000)
-
-    return () => clearInterval(intervalId)
+    return () => clearTimeout(timeoutId);
   }, [])
 
   const completedHabits = habits.filter((habit) => habit.completed).length
