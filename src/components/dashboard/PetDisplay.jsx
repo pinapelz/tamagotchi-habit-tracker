@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import defaultPet from '../../assets/pets/pixel-cat.gif'
-import { useEffect, useState } from 'react'
 
 // Import time of day backgrounds
 import predawnNight from '../../assets/timeofday/predawn-night.jpg'
@@ -15,39 +14,33 @@ import twilight from '../../assets/timeofday/twlight.webp'
 import midnight from '../../assets/timeofday/midnight.webp'
 
 export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
-  const [currentBackground, setCurrentBackground] = useState(morning)
-
-  useEffect(() => {
-    const getTimeOfDayBackground = () => {
-      switch (timeOfDay) {
-        case "predawn":
-        case "night":
-          return predawnNight
-        case "dawn":
-          return dawn
-        case "sunrise":
-          return sunrise
-        case "morning":
-          return morning
-        case "noon":
-          return noon
-        case "afternoon":
-          return afternoon
-        case "evening":
-          return evening
-        case "sunset":
-          return sunset
-        case "twilight":
-          return twilight
-        case "midnight":
-          return midnight
-        default:
-          return morning
-      }
+  const getTimeOfDayBackground = () => {
+    switch (timeOfDay) {
+      case "predawn":
+      case "night":
+        return predawnNight
+      case "dawn":
+        return dawn
+      case "sunrise":
+        return sunrise
+      case "morning":
+        return morning
+      case "noon":
+        return noon
+      case "afternoon":
+        return afternoon
+      case "evening":
+        return evening
+      case "sunset":
+        return sunset
+      case "twilight":
+        return twilight
+      case "midnight":
+        return midnight
+      default:
+        return morning
     }
-
-    setCurrentBackground(getTimeOfDayBackground())
-  }, [timeOfDay])
+  }
 
   return (
     <div
@@ -56,9 +49,9 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
       {/* Background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl">
         <img 
-          src={currentBackground} 
+          src={getTimeOfDayBackground()} 
           alt="Time of Day Background" 
-          className="w-full h-full object-cover transition-opacity duration-1000"
+          className="w-full h-full object-cover"
         />
       </div>
       {toggleComponent && <div className="absolute top-3 left-0 right-0 flex justify-center z-20 2xl:scale-150 2xl:pt-2">{toggleComponent}</div>}
