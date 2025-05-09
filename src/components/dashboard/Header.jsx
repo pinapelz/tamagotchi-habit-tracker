@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { Settings } from "lucide-react"
-import PropTypes from 'prop-types'
 
 export default function Header({ currentTime, toggleSettings }) {
   return (
@@ -26,8 +25,3 @@ export default function Header({ currentTime, toggleSettings }) {
     </header>
   )
 }
-
-Header.propTypes = {
-  currentTime: PropTypes.string.isRequired,
-  toggleSettings: PropTypes.func.isRequired
-} 

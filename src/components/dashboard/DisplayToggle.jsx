@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 
 export default function DisplayToggle({ activeView, onToggle }) {
   return (
@@ -22,8 +21,3 @@ export default function DisplayToggle({ activeView, onToggle }) {
     </div>
   )
 }
-
-DisplayToggle.propTypes = {
-  activeView: PropTypes.oneOf(['environment', 'stats']).isRequired,
-  onToggle: PropTypes.func.isRequired
-} 

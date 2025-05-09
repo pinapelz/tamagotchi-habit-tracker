@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Menu, Home, Settings, User, LogOut, HelpCircle, Bell, Users, Trophy } from 'lucide-react'
-import PropTypes from 'prop-types'
 
 export default function SideMenu({ userName }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -76,7 +75,3 @@ export default function SideMenu({ userName }) {
     </>
   )
 }
-
-SideMenu.propTypes = {
-  userName: PropTypes.string.isRequired
-} 

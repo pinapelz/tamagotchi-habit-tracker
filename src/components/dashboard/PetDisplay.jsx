@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import defaultPet from '../../assets/pets/pixel-cat.gif'
 import { useEffect, useState } from 'react'
 
@@ -72,9 +71,3 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
     </div>
   )
 }
-
-PetDisplay.propTypes = {
-  petImage: PropTypes.string,
-  toggleComponent: PropTypes.node,
-  timeOfDay: PropTypes.string
-} 

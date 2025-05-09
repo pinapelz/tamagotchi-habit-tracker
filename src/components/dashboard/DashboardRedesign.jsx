@@ -18,9 +18,9 @@ export default function DashboardRedesign() {
   const [currentDate, setCurrentDate] = useState("5/5/2025")
   const [currentWeather, setCurrentWeather] = useState("Rainy")
   const [habits, setHabits] = useState([
-    { id: "1", name: "Drink Water", completed: false },
-    { id: "2", name: "Study 1 Hour", completed: false },
-    { id: "3", name: "Stretch", completed: false },
+    { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
+    { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
+    { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
   ])
   const [streak, setStreak] = useState(5)
 
@@ -103,6 +103,14 @@ export default function DashboardRedesign() {
     setHabits(habits.filter((habit) => habit.id !== id))
   }
 
+  const addHabit = (newHabit) => {
+    setHabits([...habits, newHabit]);
+  }
+  
+  const editHabit = (id, newName) => {
+    setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
+  }
+
   const toggleSettings = () => {
     setShowSettings(!showSettings)
   }
@@ -177,6 +185,8 @@ export default function DashboardRedesign() {
               currentDate={currentDate}
               toggleHabitCompletion={toggleHabitCompletion}
               deleteHabit={deleteHabit}
+              addHabit={addHabit}
+              editHabit={editHabit}
             />
 
             {/* Progress Section */}

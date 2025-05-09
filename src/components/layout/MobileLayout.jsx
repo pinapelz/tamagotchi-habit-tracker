@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, Home, User, Users, Trophy, Bell, HelpCircle, Settings, LogOut, Cloud, CloudRain, Sun, Moon } from 'lucide-react'
-import PropTypes from 'prop-types'
 
 export default function MobileLayout({ children, userName, onToggleSettings }) {
   const [showMenu, setShowMenu] = useState(false)
@@ -138,9 +137,3 @@ export default function MobileLayout({ children, userName, onToggleSettings }) {
     </div>
   )
 }
-
-MobileLayout.propTypes = {
-  children: PropTypes.node.isRequired,
-  userName: PropTypes.string.isRequired,
-  onToggleSettings: PropTypes.func.isRequired
-} 
