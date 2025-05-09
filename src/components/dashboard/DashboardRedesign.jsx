@@ -18,9 +18,9 @@ export default function DashboardRedesign() {
   const [currentDate, setCurrentDate] = useState("5/5/2025")
   const [currentWeather, setCurrentWeather] = useState("Rainy")
   const [habits, setHabits] = useState([
-    { id: "1", name: "Drink Water", completed: false },
-    { id: "2", name: "Study 1 Hour", completed: false },
-    { id: "3", name: "Stretch", completed: false },
+    { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
+    { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
+    { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
   ])
   const [streak, setStreak] = useState(5)
 
