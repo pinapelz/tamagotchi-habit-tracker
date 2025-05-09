@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import defaultPet from '../../assets/pets/pixel-cat.gif'
 
 // Import time of day backgrounds
@@ -65,9 +64,3 @@ export default function PetDisplay({ petImage, toggleComponent, timeOfDay }) {
     </div>
   )
 }
-
-PetDisplay.propTypes = {
-  petImage: PropTypes.string,
-  toggleComponent: PropTypes.node,
-  timeOfDay: PropTypes.string
-} 
