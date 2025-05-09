@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import { Pencil, Trash2, Share2, Plus, Check, Calendar } from "lucide-react"
-import PropTypes from 'prop-types'
 import ShareModal from '../ShareModal'
 
 export default function HabitTracker({ habits, currentDate, toggleHabitCompletion, deleteHabit, addHabit, editHabit }) {
@@ -295,20 +294,4 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       <ShareModal show={showShareModal} onClose={() => setShowShareModal(false)} />
     </div>
   )
-}
-
-HabitTracker.propTypes = {
-  habits: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      recurrence: PropTypes.string,
-      completed: PropTypes.bool.isRequired
-    })
-  ).isRequired,
-  currentDate: PropTypes.string.isRequired,
-  toggleHabitCompletion: PropTypes.func.isRequired,
-  deleteHabit: PropTypes.func.isRequired,
-  addHabit: PropTypes.func.isRequired,
-  editHabit: PropTypes.func.isRequired
 }

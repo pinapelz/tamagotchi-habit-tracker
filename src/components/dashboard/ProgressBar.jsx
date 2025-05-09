@@ -1,5 +1,4 @@
 import { Info } from "lucide-react"
-import PropTypes from 'prop-types'
 
 export default function ProgressBar({ completedHabits, totalHabits, streak }) {
   return (
@@ -61,9 +60,3 @@ export default function ProgressBar({ completedHabits, totalHabits, streak }) {
     </div>
   )
 }
-
-ProgressBar.propTypes = {
-  completedHabits: PropTypes.number.isRequired,
-  totalHabits: PropTypes.number.isRequired,
-  streak: PropTypes.number.isRequired
-} 
