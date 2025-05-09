@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import defaultWeatherBg from '../../assets/pet_bg/rainy.gif'
 
 export default function EnvironmentDisplay({
@@ -42,12 +41,3 @@ export default function EnvironmentDisplay({
     </div>
   )
 }
-
-EnvironmentDisplay.propTypes = {
-  timeOfDayIcon: PropTypes.node.isRequired,
-  timeOfDay: PropTypes.string.isRequired,
-  seasonIcon: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
-  season: PropTypes.string.isRequired,
-  currentWeather: PropTypes.string.isRequired,
-  weatherImage: PropTypes.string
-} 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, Settings, Home, User, Users, Trophy, Bell, HelpCircle, LogOut } from 'lucide-react'
-import PropTypes from 'prop-types'
 import SettingsModal from '../SettingsModal'
 
 export default function Layout({ children, userName }) {
@@ -144,8 +143,3 @@ export default function Layout({ children, userName }) {
     </div>
   )
 }
-
-Layout.propTypes = {
-  children: PropTypes.node.isRequired,
-  userName: PropTypes.string.isRequired
-} 

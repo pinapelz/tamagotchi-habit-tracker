@@ -89,7 +89,7 @@ export default function LandingPage() {
                 Get Started
               </Link>
               <Link
-                to="/login"
+                to="/about"
                 className="px-5 py-3 border border-sky-600 text-sky-600 text-base rounded hover:bg-sky-100 transition w-full sm:w-auto"
               >
                 Learn More
