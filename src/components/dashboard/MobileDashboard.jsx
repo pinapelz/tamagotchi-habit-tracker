@@ -82,12 +82,26 @@ export default function MobileDashboard() {
 
       // Update timeOfDay based on current hour
       const currentHour = now.getHours()
-      if (currentHour >= 5 && currentHour < 12) {
+      if (currentHour >= 0 && currentHour < 3) {
+        setTimeOfDay("midnight")
+      } else if (currentHour >= 3 && currentHour < 5) {
+        setTimeOfDay("predawn")
+      } else if (currentHour >= 5 && currentHour < 6) {
+        setTimeOfDay("dawn")
+      } else if (currentHour >= 6 && currentHour < 7) {
+        setTimeOfDay("sunrise")
+      } else if (currentHour >= 7 && currentHour < 11) {
         setTimeOfDay("morning")
-      } else if (currentHour >= 12 && currentHour < 17) {
+      } else if (currentHour >= 11 && currentHour < 13) {
+        setTimeOfDay("noon")
+      } else if (currentHour >= 13 && currentHour < 17) {
         setTimeOfDay("afternoon")
-      } else if (currentHour >= 17 && currentHour < 21) {
+      } else if (currentHour >= 17 && currentHour < 19) {
         setTimeOfDay("evening")
+      } else if (currentHour >= 19 && currentHour < 20) {
+        setTimeOfDay("sunset")
+      } else if (currentHour >= 20 && currentHour < 21) {
+        setTimeOfDay("twilight")
       } else {
         setTimeOfDay("night")
       }
@@ -169,8 +183,8 @@ export default function MobileDashboard() {
     { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
     { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
     { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
-    { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
+    { icon: <HelpCircle size={20} />, label: 'Help', href: '/not-found' },
+    { icon: <Settings size={20} />, label: 'Settings', href: '#', action: () => setActiveTab('settings') },
     { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
   ]
 
@@ -182,7 +196,9 @@ export default function MobileDashboard() {
           <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100">
             {showMenu ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <h1 className="text-lg font-sniglet">Tamagotchi Tracker</h1>
+          <button onClick={() => navigate('/')} className="hover:opacity-80 transition">
+            <h1 className="text-lg font-sniglet">Tamagotchi Tracker</h1>
+          </button>
         </div>
         <div className="flex items-center gap-2">
           {getWeatherIcon()}
@@ -217,8 +233,11 @@ export default function MobileDashboard() {
                         onClick={() => {
                           if (item.label === 'Logout') {
                             handleLogout()
+                          } else if (item.action) {
+                            item.action()
+                            setShowMenu(false)
                           } else {
-                            setActiveTab(item.label.toLowerCase())
+                            navigate(item.href)
                             setShowMenu(false)
                           }
                         }}

@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'
 export default function MobileLayout({ children, userName, onToggleSettings }) {
   const [showMenu, setShowMenu] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
-  const [currentWeather, setCurrentWeather] = useState("Sunny")
+  const [currentWeather, setCurrentWeather] = useState("Rainy")
   const [timeOfDay, setTimeOfDay] = useState("morning")
 
   // Update time in real-time
