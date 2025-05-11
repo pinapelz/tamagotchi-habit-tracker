@@ -1,32 +1,32 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from postgres_handler import PostgresHandler
+from database import PostgresHandler
 from dotenv import load_dotenv
 
 import os
-
 
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-db = PostgresHandler(
-    host=os.environ.get("PG_HOST"),
-    user=os.environ.get("PG_USER"),
-    password=os.environ.get("PG_PASSWORD"),
-    database=os.environ.get("PG_DATABASE"),
-    port=5432
-)
+def create_database_connection():
+    """
+    Creates an authenticated database connection (Postgres)
+    """
+    return PostgresHandler(
+        host=os.environ.get("PG_HOST"),
+        user=os.environ.get("PG_USER"),
+        password=os.environ.get("PG_PASSWORD"),
+        database=os.environ.get("PG_DATABASE"),
+        port=5432
+    )
+
 
 @app.route("/api/info")
 def check_db():
+    db = create_database_connection()
     try:
-        conn = db.connect()
-        cur = conn.cursor()
-        cur.execute("SELECT 1")
-        cur.fetchone()
-        cur.close()
-
+        db.execute("SELECT 1")
         commit_sha = os.getenv("VERCEL_GIT_COMMIT_SHA", "unknown/local_dev")
 
         return jsonify({
