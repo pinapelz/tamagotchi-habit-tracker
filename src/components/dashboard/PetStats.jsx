@@ -1,5 +1,4 @@
 import { Heart, Zap, Coffee, Star } from "lucide-react"
-import PropTypes from 'prop-types'
 
 export default function PetStats({ petName, petType, petLevel, petStats }) {
   return (
