@@ -8,6 +8,7 @@ export default function Layout({ children, userName }) {
   const [currentTime, setCurrentTime] = useState("")
   const [showSettings, setShowSettings] = useState(false)
   const [theme, setTheme] = useState("light")
+  const [colonVisible, setColonVisible] = useState(true)
 
   // Update time in real-time
   useEffect(() => {
@@ -18,12 +19,25 @@ export default function Layout({ children, userName }) {
       const ampm = hours >= 12 ? "PM" : "AM";
       hours = hours % 12;
       hours = hours ? hours : 12;
-      setCurrentTime(`${hours}:${minutes} ${ampm}`);
+      
+      setCurrentTime({ 
+        hours,
+        minutes,
+        ampm
+      });
     };
 
     updateTime();
     const intervalId = setInterval(updateTime, 1000);
     return () => clearInterval(intervalId);
+  }, []);
+  
+  useEffect(() => {
+    const blinkInterval = setInterval(() => {
+      setColonVisible(prev => !prev);
+    }, 500); 
+    
+    return () => clearInterval(blinkInterval);
   }, []);
 
   const menuItems = [
@@ -67,7 +81,17 @@ export default function Layout({ children, userName }) {
           </Link>
         </div>
         <div className="flex items-center gap-4 mr-4">
-          <span className="bg-[#f0f9ff] px-4 py-2 rounded-xl text-gray-700 font-sniglet text-2xl lg:text-3xl 2xl:text-4xl">{currentTime}</span>
+          <span className="bg-[#f0f9ff] px-4 py-2 rounded-xl text-gray-700 font-sniglet text-2xl lg:text-3xl 2xl:text-4xl">
+            {typeof currentTime === 'string' ? currentTime : (
+              <>
+                {currentTime.hours}
+                <span className={colonVisible ? 'opacity-100' : 'opacity-0'}>:</span>
+                {currentTime.minutes}
+                {' '}
+                {currentTime.ampm}
+              </>
+            )}
+          </span>
           <button 
             className="p-2 hover:bg-gray-100 rounded-full transition-colors" 
             onClick={toggleSettings}

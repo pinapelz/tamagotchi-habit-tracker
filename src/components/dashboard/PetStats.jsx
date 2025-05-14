@@ -1,4 +1,5 @@
-import { Heart, Zap, Coffee } from "lucide-react"
+import { Heart, Zap, Coffee, Star } from "lucide-react"
+import PropTypes from 'prop-types'
 
 export default function PetStats({ petName, petType, petLevel, petStats }) {
   return (
@@ -16,6 +17,19 @@ export default function PetStats({ petName, petType, petLevel, petStats }) {
         <div>
           <div className="flex items-center justify-between mb-0.5 lg:mb-2 2xl:mb-3">
             <div className="flex items-center gap-1 lg:gap-2 2xl:gap-3">
+              <Star size={14} className="text-yellow-500 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8" />
+              <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">XP</span>
+            </div>
+            <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">{petStats.energy}/1000</span>
+          </div>
+          <div className="h-1 lg:h-2 2xl:h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / 1000) * 100}%` }}></div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-0.5 lg:mb-2 2xl:mb-3">
+            <div className="flex items-center gap-1 lg:gap-2 2xl:gap-3">
               <Heart size={14} className="text-pink-500 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8" />
               <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">Happiness</span>
             </div>
@@ -23,19 +37,6 @@ export default function PetStats({ petName, petType, petLevel, petStats }) {
           </div>
           <div className="h-1 lg:h-2 2xl:h-3 bg-gray-200 rounded-full overflow-hidden">
             <div className="h-full bg-pink-400" style={{ width: `${petStats.happiness}%` }}></div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-0.5 lg:mb-2 2xl:mb-3">
-            <div className="flex items-center gap-1 lg:gap-2 2xl:gap-3">
-              <Zap size={14} className="text-yellow-500 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8" />
-              <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">Energy</span>
-            </div>
-            <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">{petStats.energy}%</span>
-          </div>
-          <div className="h-1 lg:h-2 2xl:h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
           </div>
         </div>
 
