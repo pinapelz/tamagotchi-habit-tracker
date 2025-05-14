@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Menu,
@@ -31,6 +31,7 @@ import {
   Pencil,
   Eye,
   EyeOff,
+  Calendar,
 } from "lucide-react"
 
 // Import images
@@ -65,9 +66,9 @@ export default function MobileDashboard() {
   const [currentWeather, setCurrentWeather] = useState("Rainy")
   const [timeOfDay, setTimeOfDay] = useState("afternoon")
   const [habits, setHabits] = useState([
-    { id: "1", name: "Drink Water", completed: true },
-    { id: "2", name: "Study 1 Hour", completed: false },
-    { id: "3", name: "Stretch", completed: false },
+    { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
+    { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
+    { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
   ])
   const [streak, setStreak] = useState(5)
   const [petStats, setPetStats] = useState({
@@ -78,6 +79,14 @@ export default function MobileDashboard() {
   const [season, setSeason] = useState("spring")
   const [showShareModal, setShowShareModal] = useState(false)
   const [showPetStats, setShowPetStats] = useState(true)
+  const [newHabitName, setNewHabitName] = useState("");
+  const [newHabitRecurrence, setNewHabitRecurrence] = useState("daily");
+  const [isAdding, setIsAdding] = useState(false);
+  const formRef = useRef(null);
+  const [editHabitId, setEditHabitId] = useState(null);
+  const [editHabitName, setEditHabitName] = useState("");
+  const [editHabitRecurrence, setEditHabitRecurrence] = useState("daily");
+  const editFormRef = useRef(null);
 
   // Update time in real-time
   useEffect(() => {
@@ -182,6 +191,14 @@ export default function MobileDashboard() {
     setHabits(habits.filter((habit) => habit.id !== id))
   }
 
+  const addHabit = (newHabit) => {
+    setHabits([...habits, newHabit]);
+  }
+  
+  const editHabit = (id, newName) => {
+    setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
+  }
+
   const getWeatherIcon = () => {
     if (currentWeather.toLowerCase().includes("rain")) {
       return <CloudRain className="text-blue-500" size={20} />
@@ -266,6 +283,67 @@ export default function MobileDashboard() {
         return afternoon
     }
   }
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (formRef.current && !formRef.current.contains(event.target)) {
+        resetAddHabitForm();
+      }
+    }
+    
+    if (isAdding) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAdding]);
+  
+  const resetAddHabitForm = () => {
+    setNewHabitName("");
+    setNewHabitRecurrence("daily");
+    setIsAdding(false);
+  }
+
+  // Close edit popup when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (editFormRef.current && !editFormRef.current.contains(event.target)) {
+        resetEditHabitForm();
+      }
+    }
+
+    if (editHabitId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editHabitId]);
+
+  const resetEditHabitForm = () => {
+    setEditHabitId(null);
+    setEditHabitName("");
+    setEditHabitRecurrence("daily");
+  };
+
+  const openEditHabitForm = (habit) => {
+    setEditHabitId(habit.id);
+    setEditHabitName(habit.name);
+    setEditHabitRecurrence(habit.recurrence || "daily");
+  };
+
+  const saveEditedHabit = () => {
+    if (editHabitName.trim() !== "") {
+      setHabits(habits.map(habit =>
+        habit.id === editHabitId
+          ? { ...habit, name: editHabitName.trim(), recurrence: editHabitRecurrence }
+          : habit
+      ));
+      resetEditHabitForm();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#def8fb] flex flex-col">
@@ -529,11 +607,22 @@ export default function MobileDashboard() {
                         }`}
                       >
                         {habit.completed && <Check size={16} className="text-green-500" />}
-                        {habit.name}
+                        <div className="flex flex-col">
+                          <span>{habit.name}</span>
+                          {habit.recurrence && (
+                            <span className="text-xs text-gray-500 flex items-center">
+                              <Calendar size={12} className="mr-1" />
+                              {habit.recurrence.charAt(0).toUpperCase() + habit.recurrence.slice(1)}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button className="p-1 hover:bg-gray-100 rounded-full">
+                      <button
+                        className="p-1 hover:bg-gray-100 rounded-full"
+                        onClick={() => openEditHabitForm(habit)}
+                      >
                         <Pencil size={16} />
                       </button>
                       <button 
@@ -547,10 +636,15 @@ export default function MobileDashboard() {
                 ))}
               </div>
 
-              <button className="w-full bg-[#f8ffea] border border-gray-300 text-black py-2 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center justify-center gap-1">
-                <Plus size={16} />
-                Add Habit
-              </button>
+              <div className="w-full">
+                <button
+                  className="w-full bg-[#f8ffea] border border-gray-300 text-black py-2 rounded-full font-sniglet text-sm hover:bg-[#edf5df] transition-colors flex items-center justify-center gap-1"
+                  onClick={() => setIsAdding(true)}
+                >
+                  <Plus size={16} />
+                  Add Habit
+                </button>
+              </div>
             </div>
 
             {/* Quick Stats */}
@@ -635,6 +729,137 @@ export default function MobileDashboard() {
         )}
       </main>
 
+      {/* Add Habit Popup for Mobile */}
+      {isAdding && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <div 
+            ref={formRef}
+            className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm animate-fadeIn"
+          >
+            <h3 className="text-lg font-medium mb-3">Add New Habit</h3>
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="habitName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Habit name
+                </label>
+                <input
+                  id="habitName"
+                  type="text"
+                  value={newHabitName}
+                  onChange={(e) => setNewHabitName(e.target.value)}
+                  placeholder="Enter habit name"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="recurrence" className="block text-sm font-medium text-gray-700 mb-1">
+                  Recurrence
+                </label>
+                <select
+                  id="recurrence"
+                  value={newHabitRecurrence}
+                  onChange={(e) => setNewHabitRecurrence(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  <option value="daily">Hourly</option>
+                  <option value="weekly">Daily</option>
+                  <option value="monthly">Weekly</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-2 justify-end pt-2">
+                <button 
+                  onClick={resetAddHabitForm} 
+                  className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (newHabitName.trim() !== "") {
+                      const newHabit = {
+                        id: Date.now().toString(),
+                        name: newHabitName.trim(),
+                        recurrence: newHabitRecurrence,
+                        completed: false
+                      };
+                      addHabit(newHabit);
+                      resetAddHabitForm();
+                    }
+                  }}
+                  className="bg-[#e79c2d] text-white px-3 py-1.5 rounded hover:bg-[#d38c1d]"
+                >
+                  Add Habit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Habit Popup */}
+      {editHabitId && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <div
+            ref={editFormRef}
+            className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm animate-fadeIn"
+          >
+            <h3 className="text-lg font-medium mb-3">Edit Habit</h3>
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="editHabitName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Habit name
+                </label>
+                <input
+                  id="editHabitName"
+                  type="text"
+                  value={editHabitName}
+                  onChange={(e) => setEditHabitName(e.target.value)}
+                  placeholder="Enter habit name"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label htmlFor="editRecurrence" className="block text-sm font-medium text-gray-700 mb-1">
+                  Recurrence
+                </label>
+                <select
+                  id="editRecurrence"
+                  value={editHabitRecurrence}
+                  onChange={(e) => setEditHabitRecurrence(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="weekdays">Weekdays only</option>
+                  <option value="weekends">Weekends only</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  onClick={resetEditHabitForm}
+                  className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEditedHabit}
+                  className="bg-[#e79c2d] text-white px-3 py-1.5 rounded hover:bg-[#d38c1d]"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Navigation */}
       <nav className="bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
         <button
@@ -663,4 +888,4 @@ export default function MobileDashboard() {
       </nav>
     </div>
   )
-} 
+}

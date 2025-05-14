@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import { X } from 'lucide-react'
 
 export default function SettingsModal({ isOpen, onClose, userName, setUserName, theme, setTheme, onSave, onReset }) {
@@ -90,14 +89,3 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
     </>
   )
 }
-
-SettingsModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  userName: PropTypes.string.isRequired,
-  setUserName: PropTypes.func.isRequired,
-  theme: PropTypes.string.isRequired,
-  setTheme: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
-  onReset: PropTypes.func.isRequired
-} 

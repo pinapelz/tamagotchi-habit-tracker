@@ -56,14 +56,3 @@ export default function PetStats({ petName, petType, petLevel, petStats }) {
     </div>
   )
 }
-
-PetStats.propTypes = {
-  petName: PropTypes.string.isRequired,
-  petType: PropTypes.string.isRequired,
-  petLevel: PropTypes.number.isRequired,
-  petStats: PropTypes.shape({
-    happiness: PropTypes.number.isRequired,
-    energy: PropTypes.number.isRequired,
-    health: PropTypes.number.isRequired
-  }).isRequired
-} 

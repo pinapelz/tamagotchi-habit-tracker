@@ -1,5 +1,4 @@
 import { MessageCircle } from "lucide-react"
-import PropTypes from 'prop-types'
 
 export default function StatusCard({ userName, weatherIcon, currentWeather }) {
   return (
@@ -27,9 +26,3 @@ export default function StatusCard({ userName, weatherIcon, currentWeather }) {
     </div>
   )
 }
-
-StatusCard.propTypes = {
-  userName: PropTypes.string.isRequired,
-  weatherIcon: PropTypes.node.isRequired,
-  currentWeather: PropTypes.string.isRequired
-} 
