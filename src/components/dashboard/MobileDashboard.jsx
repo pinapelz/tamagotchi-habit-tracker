@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Heart,
   Zap,
+  Star,
   Coffee,
   Snowflake,
   Sunrise,
@@ -382,6 +383,19 @@ export default function MobileDashboard() {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1">
+                            <Star size={14} className="text-yellow-500" />
+                            <span className="text-xs font-sniglet">XP</span>
+                          </div>
+                          <span className="text-xs font-sniglet">{petStats.energy}/1000</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / 1000) * 100}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
                             <Heart size={14} className="text-pink-500" />
                             <span className="text-xs font-sniglet">Happiness</span>
                           </div>
@@ -389,19 +403,6 @@ export default function MobileDashboard() {
                         </div>
                         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                           <div className="h-full bg-pink-400" style={{ width: `${petStats.happiness}%` }}></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-1">
-                            <Zap size={14} className="text-yellow-500" />
-                            <span className="text-xs font-sniglet">Energy</span>
-                          </div>
-                          <span className="text-xs font-sniglet">{petStats.energy}%</span>
-                        </div>
-                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
                         </div>
                       </div>
 
