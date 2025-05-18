@@ -181,5 +181,53 @@ def authenticate_user():
     finally:
         db.close()
 
+
+@app.route("/api/auto-login", methods=["GET"])
+def auto_login():
+    """
+    Automatically logs in a user if a valid session cookie is present.
+    """
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "No session cookie found."
+        }), 401
+
+    db = create_database_connection()
+    try:
+        # Validate the session cookie
+        user = db.fetchone(
+            "SELECT users.id, users.email, users.display_name FROM cookies "
+            "JOIN users ON cookies.user_id = users.id "
+            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
+            (session_cookie,)
+        )
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401
+
+        # Return user information
+        return jsonify({
+            "status": "ok",
+            "message": "Auto-login successful.",
+            "user": {
+                "id": user["id"],
+                "email": user["email"],
+                "display_name": user["display_name"]
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     app.run(debug=True)
