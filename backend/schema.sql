@@ -52,6 +52,22 @@ CREATE TABLE user_stats (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE user_passwords (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cookies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    cookie_value TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 
 -- TODO: authentication table for external sign-in 
 -- TODO: achievements table?
