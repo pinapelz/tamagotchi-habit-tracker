@@ -95,6 +95,10 @@ export default function MobileDashboard() {
   const editFormRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [accuracy, setAccuracy] = useState(null);
 
   // Load profile data from the API
   useEffect(() => {
@@ -430,6 +434,75 @@ export default function MobileDashboard() {
           : habit
       ));
       resetEditHabitForm();
+    }
+  };
+
+  const handleSetLocationAutomatically = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setAccuracy(accuracy);
+
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ latitude, longitude, accuracy }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update location.");
+          }
+
+          setLocationError(null);
+          console.log("Location updated successfully.");
+        } catch (err) {
+          console.error("Error sending location to API:", err);
+          setLocationError("Failed to update location automatically.");
+        }
+      },
+      (error) => {
+        console.error("Error getting geolocation:", error);
+        setLocationError("Unable to retrieve your location. Please set it manually.");
+      }
+    );
+  };
+
+  const handleSetLocationManually = async () => {
+    if (!latitude || !longitude) {
+      setLocationError("Please provide both latitude and longitude.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ latitude: parseFloat(latitude), longitude: parseFloat(longitude), accuracy: null }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update location.");
+      }
+
+      setLocationError(null);
+      console.log("Location updated successfully.");
+    } catch (err) {
+      console.error("Error sending location to API:", err);
+      setLocationError("Failed to update location manually.");
     }
   };
 
@@ -826,6 +899,40 @@ export default function MobileDashboard() {
               <div className="pt-1 flex justify-center">
                 <button className="text-[#f51616] border border-[#f51616] px-4 py-1.5 rounded-md font-sniglet text-sm hover:bg-red-50 transition-colors">
                   Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Location Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-sniglet text-gray-800">Set Location</h3>
+              {locationError && <div className="text-red-500">{locationError}</div>}
+              <button
+                onClick={handleSetLocationAutomatically}
+                className="bg-[#c8c6ff] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+              >
+                Set Location Automatically
+              </button>
+              <div className="flex flex-col gap-4">
+                <input
+                  type="text"
+                  placeholder="Latitude"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSetLocationManually}
+                  className="w-full bg-[#cbffc6] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                >
+                  Set Manually
                 </button>
               </div>
             </div>

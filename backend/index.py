@@ -34,6 +34,42 @@ def create_database_connection():
         port=5432
     )
 
+def cookie_check(session_cookie):
+    """
+    Validates the session cookie and retrieves the associated user.
+    Returns the user object if valid, or a tuple with an error response and status code if invalid.
+    """
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required."
+        }), 401, None
+
+    db = create_database_connection()
+    try:
+        user = db.fetchone(
+            """
+            SELECT users.id, users.email, users.display_name, users.avatar_url, users.timezone
+            FROM cookies
+            JOIN users ON cookies.user_id = users.id
+            WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()
+            """,
+            (session_cookie,)
+        )
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401, None
+        return None, None, user  # No error, return the user object
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500, None
+    finally:
+        db.close()
+
 
 @app.route("/api/info")
 def check_db():
@@ -242,29 +278,12 @@ def get_profile():
     Returns user data, stats, and pet information.
     """
     session_cookie = request.cookies.get("session")
-    if not session_cookie:
-        return jsonify({
-            "status": "error",
-            "message": "Authentication required."
-        }), 401
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
 
     db = create_database_connection()
     try:
-        # Verify if the cookie/session is valid
-        user = db.fetchone(
-            "SELECT users.id, users.email, users.display_name, users.avatar_url, users.timezone "
-            "FROM cookies "
-            "JOIN users ON cookies.user_id = users.id "
-            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
-            (session_cookie,)
-        )
-        
-        if not user:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid or expired session."
-            }), 401
-            
         # Get user stats
         stats = db.fetchone(
             "SELECT current_streak, longest_streak, total_habits_completed "
@@ -272,7 +291,7 @@ def get_profile():
             "WHERE user_id = %s",
             (user["id"],)
         )
-        
+
         # Get pet info
         pet = db.fetchone(
             "SELECT name, type, happiness, xp, health, lvl "
@@ -280,13 +299,13 @@ def get_profile():
             "WHERE user_id = %s",
             (user["id"],)
         )
-        
+
         # Get user bio
         bio = db.fetchone(
             "SELECT bio FROM user_descriptions WHERE user_id = %s",
             (user["id"],)
         )
-        
+
         # Build the response
         profile_data = {
             "user": {
@@ -304,7 +323,7 @@ def get_profile():
             "pet": pet if pet else None,
             "bio": bio["bio"] if bio else None
         }
-        
+
         return jsonify({
             "status": "ok",
             "data": profile_data
@@ -326,26 +345,12 @@ def has_pet():
     Returns a boolean indicating pet existence.
     """
     session_cookie = request.cookies.get("session")
-    if not session_cookie:
-        return jsonify({
-            "status": "error",
-            "message": "Authentication required."
-        }), 401
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
 
     db = create_database_connection()
     try:
-        user = db.fetchone(
-            "SELECT users.id FROM cookies "
-            "JOIN users ON cookies.user_id = users.id "
-            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
-            (session_cookie,)
-        )
-        if not user:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid or expired session."
-            }), 401
-
         pet = db.fetchone(
             "SELECT id FROM pets WHERE user_id = %s",
             (user["id"],)
@@ -373,11 +378,9 @@ def create_pet():
     Returns the created pet data.
     """
     session_cookie = request.cookies.get("session")
-    if not session_cookie:
-        return jsonify({
-            "status": "error",
-            "message": "Authentication required."
-        }), 401
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
 
     data = request.get_json()
     # Validate input
@@ -389,7 +392,7 @@ def create_pet():
 
     pet_name = data["name"]
     pet_type = data["type"]
-    
+
     # Validate pet type
     valid_pet_types = ["cat", "duck", "bat", "dog"]
     if pet_type not in valid_pet_types:
@@ -400,44 +403,29 @@ def create_pet():
 
     db = create_database_connection()
     try:
-        # Verify if the cookie/session is valid
-        user = db.fetchone(
-            "SELECT users.id FROM cookies "
-            "JOIN users ON cookies.user_id = users.id "
-            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
-            (session_cookie,)
-        )
-        
-        if not user:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid or expired session."
-            }), 401
-            
-        # Check if user already has a pet (schema has UNIQUE constraint on user_id)
+        # Check if user already has a pet
         existing_pet = db.fetchone(
             "SELECT id FROM pets WHERE user_id = %s",
             (user["id"],)
         )
-        
         if existing_pet:
             return jsonify({
                 "status": "error",
                 "message": "User already has a pet."
             }), 400
-        
+
         # Create the pet
         db.execute(
             "INSERT INTO pets (user_id, name, type) VALUES (%s, %s, %s) RETURNING id",
             (user["id"], pet_name, pet_type)
         )
-        
+
         # Fetch the created pet
         pet = db.fetchone(
             "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
             (user["id"],)
         )
-        
+
         return jsonify({
             "status": "ok",
             "message": "Pet created successfully!",
@@ -451,6 +439,94 @@ def create_pet():
         }), 500
     finally:
         db.close()
+
+
+@app.route("/api/has-location", methods=["GET"])
+def has_location():
+    """
+    Checks if the authenticated user has a geolocation entry in the database.
+    Requires a valid session cookie.
+    Returns a boolean indicating whether the location exists.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Check if the user has a geolocation entry
+        location = db.fetchone(
+            "SELECT user_id FROM user_geolocations WHERE user_id = %s",
+            (user["id"],)
+        )
+        return jsonify({
+            "status": "ok",
+            "has_location": location is not None
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/set-location", methods=["POST"])
+def set_location():
+    """
+    Sets or updates the authenticated user's geolocation in the database.
+    Requires a valid session cookie.
+    Expects a JSON payload with 'latitude', 'longitude', and optionally 'accuracy'.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    # Validate input
+    if not data or not all(key in data for key in ("latitude", "longitude")):
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'latitude' and 'longitude' are required."
+        }), 400
+
+    latitude = data["latitude"]
+    longitude = data["longitude"]
+    accuracy = data.get("accuracy", None)
+
+    db = create_database_connection()
+    try:
+        # Insert or update the user's geolocation
+        db.execute(
+            """
+            INSERT INTO user_geolocations (user_id, latitude, longitude, accuracy, updated_at)
+            VALUES (%s, %s, %s, %s, NOW())
+            ON CONFLICT (user_id) DO UPDATE
+            SET latitude = EXCLUDED.latitude,
+                longitude = EXCLUDED.longitude,
+                accuracy = EXCLUDED.accuracy,
+                updated_at = NOW()
+            """,
+            (user["id"], latitude, longitude, accuracy)
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Location updated successfully."
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
