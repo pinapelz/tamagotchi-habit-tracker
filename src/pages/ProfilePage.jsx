@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
-
+import pixelCat from "../assets/pets/pixel-cat.gif";
+import pixelBat from "../assets/pets/pixel-bat.gif";
+import pixelDuck from "../assets/pets/pixel-duck.gif";
+import pixelDog from "../assets/pets/pixel-dog.gif";
 import snowBg from "../assets/pet_bg/snow.png";
 import meadowBg from "../assets/pet_bg/meadow_day.png";
 
@@ -137,8 +140,16 @@ export default function ProfilePage() {
             {/* Right: Pet Image */}
             <div>
               <img
-                src="/src/assets/pets/pixel-cat.gif"
-                alt="Tamagotchi pet"
+                src={
+                  userProfile.pet ?
+                    userProfile.pet.type === "cat" ? pixelCat :
+                      userProfile.pet.type === "dog" ? pixelDog :
+                        userProfile.pet.type === "bat" ? pixelBat :
+                          userProfile.pet.type === "duck" ? pixelDuck :
+                            pixelCat // Default to cat if type doesn't match
+                    : pixelCat // Default to cat if no pet
+                }
+                alt={`${userProfile.pet?.name || "Tamagotchi"} pet`}
                 className="w-28 h-28 object-contain"
               />
             </div>
