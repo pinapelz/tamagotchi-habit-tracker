@@ -8,6 +8,14 @@ CREATE TABLE users (
     last_login_at TIMESTAMPTZ
 );
 
+CREATE TABLE user_geolocations (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    accuracy DOUBLE PRECISION,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE user_descriptions (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     bio TEXT,
