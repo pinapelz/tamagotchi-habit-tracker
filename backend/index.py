@@ -14,7 +14,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 load_dotenv()
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 
 def create_database_connection():
     """
@@ -169,7 +169,7 @@ def authenticate_user():
             "status": "ok",
             "message": "Authentication successful."
         })
-        response.set_cookie("session", cookie_value, httponly=True, samesite="Strict", expires=expires_at)
+        response.set_cookie("session", cookie_value, httponly=True, samesite="Lax", expires=expires_at)
 
         return response, 200
 
@@ -236,7 +236,6 @@ def get_profile():
     Returns user data, stats, and pet information.
     """
     session_cookie = request.cookies.get("session")
-    print(session_cookie)
     if not session_cookie:
         return jsonify({
             "status": "error",
@@ -245,7 +244,7 @@ def get_profile():
 
     db = create_database_connection()
     try:
-        # Verify is cookie/session is valid
+        # Verify if the cookie/session is valid
         user = db.fetchone(
             "SELECT users.id, users.email, users.display_name, users.avatar_url, users.timezone "
             "FROM cookies "
@@ -276,6 +275,12 @@ def get_profile():
             (user["id"],)
         )
         
+        # Get user bio
+        bio = db.fetchone(
+            "SELECT bio FROM user_descriptions WHERE user_id = %s",
+            (user["id"],)
+        )
+        
         # Build the response
         profile_data = {
             "user": {
@@ -291,6 +296,7 @@ def get_profile():
                 "total_habits_completed": 0
             },
             "pet": pet if pet else None,
+            "bio": bio["bio"] if bio else None
         }
         
         return jsonify({
@@ -305,7 +311,6 @@ def get_profile():
         }), 500
     finally:
         db.close()
-
 
 if __name__ == "__main__":
     app.run(debug=True)
