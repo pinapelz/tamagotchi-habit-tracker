@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
-import { fetchUserProfile, getHashedBackgroundValue } from "../utils/profileHelpers";
 
 import snowBg from "../assets/pet_bg/snow.png";
 import meadowBg from "../assets/pet_bg/meadow_day.png";
 
-export default function ProfilePage({ userId }) {
+// Helper for randomly picking a background image (but maintaining consistency)
+String.prototype.hashCode = function () {
+  let hash = 0;
+  for (let i = 0; i < this.length; i++) {
+    const char = this.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return hash;
+};
+
+export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,23 +29,33 @@ export default function ProfilePage({ userId }) {
       setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const getUserProfile = async () => {
-      try {
-        const profileData = await fetchUserProfile(userId);
-        setUserProfile(profileData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  const getUserProfile = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include", // Include cookies for authentication
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile data.");
       }
-    };
-    getUserProfile();
-  }, [userId]);
+
+      const profileData = await response.json();
+      setUserProfile(profileData.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  getUserProfile();
+}, []);
 
   if (loading)
     return (
@@ -59,7 +79,7 @@ export default function ProfilePage({ userId }) {
     "Hi! I'm building good habits with my Tamagotchi. Let's grow together!";
 
   // Fix: Validate the index before accessing the backgrounds array
-  const backgroundIndex = getHashedBackgroundValue(userId, backgrounds.length);
+  const backgroundIndex = Math.abs(userProfile.user.id.hashCode()) % backgrounds.length;
   const backgroundImage =
     backgroundIndex >= 0 && backgroundIndex < backgrounds.length
       ? backgrounds[backgroundIndex]
@@ -68,7 +88,7 @@ export default function ProfilePage({ userId }) {
   const LayoutComponent = isMobile ? MobileLayout : Layout;
 
   return (
-    <LayoutComponent userName={userProfile.username}>
+    <LayoutComponent userName={userProfile.user.display_name}>
       <div
         className="min-h-screen font-sniglet pt-12"
         style={{
@@ -85,12 +105,12 @@ export default function ProfilePage({ userId }) {
             {/* Left: User Avatar and Username */}
             <div className="flex flex-col items-center">
               <img
-                src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${userProfile.username}`}
+                src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${userProfile.user.display_name}`}
                 alt="avatar"
                 className="w-20 h-20 rounded-full border-4 border-[#4abe9c] bg-white shadow mb-2"
               />
               <h1 className="text-2xl font-bold text-[#486085]">
-                {userProfile.username}
+                {userProfile.user.display_name}
               </h1>
             </div>
 
@@ -98,10 +118,10 @@ export default function ProfilePage({ userId }) {
             <div className="bg-white px-8 py-3 rounded-xl shadow-sm">
               <div className="text-center">
                 <span className="text-lg font-medium text-[#486085]">
-                  {userProfile.stats.petName} the {userProfile.stats.petType}
+                  {userProfile.pet?.name || "No pet"} the {userProfile.pet?.type || "N/A"}
                 </span>
                 <div className="text-sm text-[#486085]">
-                  Level {userProfile.stats.petLevel}
+                  Level {userProfile.pet?.lvl || 0}
                 </div>
               </div>
             </div>
@@ -133,63 +153,27 @@ export default function ProfilePage({ userId }) {
               <div className="grid grid-cols-4 gap-10 text-center">
                 <div>
                   <div className="text-xl font-bold text-[#4abe9c]">
-                    {userProfile.stats.petName}
+                    {userProfile.pet?.name || "No pet"}
                   </div>
                   <div className="text-sm text-gray-500">Pet</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[#4abe9c]">
-                    {userProfile.stats.petLevel}
+                    {userProfile.pet?.lvl || 0}
                   </div>
                   <div className="text-sm text-gray-500">Level</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[#4abe9c]">
-                    {userProfile.stats.streak}
+                    {userProfile.stats?.current_streak || 0}
                   </div>
                   <div className="text-sm text-gray-500">Day Streak</div>
                 </div>
                 <div>
                   <div className="text-xl font-bold text-[#4abe9c]">
-                    {userProfile.stats.habitsTracked}
+                    {userProfile.stats?.total_habits_completed || 0}
                   </div>
                   <div className="text-sm text-gray-500">Habits</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Lifetime Stats */}
-          {/* Pet Stats */}
-          <div>
-            <h2 className="text-[#4abe9c] text-xl font-bold mb-4 pb-2 border-b border-[#4abe9c]">
-              Lifetime Stats
-            </h2>
-            <div className="flex justify-center py-4">
-              <div className="grid grid-cols-4 gap-10 text-center">
-                <div>
-                  <div className="text-xl font-bold text-[#4abe9c]">
-                    56
-                  </div>
-                  <div className="text-sm text-gray-500">Longest Day Streak</div>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#4abe9c]">
-                    15
-                  </div>
-                  <div className="text-sm text-gray-500">Highest Level</div>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#4abe9c]">
-                    Drinking Water
-                  </div>
-                  <div className="text-sm text-gray-500">Most Tracked Habit</div>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-[#4abe9c]">
-                    10
-                  </div>
-                  <div className="text-sm text-gray-500">Total Habits Completed</div>
                 </div>
               </div>
             </div>
@@ -201,7 +185,7 @@ export default function ProfilePage({ userId }) {
               Achievements
             </h2>
             <div className="flex flex-wrap gap-4 mt-4">
-              {userProfile.achievements.map((achievement, index) => (
+              {userProfile.achievements?.map((achievement, index) => (
                 <div
                   key={index}
                   className="bg-[#eaf6f0] px-5 py-3 rounded-lg flex items-center gap-2"
