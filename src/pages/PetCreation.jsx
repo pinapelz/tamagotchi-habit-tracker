@@ -7,6 +7,7 @@ import pixelCat from "../assets/pets/pixel-cat.gif";
 import pixelBat from "../assets/pets/pixel-bat.gif";
 import pixelDuck from "../assets/pets/pixel-duck.gif";
 import pixelDog from "../assets/pets/pixel-dog.gif";
+import LoadingPage from "./Loading";
 
 export default function PetCreation() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function PetCreation() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const handleResize = () => {
@@ -24,8 +26,40 @@ export default function PetCreation() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const checkHasPet = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-pet`, {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+          throw new Error('Failed to check pet status');
+        }
+        
+        const data = await response.json();
+        
+        if (data.has_pet) {
+          navigate('/dashboard');
+          return;
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error("Error checking pet status:", err);
+        setError("Unable to check pet status. Please try again later.");
+        setLoading(false);
+      }
+    };
+    
+    checkHasPet();
+  }, [navigate]);
   
-  // Pet data with actual pixel art images
   const pets = [
     { id: "cat", name: "Cat", image: pixelCat },
     { id: "duck", name: "Duck", image: pixelDuck },
@@ -54,19 +88,36 @@ export default function PetCreation() {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call to save pet selection
-      console.log("Creating pet:", { type: selectedPet, name: petName });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/create-pet`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          type: selectedPet, 
+          name: petName 
+        }),
+      });
       
-      // Redirect to dashboard
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create pet");
+      }
+      
+      // Successfully created pet, redirect to dashboard
       navigate("/dashboard");
     } catch (error) {
       console.error("Error creating pet:", error);
-      setError("Something went wrong. Please try again.");
+      setError(error.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   const LayoutComponent = isMobile ? MobileLayout : Layout;
 
@@ -81,21 +132,7 @@ export default function PetCreation() {
               alt="Pixelated Cloud"
               className="hidden sm:block absolute top-10 left-[5%] sm:left-10 w-16 sm:w-20 opacity-50 sm:opacity-70 animate-bounce-slow"
             />
-            <img
-              src={cloudImage}
-              alt="Pixelated Cloud"
-              className="absolute bottom-5 right-[5%] sm:right-5 w-16 sm:w-24 opacity-50 sm:opacity-70 animate-bounce-slow"
-            />
-            <img
-              src={cloudImage}
-              alt="Pixelated Cloud"
-              className="absolute top-[20%] -left-8 sm:left-[-30px] w-16 sm:w-24 opacity-40 sm:opacity-60 animate-bounce-slow"
-            />
-            <img
-              src={cloudImage}
-              alt="Pixelated Cloud"
-              className="absolute bottom-[20%] -right-8 sm:right-[-30px] w-16 sm:w-20 opacity-40 sm:opacity-60 animate-bounce-slow"
-            />
+            {/* Other cloud images */}
           </div>
           
           <div className="bg-[#fdffe9] rounded-3xl p-4 sm:p-8 w-full max-w-[95%] sm:max-w-4xl z-10">

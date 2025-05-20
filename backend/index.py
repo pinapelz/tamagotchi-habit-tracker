@@ -318,5 +318,139 @@ def get_profile():
     finally:
         db.close()
 
+@app.route("/api/has-pet", methods=["GET"])
+def has_pet():
+    """
+    Checks if the authenticated user has created a pet.
+    Requires a valid session cookie.
+    Returns a boolean indicating pet existence.
+    """
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required."
+        }), 401
+
+    db = create_database_connection()
+    try:
+        user = db.fetchone(
+            "SELECT users.id FROM cookies "
+            "JOIN users ON cookies.user_id = users.id "
+            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
+            (session_cookie,)
+        )
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401
+
+        pet = db.fetchone(
+            "SELECT id FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        return jsonify({
+            "status": "ok",
+            "has_pet": pet is not None
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/create-pet", methods=["POST"])
+def create_pet():
+    """
+    Creates a new pet for the authenticated user.
+    Requires a valid session cookie.
+    Expects a JSON payload with 'name' and 'type'.
+    Returns the created pet data.
+    """
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required."
+        }), 401
+
+    data = request.get_json()
+    # Validate input
+    if not data or not all(key in data for key in ("name", "type")):
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'name' and 'type' are required."
+        }), 400
+
+    pet_name = data["name"]
+    pet_type = data["type"]
+    
+    # Validate pet type
+    valid_pet_types = ["cat", "duck", "bat", "dog"]
+    if pet_type not in valid_pet_types:
+        return jsonify({
+            "status": "error",
+            "message": f"Invalid pet type. Must be one of: {', '.join(valid_pet_types)}"
+        }), 400
+
+    db = create_database_connection()
+    try:
+        # Verify if the cookie/session is valid
+        user = db.fetchone(
+            "SELECT users.id FROM cookies "
+            "JOIN users ON cookies.user_id = users.id "
+            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
+            (session_cookie,)
+        )
+        
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401
+            
+        # Check if user already has a pet (schema has UNIQUE constraint on user_id)
+        existing_pet = db.fetchone(
+            "SELECT id FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        if existing_pet:
+            return jsonify({
+                "status": "error",
+                "message": "User already has a pet."
+            }), 400
+        
+        # Create the pet
+        db.execute(
+            "INSERT INTO pets (user_id, name, type) VALUES (%s, %s, %s) RETURNING id",
+            (user["id"], pet_name, pet_type)
+        )
+        
+        # Fetch the created pet
+        pet = db.fetchone(
+            "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        return jsonify({
+            "status": "ok",
+            "message": "Pet created successfully!",
+            "data": pet
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
