@@ -228,6 +228,84 @@ def auto_login():
     finally:
         db.close()
 
+@app.route("/api/profile", methods=["GET"])
+def get_profile():
+    """
+    Retrieves the profile data for the authenticated user.
+    Requires a valid session cookie.
+    Returns user data, stats, and pet information.
+    """
+    session_cookie = request.cookies.get("session")
+    print(session_cookie)
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required."
+        }), 401
+
+    db = create_database_connection()
+    try:
+        # Verify is cookie/session is valid
+        user = db.fetchone(
+            "SELECT users.id, users.email, users.display_name, users.avatar_url, users.timezone "
+            "FROM cookies "
+            "JOIN users ON cookies.user_id = users.id "
+            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
+            (session_cookie,)
+        )
+        
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401
+            
+        # Get user stats
+        stats = db.fetchone(
+            "SELECT current_streak, longest_streak, total_habits_completed "
+            "FROM user_stats "
+            "WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Get pet info
+        pet = db.fetchone(
+            "SELECT name, type, happiness, xp, health, lvl "
+            "FROM pets "
+            "WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Build the response
+        profile_data = {
+            "user": {
+                "id": user["id"],
+                "email": user["email"],
+                "display_name": user["display_name"],
+                "avatar_url": user["avatar_url"],
+                "timezone": user["timezone"]
+            },
+            "stats": stats if stats else {
+                "current_streak": 0,
+                "longest_streak": 0,
+                "total_habits_completed": 0
+            },
+            "pet": pet if pet else None,
+        }
+        
+        return jsonify({
+            "status": "ok",
+            "data": profile_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
