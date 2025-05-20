@@ -36,6 +36,9 @@ import {
 
 // Import images
 import catGif from "../../assets/pets/pixel-cat.gif"
+import dogGif from "../../assets/pets/pixel-dog.gif"
+import batGif from "../../assets/pets/pixel-bat.gif"
+import duckGif from "../../assets/pets/pixel-duck.gif"
 import rainyBg from "../../assets/pet_bg/rainy.gif"
 // Import time of day backgrounds
 import predawnNight from "../../assets/timeofday/predawn-night.jpg"
@@ -60,22 +63,25 @@ export default function MobileDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("home")
   const [showMenu, setShowMenu] = useState(false)
-  const [userName, setUserName] = useState("Alex")
+  const [userName, setUserName] = useState("User")
   const [currentTime, setCurrentTime] = useState("")
-  const [currentDate, setCurrentDate] = useState("5/6/2025")
-  const [currentWeather, setCurrentWeather] = useState("Rainy")
+  const [currentDate, setCurrentDate] = useState("")
+  const [currentWeather, setCurrentWeather] = useState("Sunny")
   const [timeOfDay, setTimeOfDay] = useState("afternoon")
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
     { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
     { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
   ])
-  const [streak, setStreak] = useState(5)
+  const [streak, setStreak] = useState(0)
   const [petStats, setPetStats] = useState({
-    happiness: 85,
-    energy: 70,
-    health: 90,
+    happiness: 50,
+    energy: 0,
+    health: 100,
   })
+  const [petName, setPetName] = useState("No Pet")
+  const [petType, setPetType] = useState("cat")
+  const [petLevel, setPetLevel] = useState(0)
   const [season, setSeason] = useState("spring")
   const [showShareModal, setShowShareModal] = useState(false)
   const [showPetStats, setShowPetStats] = useState(true)
@@ -87,6 +93,64 @@ export default function MobileDashboard() {
   const [editHabitName, setEditHabitName] = useState("");
   const [editHabitRecurrence, setEditHabitRecurrence] = useState("daily");
   const editFormRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Load profile data from the API
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login')
+            return
+          }
+          throw new Error("Failed to fetch profile data")
+        }
+
+        const { data } = await response.json()
+        
+        // Set user data from API
+        if (data.user) {
+          setUserName(data.user.display_name || "User")
+        }
+        
+        // Set pet data from API
+        if (data.pet) {
+          setPetName(data.pet.name || "No Pet")
+          setPetType(data.pet.type || "cat")
+          setPetLevel(data.pet.lvl || 0)
+          setPetStats({
+            happiness: data.pet.happiness || 50,
+            energy: data.pet.xp || 0,
+            health: data.pet.health || 100,
+          })
+        }
+        
+        // Set stats data from API
+        if (data.stats) {
+          setStreak(data.stats.current_streak || 0)
+        }
+        
+        setLoading(false)
+      } catch (err) {
+        console.error("Error fetching profile:", err)
+        setError(err.message)
+        setLoading(false)
+      }
+    }
+
+    fetchProfileData()
+    
+    // Set current date
+    const options = { year: 'numeric', month: 'numeric', day: 'numeric' }
+    setCurrentDate(new Date().toLocaleDateString(undefined, options))
+  }, [navigate])
 
   // Update time in real-time
   useEffect(() => {
@@ -129,7 +193,19 @@ export default function MobileDashboard() {
         setTimeOfDay("night")
       }
       
-      // Determine how often to check time based on how close we are to any time transition
+      // Set season based on month
+      const month = now.getMonth() // 0-11
+      if (month >= 2 && month <= 4) {
+        setSeason("spring")
+      } else if (month >= 5 && month <= 7) {
+        setSeason("summer")
+      } else if (month >= 8 && month <= 10) {
+        setSeason("autumn")
+      } else {
+        setSeason("winter")
+      }
+      
+      // Determine how often to check time
       let nextInterval = 60000; // Default is 1 minute
       
       // List of all transition hours
@@ -235,9 +311,21 @@ export default function MobileDashboard() {
       case "summer":
         return <span className="text-base">☀️</span>
       case "fall":
+      case "autumn":
         return <span className="text-base">🍂</span>
       default:
         return <span className="text-base">🌸</span>
+    }
+  }
+  
+  // Get pet image based on type
+  const getPetImage = () => {
+    switch(petType.toLowerCase()) {
+      case 'cat': return catGif;
+      case 'dog': return dogGif;
+      case 'duck': return duckGif;
+      case 'bat': return batGif;
+      default: return catGif; // Default to cat
     }
   }
 
@@ -345,6 +433,22 @@ export default function MobileDashboard() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#def8fb] flex flex-col">
       {/* Mobile Header */}
@@ -441,20 +545,20 @@ export default function MobileDashboard() {
                 </button>
 
                 <div className={`transition-all duration-300 ${!showPetStats ? 'mt-auto mb-8' : 'mb-3'}`}>
-                  <img src={catGif} alt="Pet" className="w-[100px] h-[100px] object-contain" />
+                  <img src={getPetImage()} alt="Pet" className="w-[100px] h-[100px] object-contain" />
                 </div>
 
                 {!showPetStats && (
                   <div className="bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full text-center mb-2">
-                    <h3 className="font-sniglet text-xs">Whiskers · Lvl 3</h3>
+                    <h3 className="font-sniglet text-xs">{petName} · Lvl {petLevel}</h3>
                   </div>
                 )}
 
                 {showPetStats && (
                   <div className="w-full bg-white/50 backdrop-blur-sm rounded-xl p-3 transition-opacity duration-300">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-sniglet text-sm">Whiskers</h3>
-                      <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl 3</span>
+                      <h3 className="font-sniglet text-sm">{petName}</h3>
+                      <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl {petLevel}</span>
                     </div>
 
                     <div className="space-y-2">
@@ -464,10 +568,10 @@ export default function MobileDashboard() {
                             <Star size={14} className="text-yellow-500" />
                             <span className="text-xs font-sniglet">XP</span>
                           </div>
-                          <span className="text-xs font-sniglet">{petStats.energy}/1000</span>
+                          <span className="text-xs font-sniglet">{petStats.energy}/100</span>
                         </div>
                         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / 1000) * 100}%` }}></div>
+                          <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
                         </div>
                       </div>
 
