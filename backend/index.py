@@ -527,6 +527,52 @@ def set_location():
     finally:
         db.close()
 
+@app.route("/api/set-bio", methods=["POST"])
+def set_bio():
+    """
+    Sets or updates the authenticated user's bio.
+    Requires a valid session cookie.
+    Expects a JSON payload with 'bio'.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "bio" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'bio' is required."
+        }), 400
+
+    bio = data["bio"]
+
+    db = create_database_connection()
+    try:
+        db.execute(
+            """
+            INSERT INTO user_descriptions (user_id, bio, updated_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (user_id) DO UPDATE
+            SET bio = EXCLUDED.bio,
+                updated_at = NOW()
+            """,
+            (user["id"], bio)
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Bio updated successfully."
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     app.run(debug=True)
