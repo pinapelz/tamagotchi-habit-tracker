@@ -21,6 +21,73 @@ export default function DashboardRedesign() {
   const [error, setError] = useState(null)
   const [profile, setProfile] = useState(null)
 
+  const [locationError, setLocationError] = useState(null);
+
+  const checkAndSetLocation = async () => {
+    try {
+      const hasLocationResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-location`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!hasLocationResponse.ok) {
+        throw new Error("Failed to check location status.");
+      }
+
+      const { has_location } = await hasLocationResponse.json();
+
+      if (has_location) {
+        console.log("Location is already set. Skipping location update.");
+        return;
+      }
+
+      requestAndSendLocation();
+    } catch (err) {
+      console.error("Error checking location status:", err);
+      setLocationError(err.message);
+    }
+  };
+
+  const requestAndSendLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ latitude, longitude, accuracy }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update location.");
+          }
+
+          console.log("Location updated successfully.");
+        } catch (err) {
+          console.error("Error sending location to API:", err);
+          setLocationError(err.message);
+        }
+      },
+      (error) => {
+        console.error("Error getting geolocation:", error);
+        setLocationError("Unable to retrieve your location. Please manually set it in settings");
+      }
+    );
+  };
+
+  useEffect(() => {
+    checkAndSetLocation();
+  }, []);
   // UI state
   const [showSettings, setShowSettings] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
@@ -33,7 +100,7 @@ export default function DashboardRedesign() {
 
   // Toggle between environment and pet stats views
   const [activeView, setActiveView] = useState("environment")
-  
+
   // Habit state
   const [habits, setHabits] = useState([])
 
@@ -56,7 +123,7 @@ export default function DashboardRedesign() {
 
         const { data } = await response.json()
         setProfile(data)
-        
+
         // Initialize habits from backend data (you'll need to create this endpoint)
         // For now, using sample habits
         setHabits([
@@ -90,7 +157,7 @@ export default function DashboardRedesign() {
       hours = hours ? hours : 12 // the hour '0' should be '12'
 
       setCurrentTime(`${hours}:${minutes} ${ampm}`)
-      
+
       // Set current date
       const options = { year: 'numeric', month: 'numeric', day: 'numeric' }
       setCurrentDate(now.toLocaleDateString(undefined, options))
@@ -121,7 +188,7 @@ export default function DashboardRedesign() {
       } else {
         setTimeOfDay("night")
       }
-      
+
       // Set season based on month
       const month = now.getMonth() // 0-11
       if (month >= 2 && month <= 4) {
@@ -136,10 +203,10 @@ export default function DashboardRedesign() {
 
       // Determine how often to check time
       let nextInterval = 60000; // Default is 1 minute
-      
+
       // List of all transition hours
       const transitions = [0, 3, 5, 6, 7, 11, 13, 17, 19, 20, 21, 23];
-      
+
       // Check if we're near any transition (1 minute before or after)
       const isNearTransition = transitions.some(hour => {
         if (currentHour === hour && minutes <= 1) return true;
@@ -147,7 +214,7 @@ export default function DashboardRedesign() {
         if (currentHour === prevHour && minutes >= 59) return true;
         return false;
       });
-      
+
       // Check if we're approaching a transition (10 minutes before or after)
       const isApproachingTransition = transitions.some(hour => {
         if (currentHour === hour && minutes <= 10) return true;
@@ -155,19 +222,19 @@ export default function DashboardRedesign() {
         if (currentHour === prevHour && minutes >= 50) return true;
         return false;
       });
-      
+
       if (isNearTransition) {
         nextInterval = 1000; // Check every second right around transitions
       } else if (isApproachingTransition) {
         nextInterval = 5000; // Check every 5 seconds near transitions
       }
-      
+
       return nextInterval;
     }
 
     // Update time immediately
     let nextCheckDelay = updateTime()
-    
+
     // Use a recursive setTimeout instead of setInterval to allow dynamic timing
     let timeoutId = setTimeout(function checkTime() {
       nextCheckDelay = updateTime();
@@ -184,8 +251,8 @@ export default function DashboardRedesign() {
   // Get pet image based on type
   const getPetImage = (petType) => {
     if (!petType) return pixelCat; // Default to cat
-    
-    switch(petType.toLowerCase()) {
+
+    switch (petType.toLowerCase()) {
       case 'cat': return pixelCat;
       case 'dog': return pixelDog;
       case 'duck': return pixelDuck;
@@ -208,7 +275,7 @@ export default function DashboardRedesign() {
     setHabits([...habits, newHabit]);
     // TODO: Add API call to create habit
   }
-  
+
   const editHabit = (id, newName) => {
     setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
     // TODO: Add API call to update habit
@@ -264,6 +331,11 @@ export default function DashboardRedesign() {
   return (
     <Layout userName={userName} onToggleSettings={toggleSettings}>
       <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
+        {locationError && (
+          <div className="text-red-500 text-center">
+            Error with location: {locationError}
+          </div>
+        )}
         {/* Main Content */}
         <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-8 py-4 mt-8 max-w-none mx-auto w-full">
           {/* Left Column */}
@@ -281,7 +353,7 @@ export default function DashboardRedesign() {
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Pet Display with Toggle */}
               <div className="w-full lg:w-1/2 flex items-center justify-center">
-                <PetDisplay 
+                <PetDisplay
                   petImage={petImage}
                   toggleComponent={toggleComponent}
                   timeOfDay={timeOfDay}
@@ -300,11 +372,11 @@ export default function DashboardRedesign() {
                     weatherImage={null}
                   />
                 ) : (
-                  <PetStats 
-                    petName={petName} 
-                    petType={petType} 
-                    petLevel={petLevel} 
-                    petStats={petStats} 
+                  <PetStats
+                    petName={petName}
+                    petType={petType}
+                    petLevel={petLevel}
+                    petStats={petStats}
                   />
                 )}
               </div>
@@ -324,10 +396,10 @@ export default function DashboardRedesign() {
             />
 
             {/* Progress Section */}
-            <ProgressBar 
-              completedHabits={completedHabits} 
-              totalHabits={totalHabits} 
-              streak={streak} 
+            <ProgressBar
+              completedHabits={completedHabits}
+              totalHabits={totalHabits}
+              streak={streak}
             />
           </div>
         </main>
@@ -337,9 +409,9 @@ export default function DashboardRedesign() {
           isOpen={showSettings}
           onClose={toggleSettings}
           userName={userName}
-          setUserName={() => {}} // Would need a function to update userName
+          setUserName={() => { }} // Would need a function to update userName
           theme="light"
-          setTheme={() => {}} // Would need a function to update theme
+          setTheme={() => { }} // Would need a function to update theme
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
         />
