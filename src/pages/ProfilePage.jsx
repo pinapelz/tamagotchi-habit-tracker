@@ -178,6 +178,40 @@ useEffect(() => {
               </div>
             </div>
           </div>
+          {/* Lifetime Stats */}
+          <div>
+            <h2 className="text-[#4abe9c] text-xl font-bold mb-4 pb-2 border-b border-[#4abe9c]">
+              Lifetime Stats
+            </h2>
+            <div className="flex justify-center py-4">
+              <div className="grid grid-cols-4 gap-10 text-center">
+                <div>
+                  <div className="text-xl font-bold text-[#4abe9c]">
+                    56
+                  </div>
+                  <div className="text-sm text-gray-500">Longest Day Streak</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#4abe9c]">
+                    15
+                  </div>
+                  <div className="text-sm text-gray-500">Highest Level</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#4abe9c]">
+                    Drinking Water
+                  </div>
+                  <div className="text-sm text-gray-500">Most Tracked Habit</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold text-[#4abe9c]">
+                    10
+                  </div>
+                  <div className="text-sm text-gray-500">Total Habits Completed</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Achievements */}
           <div>
