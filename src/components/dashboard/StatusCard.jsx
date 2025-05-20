@@ -4,7 +4,7 @@ export default function StatusCard({ userName, weatherIcon, currentWeather }) {
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm lg:max-w-[99%] 2xl:max-w-[98.5%]">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-sniglet">Hello, "{userName}"!</h2>
+        <h2 className="text-xl font-sniglet">Hello, {userName}!</h2>
 
         {/* Larger weather display */}
         <div className="flex items-center gap-2 bg-[#f0f9ff] px-4 py-2 rounded-xl">
