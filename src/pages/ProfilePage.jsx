@@ -26,6 +26,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bio, setBio] = useState("");
+  const [bioError, setBioError] = useState(null);
   const backgrounds = [snowBg, meadowBg];
   const navigate = useNavigate(); // Add this line to get navigation function
 
@@ -57,6 +60,7 @@ export default function ProfilePage() {
 
         const profileData = await response.json();
         setUserProfile(profileData.data);
+        setBio(profileData.data.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
       } catch (err) {
         setError(err.message);
         navigate('/login');
@@ -67,6 +71,30 @@ export default function ProfilePage() {
 
     getUserProfile();
   }, [navigate]);
+
+  const handleSaveBio = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-bio`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bio }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update bio.");
+      }
+
+      setIsEditingBio(false);
+      setBioError(null);
+      console.log("Bio updated successfully.");
+    } catch (err) {
+      setBioError(err.message);
+    }
+  };
 
   if (loading)
     return (
@@ -84,10 +112,6 @@ export default function ProfilePage() {
         No profile found.
       </div>
     );
-
-  const bio =
-    userProfile.bio ||
-    "Hi! I'm building good habits with my Tamagotchi. Let's grow together!";
 
   // Fix: Validate the index before accessing the backgrounds array
   const backgroundIndex = Math.abs(userProfile.user.id.hashCode()) % backgrounds.length;
@@ -160,7 +184,41 @@ export default function ProfilePage() {
             <h2 className="text-[#4abe9c] text-xl font-bold mb-4 pb-2 border-b border-[#4abe9c]">
               About Me
             </h2>
-            <p className="text-[#486085]">{bio}</p>
+            {isEditingBio ? (
+              <div className="space-y-4">
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c]"
+                  rows="4"
+                />
+                {bioError && <div className="text-red-500 text-sm">{bioError}</div>}
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleSaveBio}
+                    className="bg-[#4abe9c] text-white px-4 py-2 rounded-lg hover:bg-[#3aa87c] transition"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setIsEditingBio(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <p className="text-[#486085]">{bio}</p>
+                <button
+                  onClick={() => setIsEditingBio(true)}
+                  className="text-[#4abe9c] hover:underline text-sm"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Pet Stats */}
