@@ -14,7 +14,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 def create_database_connection():
     """
