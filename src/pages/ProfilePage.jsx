@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
@@ -23,6 +24,7 @@ export default function ProfilePage() {
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const backgrounds = [snowBg, meadowBg];
+  const navigate = useNavigate(); // Add this line to get navigation function
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,29 +35,35 @@ export default function ProfilePage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-useEffect(() => {
-  const getUserProfile = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
-        method: "GET",
-        credentials: "include", // Include cookies for authentication
-      });
+  useEffect(() => {
+    const getUserProfile = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch profile data.");
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+          throw new Error(errorData.message || "Failed to fetch profile data.");
+        }
+
+        const profileData = await response.json();
+        setUserProfile(profileData.data);
+      } catch (err) {
+        setError(err.message);
+        navigate('/login');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const profileData = await response.json();
-      setUserProfile(profileData.data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  getUserProfile();
-}, []);
+    getUserProfile();
+  }, [navigate]);
 
   if (loading)
     return (
