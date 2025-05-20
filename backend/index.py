@@ -14,7 +14,13 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 load_dotenv()
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=[
+    "https://*.netlify.app",  # For Netlify deployments
+    "http://localhost:5173", # For local frontend development
+    "http://127.0.0.1:5173",  # Optional: For localhost with IP - Added comma here
+    "https://*.tamagotchi.moekyun.me", # production
+    "https://tamagotchi.moekyun.me"  # Added specific domain without wildcard
+])
 
 def create_database_connection():
     """
@@ -169,7 +175,7 @@ def authenticate_user():
             "status": "ok",
             "message": "Authentication successful."
         })
-        response.set_cookie("session", cookie_value, httponly=True, samesite="Strict", expires=expires_at)
+        response.set_cookie("session", cookie_value, httponly=True, samesite="Lax", expires=expires_at)
 
         return response, 200
 
@@ -228,6 +234,89 @@ def auto_login():
     finally:
         db.close()
 
+@app.route("/api/profile", methods=["GET"])
+def get_profile():
+    """
+    Retrieves the profile data for the authenticated user.
+    Requires a valid session cookie.
+    Returns user data, stats, and pet information.
+    """
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "Authentication required."
+        }), 401
+
+    db = create_database_connection()
+    try:
+        # Verify if the cookie/session is valid
+        user = db.fetchone(
+            "SELECT users.id, users.email, users.display_name, users.avatar_url, users.timezone "
+            "FROM cookies "
+            "JOIN users ON cookies.user_id = users.id "
+            "WHERE cookies.cookie_value = %s AND cookies.expires_at > NOW()",
+            (session_cookie,)
+        )
+        
+        if not user:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid or expired session."
+            }), 401
+            
+        # Get user stats
+        stats = db.fetchone(
+            "SELECT current_streak, longest_streak, total_habits_completed "
+            "FROM user_stats "
+            "WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Get pet info
+        pet = db.fetchone(
+            "SELECT name, type, happiness, xp, health, lvl "
+            "FROM pets "
+            "WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Get user bio
+        bio = db.fetchone(
+            "SELECT bio FROM user_descriptions WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Build the response
+        profile_data = {
+            "user": {
+                "id": user["id"],
+                "email": user["email"],
+                "display_name": user["display_name"],
+                "avatar_url": user["avatar_url"],
+                "timezone": user["timezone"]
+            },
+            "stats": stats if stats else {
+                "current_streak": 0,
+                "longest_streak": 0,
+                "total_habits_completed": 0
+            },
+            "pet": pet if pet else None,
+            "bio": bio["bio"] if bio else None
+        }
+        
+        return jsonify({
+            "status": "ok",
+            "data": profile_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     app.run(debug=True)

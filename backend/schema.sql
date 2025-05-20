@@ -8,6 +8,12 @@ CREATE TABLE users (
     last_login_at TIMESTAMPTZ
 );
 
+CREATE TABLE user_descriptions (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    bio TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE habits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
