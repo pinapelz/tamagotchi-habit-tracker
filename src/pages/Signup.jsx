@@ -198,7 +198,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
             <div className="space-y-1 sm:space-y-2">
               <label htmlFor="name" className="block text-base sm:text-lg">
-                Name
+                User Name
               </label>
               <input
                 type="text"
@@ -207,7 +207,7 @@ export default function SignupPage() {
                 value={formData.name}
                 onChange={handleChange}
                 className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-1 sm:py-2 px-1 text-sm sm:text-base"
-                placeholder="Enter your name"
+                placeholder="Enter your user name"
               />
               {errors.name && <p className="text-red-500 text-xs sm:text-sm">{errors.name}</p>}
             </div>
