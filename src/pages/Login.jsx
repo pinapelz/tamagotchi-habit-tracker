@@ -4,22 +4,21 @@ import { Mail } from "lucide-react"
 import { FaGithub } from "react-icons/fa"
 import AuthNav from "../components/AuthNav"
 import cloudImage from '../assets/landing/cloud-pixel.webp'
+import { auth } from '../firebase';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  // form data - need to add validation later
   const [loginInfo, setLoginInfo] = useState({
     email: "",
     password: "",
   })
-  // error messages - probably need better ones
   const [errorMsgs, setErrorMsgs] = useState({
     email: "",
     password: "",
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  // handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setLoginInfo((prev) => ({
@@ -27,7 +26,6 @@ export default function LoginPage() {
       [name]: value,
     }))
 
-    // clear error when typing
     if (errorMsgs[name]) {
       setErrorMsgs((prev) => ({
         ...prev,
@@ -36,7 +34,6 @@ export default function LoginPage() {
     }
   }
 
-  // super basic validation - will improve later maybe
   const checkForm = () => {
     let formOk = true
     const newErrors = { ...errorMsgs }
@@ -58,7 +55,6 @@ export default function LoginPage() {
     return formOk
   }
 
-  // login form submit
   const handleLogin = async (e) => {
     e.preventDefault()
 
@@ -67,51 +63,39 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // fake login - will replace with real API later
-      console.log("Logging in with:", loginInfo)
-
-      // pretend API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // go to loading page
-      navigate("/loading")
+      await signInWithEmailAndPassword(auth, loginInfo.email, loginInfo.password);
+      navigate("/dashboard");
     } catch (error) {
-      console.error("Login error:", error)
-      // should handle this better but whatever
+      console.error("Login error:", error);
+      setErrorMsgs({
+        email: "Invalid email or password",
+        password: "Invalid email or password",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
-  // google login - not implemented yet
-  const loginWithGoogle = async () => {
-    try {
-      console.log("Logging in with Google")
-      // TODO: implement real Google login
-      // copied from tutorial: await signIn('google')
-
-      // fake delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      navigate("/loading")
-    } catch (error) {
-      console.error("Google login error:", error)
-    }
-  }
-
-  // github login - not implemented yet
   const loginWithGithub = async () => {
     try {
-      console.log("Logging in with GitHub")
-      // TODO: implement real GitHub login
-      // copied from tutorial: await signIn('github')
-
-      // fake delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      navigate("/loading")
+      console.log("GitHub login not implemented yet")
+      // TODO: implement GitHub login with Firebase
     } catch (error) {
       console.error("GitHub login error:", error)
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error during Google login:', error);
+      setErrorMsgs({
+        email: "Google login failed",
+        password: "Google login failed",
+      });
     }
   }
 
@@ -154,8 +138,8 @@ export default function LoginPage() {
 
           <div className="flex flex-col gap-2 sm:gap-4 mb-4 sm:mb-8">
             <button
-              onClick={loginWithGoogle}
-              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-2 sm:py-3 px-4 rounded-full border border-gray-300 transition-colors cursor-pointer text-sm sm:text-base"
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-800 py-2 sm:py-3 px-4 rounded-full border border-gray-300 transition-colors cursor-pointer text-sm sm:text-base w-full"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="w-4 h-4 sm:w-5 sm:h-5">
                 <path

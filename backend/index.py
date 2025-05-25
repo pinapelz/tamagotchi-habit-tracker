@@ -1,7 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
-from .database import PostgresHandler
+from database import PostgresHandler
 from dotenv import load_dotenv
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
 
 from datetime import datetime, timedelta
 import uuid
@@ -14,6 +18,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 load_dotenv()
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Required for session
 CORS(app, supports_credentials=True, origins=[
     "https://*.netlify.app",  # For Netlify deployments
     "http://localhost:5173", # For local frontend development
@@ -21,6 +26,11 @@ CORS(app, supports_credentials=True, origins=[
     "https://*.tamagotchi.moekyun.me", # production
     "https://tamagotchi.moekyun.me"  # Added specific domain without wildcard
 ])
+
+# Google OAuth configuration
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost:5000/api/auth/google/callback')
 
 def create_database_connection():
     """
@@ -573,6 +583,131 @@ def set_bio():
         }), 500
     finally:
         db.close()
+
+@app.route("/api/auth/google", methods=["POST"])
+def google_auth():
+    """
+    Handles Google OAuth authentication.
+    Expects a Google ID token in the request.
+    """
+    data = request.get_json()
+    if not data or 'id_token' not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Google ID token is required."
+        }), 400
+
+    try:
+        # Verify the Google ID token
+        idinfo = id_token.verify_oauth2_token(
+            data['id_token'], 
+            requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Invalid issuer.')
+
+        # Get user info from the token
+        google_id = idinfo['sub']
+        email = idinfo['email']
+        name = idinfo.get('name', email.split('@')[0])
+        picture = idinfo.get('picture')
+
+        db = create_database_connection()
+        try:
+            # Check if user exists in google_oauth table
+            google_user = db.fetchone(
+                "SELECT user_id FROM google_oauth WHERE google_id = %s",
+                (google_id,)
+            )
+
+            if google_user:
+                # User exists, get their info
+                user = db.fetchone(
+                    "SELECT id, email, display_name, avatar_url FROM users WHERE id = %s",
+                    (google_user['user_id'],)
+                )
+            else:
+                # Check if email exists in users table
+                existing_user = db.fetchone(
+                    "SELECT id FROM users WHERE email = %s",
+                    (email,)
+                )
+
+                if existing_user:
+                    # Link existing account with Google
+                    db.execute(
+                        "INSERT INTO google_oauth (user_id, google_id, email) VALUES (%s, %s, %s)",
+                        (existing_user['id'], google_id, email)
+                    )
+                    user = db.fetchone(
+                        "SELECT id, email, display_name, avatar_url FROM users WHERE id = %s",
+                        (existing_user['id'],)
+                    )
+                else:
+                    # Create new user
+                    db.execute(
+                        "INSERT INTO users (email, display_name, avatar_url) VALUES (%s, %s, %s) RETURNING id",
+                        (email, name, picture)
+                    )
+                    user_id = db.fetchone("SELECT id FROM users WHERE email = %s", (email,))["id"]
+                    
+                    # Link with Google
+                    db.execute(
+                        "INSERT INTO google_oauth (user_id, google_id, email) VALUES (%s, %s, %s)",
+                        (user_id, google_id, email)
+                    )
+                    user = db.fetchone(
+                        "SELECT id, email, display_name, avatar_url FROM users WHERE id = %s",
+                        (user_id,)
+                    )
+
+            # Generate session cookie
+            cookie_value = str(uuid.uuid4())
+            expires_at = datetime.utcnow() + timedelta(days=7)
+            
+            db.execute(
+                "INSERT INTO cookies (user_id, cookie_value, expires_at) VALUES (%s, %s, %s)",
+                (user['id'], cookie_value, expires_at)
+            )
+
+            response = jsonify({
+                "status": "ok",
+                "message": "Authentication successful",
+                "user": {
+                    "id": user['id'],
+                    "email": user['email'],
+                    "display_name": user['display_name'],
+                    "avatar_url": user['avatar_url']
+                }
+            })
+            
+            # Set the session cookie
+            response.set_cookie(
+                'session',
+                cookie_value,
+                expires=expires_at,
+                httponly=True,
+                secure=True,
+                samesite='Lax'
+            )
+            
+            return response, 200
+
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
+        finally:
+            db.close()
+
+    except ValueError as e:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid Google token."
+        }), 401
 
 if __name__ == "__main__":
     app.run(debug=True)
