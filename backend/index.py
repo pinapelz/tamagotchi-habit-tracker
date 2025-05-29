@@ -5,9 +5,6 @@ from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
 import uuid
-
-
-
 import os
 import sys
 
@@ -138,7 +135,7 @@ def register_user():
         # Insert the hashed password into the user_passwords table
         db.execute(
             "INSERT INTO user_passwords (user_id, password_hash, salt) VALUES (%s, %s, %s)",
-            (user_id, hashed_password, "default_salt") 
+            (user_id, hashed_password, "default_salt")
         )
 
         return jsonify({
@@ -564,6 +561,69 @@ def set_bio():
             "status": "ok",
             "message": "Bio updated successfully."
         }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/weather", methods=["GET"])
+def get_weather():
+    """
+    Retrieves the current weather based on the user's geolocation.
+    Requires a valid session cookie and a geolocation entry in the database.
+    """
+    import requests
+    def _get_weather_str_from_code(code: int):
+        if code == 0:
+            return "stub"
+        else:
+            return "unknown"
+
+    def _get_weather_data_for_coordinate(longitude: int, latitude: int):
+            url = f"https://api.open-meteo.com/v1/forecast?longitude={str(longitude)}&latitude={str(latitude)}&&current=weather_code"
+            print(url)
+            response = requests.get(url)
+            if response.status_code == 200:
+                response_data = response.json()
+                print(response_data)
+                return _get_weather_str_from_code(response_data["current"]["weather_code"])
+            else:
+                raise Exception(f"Failed to fetch weather data: {response.status_code}")
+
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        location = db.fetchone(
+            "SELECT latitude, longitude FROM user_geolocations WHERE user_id = %s",
+            (user["id"],)
+        )
+        if not location:
+            return jsonify({
+                "status": "error",
+                "message": "No geolocation data found for the user."
+            }), 404
+
+        latitude = location["latitude"]
+        longitude = location["longitude"]
+        try:
+            weather = _get_weather_data_for_coordinate(longitude, latitude)
+            return jsonify({
+                "status": "ok",
+                "weather": weather
+            }), 200
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
 
     except Exception as e:
         return jsonify({
