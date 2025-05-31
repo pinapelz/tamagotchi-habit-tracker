@@ -579,10 +579,16 @@ def get_weather():
     """
     import requests
     def _get_weather_str_from_code(code: int):
-        if code == 0:
-            return "stub"
+        if code >= 0 and code <= 3:
+            return "sunny"
+        elif code == 45 or code == 48:
+            return "cloudy"
+        elif (code >= 51 and code <= 67) or (code >= 80 and code <= 82) or (code >= 95):
+            return "rainy"
+        elif code >= 71 and code <= 77:
+            return "snowy"
         else:
-            return "unknown"
+            return "windy"
 
     def _get_weather_data_for_coordinate(longitude: int, latitude: int):
             url = f"https://api.open-meteo.com/v1/forecast?longitude={str(longitude)}&latitude={str(latitude)}&&current=weather_code"
