@@ -153,27 +153,31 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
               >
                 Set Location Automatically
               </button>
-              <div className="flex items-center gap-4">
-                <input
-                  type="text"
-                  placeholder="Latitude"
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
-                />
-                <input
-                  type="text"
-                  placeholder="Longitude"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
-                />
-                <button
-                  onClick={handleSetLocationManually}
-                  className="bg-[#cbffc6] text-gray-700 px-6 py-2 rounded-full font-sniglet text-base hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
-                >
-                  Set Manually
-                </button>
+              <div className="relative">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="text"
+                    placeholder="Latitude"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Longitude"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex justify-start">
+                  <button
+                    onClick={handleSetLocationManually}
+                    className="bg-[#cbffc6] text-gray-700 px-6 py-4 rounded-full font-sniglet text-base hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                  >
+                    Set Manually
+                  </button>
+                </div>
               </div>
             </div>
 

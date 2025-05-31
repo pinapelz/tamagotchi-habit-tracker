@@ -1,18 +1,70 @@
-import defaultWeatherBg from '../../assets/pet_bg/rainy.gif'
+import { useState, useEffect } from 'react';
+import rainyBg from '../../assets/weather_bg/rainy.gif';
+import cloudyBg from '../../assets/weather_bg/cloudy.gif';
+import snowBg from '../../assets/weather_bg/snow.png';
+import sunnyBg from '../../assets/weather_bg/sunny.jpeg';
+import windyBg from '../../assets/weather_bg/windy.gif';
+
 
 export default function EnvironmentDisplay({
   timeOfDayIcon,
   timeOfDay,
   seasonIcon,
   season,
-  currentWeather,
-  weatherImage,
 }) {
+  const [currentWeather, setCurrentWeather] = useState('');
+  const [weatherImage, setWeatherImage] = useState(null);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const weather = data.weather;
+
+        setCurrentWeather(weather);
+
+        switch (weather.toLowerCase()) {
+          case 'rainy':
+            setWeatherImage(rainyBg);
+            break;
+          case 'cloudy':
+            setWeatherImage(cloudyBg);
+            break;
+          case 'snowy':
+            setWeatherImage(snowBg);
+            break;
+          case 'sunny':
+            setWeatherImage(sunnyBg);
+            break;
+          case 'windy':
+            setWeatherImage(windyBg);
+            break;
+          default:
+            setWeatherImage(sunnyBg);
+        }
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+        setWeatherImage(rainyBg);
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
   return (
     <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative w-full h-full min-h-[300px] md:min-h-[250px] lg:min-h-[350px] 2xl:h-[55vh]">
       {/* Weather background image */}
       <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-80">
-        <img src={weatherImage || defaultWeatherBg} alt="Weather" className="w-full h-full object-cover" />
+        <img src={weatherImage} alt="Weather" className="w-full h-full object-cover" />
       </div>
 
       <div className="relative z-10">
@@ -34,10 +86,10 @@ export default function EnvironmentDisplay({
       {/* Weather Message */}
       <div className="relative z-10 bg-white/70 backdrop-blur-sm px-3 py-2 md:px-3 md:py-1.5 lg:px-4 lg:py-3 2xl:px-6 2xl:py-4 rounded-lg">
         <p className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-lg text-center">
-          Your pet {currentWeather.toLowerCase().includes("rain") ? "is staying dry during the" : "enjoys the"}{" "}
+          Your pet {currentWeather.toLowerCase().includes('rain') ? 'is staying dry during the' : 'enjoys the'}{' '}
           {currentWeather.toLowerCase()} weather!
         </p>
       </div>
     </div>
-  )
+  );
 }
