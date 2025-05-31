@@ -14,8 +14,9 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=[
     "https://*.netlify.app",  # For Netlify deployments
     "http://localhost:5173", # For local frontend development
-    "http://127.0.0.1:5173"  # Optional: For localhost with IP
-    "https://tamagotchi.moekyun.me" # production
+    "http://127.0.0.1:5173",  # Optional: For localhost with IP - Added comma here
+    "https://*.tamagotchi.moekyun.me", # production
+    "https://tamagotchi.moekyun.me"  # Added specific domain without wildcard
 ])
 
 def create_database_connection():
