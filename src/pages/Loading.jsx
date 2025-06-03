@@ -9,10 +9,9 @@ export default function LoadingPage() {
   const fromSignup = searchParams.get("fromSignup") === "true"
 
   useEffect(() => {
-    // Redirect to pet creation if coming from signup, otherwise to dashboard
     const timer = setTimeout(() => {
       if (fromSignup) {
-        navigate("/petcreation")
+        navigate("/login")
       } else {
         navigate("/dashboard")
       }
