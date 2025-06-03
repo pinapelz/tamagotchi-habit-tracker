@@ -208,7 +208,7 @@ def authenticate_user():
             "status": "ok",
             "message": "Authentication successful."
         })
-        response.set_cookie("session", cookie_value, httponly=True, samesite="Lax", expires=expires_at)
+        response.set_cookie("session", cookie_value, secure=True, httponly=True, samesite="None", expires=expires_at)
 
         return response, 200
 
