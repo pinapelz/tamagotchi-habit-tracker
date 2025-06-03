@@ -1,25 +1,25 @@
-import { useState, useEffect } from "react"
-import SettingsModal from "../SettingsModal"
-import StatusCard from "./StatusCard"
-import PetDisplay from "./PetDisplay"
-import EnvironmentDisplay from "./EnvironmentDisplay"
-import PetStats from "./PetStats"
-import DisplayToggle from "./DisplayToggle"
-import HabitTracker from "./HabitTracker"
-import ProgressBar from "./ProgressBar"
-import Layout from "../layout/Layout"
-import { getTimeOfDayIcon, getWeatherIcon, getSeasonIcon } from "./WeatherUtils"
-import { useNavigate } from "react-router-dom"
-import pixelCat from "../../assets/pets/pixel-cat.gif"
-import pixelBat from "../../assets/pets/pixel-bat.gif"
-import pixelDuck from "../../assets/pets/pixel-duck.gif"
-import pixelDog from "../../assets/pets/pixel-dog.gif"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import SettingsModal from "../SettingsModal";
+import StatusCard from "./StatusCard";
+import PetDisplay from "./PetDisplay";
+import EnvironmentDisplay from "./EnvironmentDisplay";
+import PetStats from "./PetStats";
+import DisplayToggle from "./DisplayToggle";
+import HabitTracker from "./HabitTracker";
+import ProgressBar from "./ProgressBar";
+import Layout from "../layout/Layout";
+import { getTimeOfDayIcon, getWeatherIcon, getSeasonIcon } from "./WeatherUtils";
+import pixelCat from "../../assets/pets/pixel-cat.gif";
+import pixelBat from "../../assets/pets/pixel-bat.gif";
+import pixelDuck from "../../assets/pets/pixel-duck.gif";
+import pixelDog from "../../assets/pets/pixel-dog.gif";
 
 export default function DashboardRedesign() {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   const [locationError, setLocationError] = useState(null);
 
@@ -89,20 +89,20 @@ export default function DashboardRedesign() {
     checkAndSetLocation();
   }, []);
   // UI state
-  const [showSettings, setShowSettings] = useState(false)
-  const [currentTime, setCurrentTime] = useState("")
-  const [currentDate, setCurrentDate] = useState("")
-  const [currentWeather, setCurrentWeather] = useState("Sunny")
+  const [showSettings, setShowSettings] = useState(false);
+  const [currentTime, setCurrentTime] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentWeather, setCurrentWeather] = useState("Sunny");
 
   // Environment settings
-  const [timeOfDay, setTimeOfDay] = useState("morning")
-  const [season, setSeason] = useState("spring")
+  const [timeOfDay, setTimeOfDay] = useState("morning");
+  const [season, setSeason] = useState("spring");
 
   // Toggle between environment and pet stats views
-  const [activeView, setActiveView] = useState("environment")
+  const [activeView, setActiveView] = useState("environment");
 
   // Habit state
-  const [habits, setHabits] = useState([])
+  const [habits, setHabits] = useState([]);
 
   // Load profile data on component mount
   useEffect(() => {
@@ -111,18 +111,18 @@ export default function DashboardRedesign() {
         const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
           method: "GET",
           credentials: "include",
-        })
+        });
 
         if (!response.ok) {
           if (response.status === 401) {
-            navigate('/login')
-            return
+            navigate('/login');
+            return;
           }
-          throw new Error("Failed to fetch profile data")
+          throw new Error("Failed to fetch profile data");
         }
 
-        const { data } = await response.json()
-        setProfile(data)
+        const { data } = await response.json();
+        setProfile(data);
 
         // Initialize habits from backend data (you'll need to create this endpoint)
         // For now, using sample habits
@@ -130,75 +130,106 @@ export default function DashboardRedesign() {
           { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
           { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
           { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
-        ])
+        ]);
 
-        setLoading(false)
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching profile:", err)
-        setError(err.message)
-        setLoading(false)
+        console.error("Error fetching profile:", err);
+        setError(err.message);
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProfileData()
-  }, [navigate])
+    fetchProfileData();
+  }, [navigate]);
+
+  // Check if the user has a pet
+  useEffect(() => {
+    const checkPetStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-pet`, {
+          method: "GET",
+          credentials: "include", // Include cookies for session management
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (!data.has_pet) {
+            // Redirect to pet creation if the user doesn't have a pet
+            navigate("/petcreation");
+          } else {
+            setLoading(false); // Stop loading if the user has a pet
+          }
+        } else {
+          console.error("Error checking pet status:", data.message);
+          setError(data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching pet status:", err);
+        setError("An unexpected error occurred.");
+      }
+    };
+
+    checkPetStatus();
+  }, [navigate]);
 
   // Update time in real-time
   useEffect(() => {
     // Function to format the current time and date
     const updateTime = () => {
-      const now = new Date()
-      let hours = now.getHours()
-      const minutes = now.getMinutes().toString().padStart(2, "0")
-      const ampm = hours >= 12 ? "PM" : "AM"
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
 
       // Convert to 12-hour format
-      hours = hours % 12
-      hours = hours ? hours : 12 // the hour '0' should be '12'
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
 
-      setCurrentTime(`${hours}:${minutes} ${ampm}`)
+      setCurrentTime(`${hours}:${minutes} ${ampm}`);
 
       // Set current date
-      const options = { year: 'numeric', month: 'numeric', day: 'numeric' }
-      setCurrentDate(now.toLocaleDateString(undefined, options))
+      const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+      setCurrentDate(now.toLocaleDateString(undefined, options));
 
       // Update timeOfDay based on current hour
-      const currentHour = now.getHours()
+      const currentHour = now.getHours();
 
       if (currentHour >= 0 && currentHour < 3) {
-        setTimeOfDay("midnight")
+        setTimeOfDay("midnight");
       } else if (currentHour >= 3 && currentHour < 5) {
-        setTimeOfDay("predawn")
+        setTimeOfDay("predawn");
       } else if (currentHour >= 5 && currentHour < 6) {
-        setTimeOfDay("dawn")
+        setTimeOfDay("dawn");
       } else if (currentHour >= 6 && currentHour < 7) {
-        setTimeOfDay("sunrise")
+        setTimeOfDay("sunrise");
       } else if (currentHour >= 7 && currentHour < 11) {
-        setTimeOfDay("morning")
+        setTimeOfDay("morning");
       } else if (currentHour >= 11 && currentHour < 13) {
-        setTimeOfDay("noon")
+        setTimeOfDay("noon");
       } else if (currentHour >= 13 && currentHour < 17) {
-        setTimeOfDay("afternoon")
+        setTimeOfDay("afternoon");
       } else if (currentHour >= 17 && currentHour < 19) {
-        setTimeOfDay("evening")
+        setTimeOfDay("evening");
       } else if (currentHour >= 19 && currentHour < 20) {
-        setTimeOfDay("sunset")
+        setTimeOfDay("sunset");
       } else if (currentHour >= 20 && currentHour < 21) {
-        setTimeOfDay("twilight")
+        setTimeOfDay("twilight");
       } else {
-        setTimeOfDay("night")
+        setTimeOfDay("night");
       }
 
       // Set season based on month
-      const month = now.getMonth() // 0-11
+      const month = now.getMonth(); // 0-11
       if (month >= 2 && month <= 4) {
-        setSeason("spring")
+        setSeason("spring");
       } else if (month >= 5 && month <= 7) {
-        setSeason("summer")
+        setSeason("summer");
       } else if (month >= 8 && month <= 10) {
-        setSeason("autumn")
+        setSeason("autumn");
       } else {
-        setSeason("winter")
+        setSeason("winter");
       }
 
       // Determine how often to check time
@@ -230,10 +261,10 @@ export default function DashboardRedesign() {
       }
 
       return nextInterval;
-    }
+    };
 
     // Update time immediately
-    let nextCheckDelay = updateTime()
+    let nextCheckDelay = updateTime();
 
     // Use a recursive setTimeout instead of setInterval to allow dynamic timing
     let timeoutId = setTimeout(function checkTime() {
@@ -242,11 +273,11 @@ export default function DashboardRedesign() {
     }, nextCheckDelay);
 
     return () => clearTimeout(timeoutId);
-  }, [])
+  }, []);
 
   // Calculate completed habits
-  const completedHabits = habits.filter((habit) => habit.completed).length
-  const totalHabits = habits.length
+  const completedHabits = habits.filter((habit) => habit.completed).length;
+  const totalHabits = habits.length;
 
   // Get pet image based on type
   const getPetImage = (petType) => {
@@ -259,51 +290,51 @@ export default function DashboardRedesign() {
       case 'bat': return pixelBat;
       default: return pixelCat;
     }
-  }
+  };
 
   const toggleHabitCompletion = (id) => {
-    setHabits(habits.map((habit) => (habit.id === id ? { ...habit, completed: !habit.completed } : habit)))
+    setHabits(habits.map((habit) => (habit.id === id ? { ...habit, completed: !habit.completed } : habit)));
     // TODO: Add API call to update habit completion status
-  }
+  };
 
   const deleteHabit = (id) => {
-    setHabits(habits.filter((habit) => habit.id !== id))
+    setHabits(habits.filter((habit) => habit.id !== id));
     // TODO: Add API call to delete habit
-  }
+  };
 
   const addHabit = (newHabit) => {
     setHabits([...habits, newHabit]);
     // TODO: Add API call to create habit
-  }
+  };
 
   const editHabit = (id, newName) => {
     setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
     // TODO: Add API call to update habit
-  }
+  };
 
   const toggleSettings = () => {
-    setShowSettings(!showSettings)
-  }
+    setShowSettings(!showSettings);
+  };
 
   const handleSaveSettings = () => {
     // TODO: Add API call to save settings
-    setShowSettings(false)
-  }
+    setShowSettings(false);
+  };
 
   const handleResetSettings = () => {
     // TODO: Add API call to reset settings
-  }
+  };
 
   const handleToggleView = (view) => {
-    setActiveView(view)
-  }
+    setActiveView(view);
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500"></div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -311,22 +342,22 @@ export default function DashboardRedesign() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-red-500">Error: {error}</div>
       </div>
-    )
+    );
   }
 
-  const petName = profile?.pet?.name || "No Pet"
-  const petType = profile?.pet?.type || "Cat"
-  const petLevel = profile?.pet?.lvl || 0
+  const petName = profile?.pet?.name || "No Pet";
+  const petType = profile?.pet?.type || "Cat";
+  const petLevel = profile?.pet?.lvl || 0;
   const petStats = {
     happiness: profile?.pet?.happiness || 50,
     energy: profile?.pet?.energy || 50, // Not in your schema, fallback value
     health: profile?.pet?.health || 100
-  }
-  const userName = profile?.user?.display_name || "User"
-  const streak = profile?.stats?.current_streak || 0
+  };
+  const userName = profile?.user?.display_name || "User";
+  const streak = profile?.stats?.current_streak || 0;
 
-  const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />
-  const petImage = getPetImage(petType)
+  const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />;
+  const petImage = getPetImage(petType);
 
   return (
     <Layout userName={userName} onToggleSettings={toggleSettings}>
@@ -417,5 +448,5 @@ export default function DashboardRedesign() {
         />
       </div>
     </Layout>
-  )
+  );
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -32,25 +32,25 @@ import {
   Eye,
   EyeOff,
   Calendar,
-} from "lucide-react"
+} from "lucide-react";
 
 // Import images
-import catGif from "../../assets/pets/pixel-cat.gif"
-import dogGif from "../../assets/pets/pixel-dog.gif"
-import batGif from "../../assets/pets/pixel-bat.gif"
-import duckGif from "../../assets/pets/pixel-duck.gif"
-import rainyBg from "../../assets/pet_bg/rainy.gif"
+import catGif from "../../assets/pets/pixel-cat.gif";
+import dogGif from "../../assets/pets/pixel-dog.gif";
+import batGif from "../../assets/pets/pixel-bat.gif";
+import duckGif from "../../assets/pets/pixel-duck.gif";
+import rainyBg from "../../assets/pet_bg/rainy.gif";
 // Import time of day backgrounds
-import predawnNight from "../../assets/timeofday/predawn-night.jpg"
-import dawn from "../../assets/timeofday/dawn.png"
-import sunrise from "../../assets/timeofday/sunrise.png"
-import morning from "../../assets/timeofday/morning.webp"
-import noon from "../../assets/timeofday/noon.png"
-import afternoon from "../../assets/timeofday/afternoon.png"
-import evening from "../../assets/timeofday/evening.png"
-import sunset from "../../assets/timeofday/sunset.png"
-import twilight from "../../assets/timeofday/twlight.webp"
-import midnight from "../../assets/timeofday/midnight.webp"
+import predawnNight from "../../assets/timeofday/predawn-night.jpg";
+import dawn from "../../assets/timeofday/dawn.png";
+import sunrise from "../../assets/timeofday/sunrise.png";
+import morning from "../../assets/timeofday/morning.webp";
+import noon from "../../assets/timeofday/noon.png";
+import afternoon from "../../assets/timeofday/afternoon.png";
+import evening from "../../assets/timeofday/evening.png";
+import sunset from "../../assets/timeofday/sunset.png";
+import twilight from "../../assets/timeofday/twlight.webp";
+import midnight from "../../assets/timeofday/midnight.webp";
 
 /**
  * @typedef {Object} Habit
@@ -60,31 +60,31 @@ import midnight from "../../assets/timeofday/midnight.webp"
  */
 
 export default function MobileDashboard() {
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState("home")
-  const [showMenu, setShowMenu] = useState(false)
-  const [userName, setUserName] = useState("User")
-  const [currentTime, setCurrentTime] = useState("")
-  const [currentDate, setCurrentDate] = useState("")
-  const [currentWeather, setCurrentWeather] = useState("Sunny")
-  const [timeOfDay, setTimeOfDay] = useState("afternoon")
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("home");
+  const [showMenu, setShowMenu] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [currentTime, setCurrentTime] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentWeather, setCurrentWeather] = useState("Sunny");
+  const [timeOfDay, setTimeOfDay] = useState("afternoon");
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
     { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
     { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
-  ])
-  const [streak, setStreak] = useState(0)
+  ]);
+  const [streak, setStreak] = useState(0);
   const [petStats, setPetStats] = useState({
     happiness: 50,
     energy: 0,
     health: 100,
-  })
-  const [petName, setPetName] = useState("No Pet")
-  const [petType, setPetType] = useState("cat")
-  const [petLevel, setPetLevel] = useState(0)
-  const [season, setSeason] = useState("spring")
-  const [showShareModal, setShowShareModal] = useState(false)
-  const [showPetStats, setShowPetStats] = useState(true)
+  });
+  const [petName, setPetName] = useState("No Pet");
+  const [petType, setPetType] = useState("cat");
+  const [petLevel, setPetLevel] = useState(0);
+  const [season, setSeason] = useState("spring");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showPetStats, setShowPetStats] = useState(true);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitRecurrence, setNewHabitRecurrence] = useState("daily");
   const [isAdding, setIsAdding] = useState(false);
@@ -100,6 +100,37 @@ export default function MobileDashboard() {
   const [longitude, setLongitude] = useState("");
   const [accuracy, setAccuracy] = useState(null);
 
+  // Check if the user has a pet
+  useEffect(() => {
+    const checkPetStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-pet`, {
+          method: "GET",
+          credentials: "include", // Include cookies for session management
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (!data.has_pet) {
+            // Redirect to pet creation if the user doesn't have a pet
+            navigate("/petcreation");
+          } else {
+            setLoading(false); // Stop loading if the user has a pet
+          }
+        } else {
+          console.error("Error checking pet status:", data.message);
+          setError(data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching pet status:", err);
+        setError("An unexpected error occurred.");
+      }
+    };
+
+    checkPetStatus();
+  }, [navigate]);
+
   // Load profile data from the API
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -107,7 +138,7 @@ export default function MobileDashboard() {
         const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
           method: "GET",
           credentials: "include",
-        })
+        });
 
         if (!response.ok) {
           if (response.status === 401) {
