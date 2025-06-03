@@ -65,27 +65,47 @@ export default function SignupPage() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      // This would be replaced with your actual signup API call
-      console.log("Signing up with:", formData)
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json();
 
-      // Redirect to loading page after successful signup with fromSignup parameter
-      navigate("/loading?fromSignup=true")
+      if (response.ok) {
+        console.log("Signup successful:", data);
+        navigate("/loading?fromSignup=true");
+      } else {
+        console.error("Signup failed:", data.message);
+        setErrors((prev) => ({
+          ...prev,
+          email: data.message,
+        }));
+      }
     } catch (error) {
-      console.error("Signup error:", error)
+      console.error("Signup error:", error);
+      setErrors((prev) => ({
+        ...prev,
+        email: "An unexpected error occurred.",
+      }));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleGoogleSignup = async () => {
     try {
@@ -266,4 +286,4 @@ export default function SignupPage() {
       </main>
     </div>
   )
-} 
+}

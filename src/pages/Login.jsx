@@ -60,28 +60,44 @@ export default function LoginPage() {
 
   // login form submit
   const handleLogin = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!checkForm()) return
+    if (!checkForm()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      // fake login - will replace with real API later
-      console.log("Logging in with:", loginInfo)
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/authenticate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginInfo),
+        credentials: "include", // Include cookies for session management
+      });
 
-      // pretend API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json();
 
-      // go to loading page
-      navigate("/loading")
+      if (response.ok) {
+        console.log("Login successful:", data);
+        navigate("/loading");
+      } else {
+        console.error("Login failed:", data.message);
+        setErrorMsgs((prev) => ({
+          ...prev,
+          email: data.message,
+        }));
+      }
     } catch (error) {
-      console.error("Login error:", error)
-      // should handle this better but whatever
+      console.error("Login error:", error);
+      setErrorMsgs((prev) => ({
+        ...prev,
+        email: "An unexpected error occurred.",
+      }));
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // google login - not implemented yet
   const loginWithGoogle = async () => {
@@ -252,4 +268,4 @@ export default function LoginPage() {
       </main>
     </div>
   )
-} 
+}
