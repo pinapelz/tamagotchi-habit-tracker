@@ -70,9 +70,11 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
 
       setLocationError(null)
       console.log("Location updated successfully.")
+      window.location.reload()
     } catch (err) {
       console.error("Error sending location to API:", err)
-      setLocationError("Failed to update location manually.")
+      alert("Failed to update location manually");
+      setLocationError("Failed to update location manually. Ensure your inputs are valid latitude and longitude coordinates");
     }
   }
 
