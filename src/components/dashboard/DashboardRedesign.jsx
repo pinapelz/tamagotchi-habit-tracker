@@ -14,6 +14,11 @@ import pixelCat from "../../assets/pets/pixel-cat.gif";
 import pixelBat from "../../assets/pets/pixel-bat.gif";
 import pixelDuck from "../../assets/pets/pixel-duck.gif";
 import pixelDog from "../../assets/pets/pixel-dog.gif";
+import rainyBg from "../../assets/weather_bg/rainy.gif";
+import cloudyBg from "../../assets/weather_bg/cloudy.gif";
+import snowBg from "../../assets/weather_bg/snow.png";
+import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
+import windyBg from "../../assets/weather_bg/windy.gif";
 
 export default function DashboardRedesign() {
   const navigate = useNavigate();
@@ -93,6 +98,7 @@ export default function DashboardRedesign() {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   const [currentWeather, setCurrentWeather] = useState("Sunny");
+  const [weatherImage, setWeatherImage] = useState(sunnyBg);
 
   // Environment settings
   const [timeOfDay, setTimeOfDay] = useState("morning");
@@ -329,6 +335,50 @@ export default function DashboardRedesign() {
     setActiveView(view);
   };
 
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const weather = data.weather;
+
+        setCurrentWeather(weather);
+
+        switch (weather.toLowerCase()) {
+          case "rainy":
+            setWeatherImage(rainyBg);
+            break;
+          case "cloudy":
+            setWeatherImage(cloudyBg);
+            break;
+          case "snowy":
+            setWeatherImage(snowBg);
+            break;
+          case "sunny":
+            setWeatherImage(sunnyBg);
+            break;
+          case "windy":
+            setWeatherImage(windyBg);
+            break;
+          default:
+            setWeatherImage(sunnyBg);
+        }
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -400,7 +450,7 @@ export default function DashboardRedesign() {
                     seasonIcon={getSeasonIcon(season)}
                     season={season}
                     currentWeather={currentWeather}
-                    weatherImage={null}
+                    weatherImage={weatherImage}
                   />
                 ) : (
                   <PetStats

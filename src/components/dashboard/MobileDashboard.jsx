@@ -39,7 +39,11 @@ import catGif from "../../assets/pets/pixel-cat.gif";
 import dogGif from "../../assets/pets/pixel-dog.gif";
 import batGif from "../../assets/pets/pixel-bat.gif";
 import duckGif from "../../assets/pets/pixel-duck.gif";
-import rainyBg from "../../assets/pet_bg/rainy.gif";
+import rainyBg from "../../assets/weather_bg/rainy.gif";
+import cloudyBg from "../../assets/weather_bg/cloudy.gif";
+import snowBg from "../../assets/weather_bg/snow.png";
+import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
+import windyBg from "../../assets/weather_bg/windy.gif";
 // Import time of day backgrounds
 import predawnNight from "../../assets/timeofday/predawn-night.jpg";
 import dawn from "../../assets/timeofday/dawn.png";
@@ -67,6 +71,7 @@ export default function MobileDashboard() {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   const [currentWeather, setCurrentWeather] = useState("Sunny");
+  const [weatherImage, setWeatherImage] = useState(sunnyBg);
   const [timeOfDay, setTimeOfDay] = useState("afternoon");
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
@@ -537,6 +542,51 @@ export default function MobileDashboard() {
     }
   };
 
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const weather = data.weather;
+
+        setCurrentWeather(weather);
+
+        switch (weather.toLowerCase()) {
+          case "rainy":
+            setWeatherImage(rainyBg);
+            break;
+          case "cloudy":
+            setWeatherImage(cloudyBg);
+            break;
+          case "snowy":
+            setWeatherImage(snowBg);
+            break;
+          case "sunny":
+            setWeatherImage(sunnyBg);
+            break;
+          case "windy":
+            setWeatherImage(windyBg);
+            break;
+          default:
+            setWeatherImage(sunnyBg);
+        }
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -568,7 +618,6 @@ export default function MobileDashboard() {
         <div className="flex items-center gap-2">
           {getWeatherIcon()}
           <span className="text-sm font-sniglet">{currentWeather}</span>
-          <span className="text-sm font-sniglet border-l border-gray-300 pl-2">{currentTime}</span>
         </div>
       </header>
 
@@ -747,10 +796,10 @@ export default function MobileDashboard() {
               className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-2xl overflow-hidden relative"
               style={{ height: "280px" }}
             >
-              {/* Rainy GIF Background */}
+              {/* Weather Background */}
               <div className="absolute inset-0 z-0">
                 <img
-                  src={rainyBg}
+                  src={weatherImage}
                   alt="Weather"
                   className="w-full h-full object-cover"
                 />
