@@ -1,9 +1,16 @@
-import { useState, useRef, useEffect } from 'react'
-import { Pencil, Trash2, Share2, Plus, Check, Calendar } from "lucide-react"
-import ShareModal from '../ShareModal'
+import { useState, useRef, useEffect } from "react";
+import { Pencil, Trash2, Share2, Plus, Check, Calendar } from "lucide-react";
+import ShareModal from "../ShareModal";
 
-export default function HabitTracker({ habits, currentDate, toggleHabitCompletion, deleteHabit, addHabit, editHabit }) {
-  const [showShareModal, setShowShareModal] = useState(false)
+export default function HabitTracker({
+  habits,
+  currentDate,
+  toggleHabitCompletion,
+  deleteHabit,
+  addHabit,
+  editHabit,
+}) {
+  const [showShareModal, setShowShareModal] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitRecurrence, setNewHabitRecurrence] = useState("daily");
   const [isAdding, setIsAdding] = useState(false);
@@ -14,33 +21,33 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
   const editFormRef = useRef(null);
 
   const toggleHabit = (id) => {
-    toggleHabitCompletion(id)
-  }
+    toggleHabitCompletion(id);
+  };
 
   const resetAddHabitForm = () => {
     setNewHabitName("");
     setNewHabitRecurrence("daily");
     setIsAdding(false);
-  }
+  };
 
   const resetEditHabitForm = () => {
     setEditHabitId(null);
     setEditHabitName("");
     setEditHabitRecurrence("daily");
-  }
+  };
 
   const openEditHabitForm = (habit) => {
     setEditHabitId(habit.id);
     setEditHabitName(habit.name);
     setEditHabitRecurrence(habit.recurrence || "daily");
-  }
+  };
 
   const saveEditedHabit = () => {
     if (editHabitName.trim() !== "") {
       editHabit(editHabitId, editHabitName.trim(), editHabitRecurrence);
       resetEditHabitForm();
     }
-  }
+  };
 
   // Close add popup when clicking outside
   useEffect(() => {
@@ -81,7 +88,7 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
           <h2 className="text-xl font-medium">Habit Tracker</h2>
           <p className="font-sniglet text-sm text-gray-600">{currentDate}</p>
         </div>
-        <button 
+        <button
           className="bg-[#5dd6e8] text-black px-3 py-1.5 rounded-full font-sniglet text-sm flex items-center"
           onClick={() => setShowShareModal(true)}
         >
@@ -95,7 +102,7 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
         <div className="h-full overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
           <ul className="space-y-3">
             {habits.map((habit) => (
-              <li 
+              <li
                 key={habit.id}
                 className="group bg-white/50 rounded-lg overflow-hidden"
               >
@@ -104,35 +111,42 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                     onClick={() => toggleHabit(habit.id)}
                     className="flex items-center gap-3 flex-1 text-left"
                   >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      habit.completed 
-                        ? 'bg-green-500 border-green-500' 
-                        : 'border-gray-300 group-hover:border-gray-400'
-                    }`}>
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        habit.completed
+                          ? "bg-green-500 border-green-500"
+                          : "border-gray-300 group-hover:border-gray-400"
+                      }`}
+                    >
                       {habit.completed && (
                         <Check size={16} className="text-white" />
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className={`text-gray-700 ${habit.completed ? 'text-gray-400' : ''}`}>
+                      <span
+                        className={`text-gray-700 ${
+                          habit.completed ? "text-gray-400" : ""
+                        }`}
+                      >
                         {habit.name}
                       </span>
                       {habit.recurrence && (
                         <span className="text-xs text-gray-500 flex items-center">
                           <Calendar size={12} className="mr-1" />
-                          {habit.recurrence.charAt(0).toUpperCase() + habit.recurrence.slice(1)}
+                          {habit.recurrence.charAt(0).toUpperCase() +
+                            habit.recurrence.slice(1)}
                         </span>
                       )}
                     </div>
                   </button>
                   <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
+                    <button
                       className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                       onClick={() => openEditHabitForm(habit)}
                     >
                       <Pencil size={16} className="text-gray-600" />
                     </button>
-                    <button 
+                    <button
                       className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -162,14 +176,17 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       {/* Add Habit Popup */}
       {isAdding && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div 
+          <div
             ref={formRef}
             className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md animate-fadeIn"
           >
             <h3 className="text-lg font-medium mb-3">Add New Habit</h3>
             <div className="space-y-3">
               <div>
-                <label htmlFor="habitName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="habitName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Habit name
                 </label>
                 <input
@@ -182,9 +199,12 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                   autoFocus
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="recurrence" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="recurrence"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Recurrence
                 </label>
                 <select
@@ -200,10 +220,10 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                   <option value="weekends">Weekends only</option>
                 </select>
               </div>
-              
+
               <div className="flex gap-2 justify-end pt-2">
-                <button 
-                  onClick={resetAddHabitForm} 
+                <button
+                  onClick={resetAddHabitForm}
                   className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
                 >
                   Cancel
@@ -215,7 +235,7 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                         id: Date.now().toString(),
                         name: newHabitName.trim(),
                         recurrence: newHabitRecurrence,
-                        completed: false
+                        completed: false,
                       };
                       addHabit(newHabit);
                       resetAddHabitForm();
@@ -234,14 +254,17 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       {/* Edit Habit Popup */}
       {editHabitId && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div 
+          <div
             ref={editFormRef}
             className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md animate-fadeIn"
           >
             <h3 className="text-lg font-medium mb-3">Edit Habit</h3>
             <div className="space-y-3">
               <div>
-                <label htmlFor="editHabitName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="editHabitName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Habit name
                 </label>
                 <input
@@ -254,9 +277,12 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                   autoFocus
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="editRecurrence" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="editRecurrence"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Recurrence
                 </label>
                 <select
@@ -265,15 +291,17 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
                   onChange={(e) => setEditHabitRecurrence(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
                 >
-                  <option value="daily">Hourly</option>
-                  <option value="weekly">Daily</option>
-                  <option value="monthly">Weekly</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="weekdays">Weekdays only</option>
+                  <option value="weekends">Weekends only</option>
                 </select>
               </div>
-              
+
               <div className="flex gap-2 justify-end pt-2">
-                <button 
-                  onClick={resetEditHabitForm} 
+                <button
+                  onClick={resetEditHabitForm}
                   className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
                 >
                   Cancel
@@ -291,7 +319,10 @@ export default function HabitTracker({ habits, currentDate, toggleHabitCompletio
       )}
 
       {/* Share Modal */}
-      <ShareModal show={showShareModal} onClose={() => setShowShareModal(false)} />
+      <ShareModal
+        show={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
-  )
+  );
 }
