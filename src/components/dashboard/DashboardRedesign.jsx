@@ -9,7 +9,11 @@ import DisplayToggle from "./DisplayToggle";
 import HabitTracker from "./HabitTracker";
 import ProgressBar from "./ProgressBar";
 import Layout from "../layout/Layout";
-import { getTimeOfDayIcon, getWeatherIcon, getSeasonIcon } from "./WeatherUtils";
+import {
+  getTimeOfDayIcon,
+  getWeatherIcon,
+  getSeasonIcon,
+} from "./WeatherUtils";
 import pixelCat from "../../assets/pets/pixel-cat.gif";
 import pixelBat from "../../assets/pets/pixel-bat.gif";
 import pixelDuck from "../../assets/pets/pixel-duck.gif";
@@ -30,10 +34,13 @@ export default function DashboardRedesign() {
 
   const checkAndSetLocation = async () => {
     try {
-      const hasLocationResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-location`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const hasLocationResponse = await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/has-location`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
 
       if (!hasLocationResponse.ok) {
         throw new Error("Failed to check location status.");
@@ -64,14 +71,17 @@ export default function DashboardRedesign() {
         const { latitude, longitude, accuracy } = position.coords;
 
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ latitude, longitude, accuracy }),
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_API_DOMAIN}/api/set-location`,
+            {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ latitude, longitude, accuracy }),
+            }
+          );
 
           if (!response.ok) {
             throw new Error("Failed to update location.");
@@ -85,7 +95,9 @@ export default function DashboardRedesign() {
       },
       (error) => {
         console.error("Error getting geolocation:", error);
-        setLocationError("Unable to retrieve your location. Please manually set it in settings");
+        setLocationError(
+          "Unable to retrieve your location. Please manually set it in settings"
+        );
       }
     );
   };
@@ -110,42 +122,49 @@ export default function DashboardRedesign() {
   // Habit state
   const [habits, setHabits] = useState([]);
 
-  // Load profile data on component mount
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/profile`,
+        {
           method: "GET",
           credentials: "include",
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            navigate('/login');
-            return;
-          }
-          throw new Error("Failed to fetch profile data");
         }
+      );
 
-        const { data } = await response.json();
-        setProfile(data);
-
-        // Initialize habits from backend data (you'll need to create this endpoint)
-        // For now, using sample habits
-        setHabits([
-          { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
-          { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
-          { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
-        ]);
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        setError(err.message);
-        setLoading(false);
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/login");
+          return;
+        }
+        throw new Error("Failed to fetch profile data");
       }
-    };
 
+      const { data } = await response.json();
+      setProfile(data);
+
+      // Initialize habits from backend data (you'll need to create this endpoint)
+      // For now, using sample habits
+      const habitsRes = await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/habits`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      const habitsData = await habitsRes.json();
+      setHabits(habitsData);
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  // Load profile data on component mount
+  useEffect(() => {
     fetchProfileData();
   }, [navigate]);
 
@@ -153,10 +172,13 @@ export default function DashboardRedesign() {
   useEffect(() => {
     const checkPetStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-pet`, {
-          method: "GET",
-          credentials: "include", // Include cookies for session management
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_DOMAIN}/api/has-pet`,
+          {
+            method: "GET",
+            credentials: "include", // Include cookies for session management
+          }
+        );
 
         const data = await response.json();
 
@@ -196,7 +218,7 @@ export default function DashboardRedesign() {
       setCurrentTime(`${hours}:${minutes} ${ampm}`);
 
       // Set current date
-      const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+      const options = { year: "numeric", month: "numeric", day: "numeric" };
       setCurrentDate(now.toLocaleDateString(undefined, options));
 
       // Update timeOfDay based on current hour
@@ -245,17 +267,17 @@ export default function DashboardRedesign() {
       const transitions = [0, 3, 5, 6, 7, 11, 13, 17, 19, 20, 21, 23];
 
       // Check if we're near any transition (1 minute before or after)
-      const isNearTransition = transitions.some(hour => {
+      const isNearTransition = transitions.some((hour) => {
         if (currentHour === hour && minutes <= 1) return true;
-        const prevHour = (hour === 0) ? 23 : hour - 1;
+        const prevHour = hour === 0 ? 23 : hour - 1;
         if (currentHour === prevHour && minutes >= 59) return true;
         return false;
       });
 
       // Check if we're approaching a transition (10 minutes before or after)
-      const isApproachingTransition = transitions.some(hour => {
+      const isApproachingTransition = transitions.some((hour) => {
         if (currentHour === hour && minutes <= 10) return true;
-        const prevHour = (hour === 0) ? 23 : hour - 1;
+        const prevHour = hour === 0 ? 23 : hour - 1;
         if (currentHour === prevHour && minutes >= 50) return true;
         return false;
       });
@@ -281,41 +303,148 @@ export default function DashboardRedesign() {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Calculate completed habits
-  const completedHabits = habits.filter((habit) => habit.completed).length;
-  const totalHabits = habits.length;
+  // Calculate completed habits OLD CODE
+  //const completedHabits = habits.filter((habit) => habit.completed).length;
+  //const totalHabits = habits.length;
+
+  //NEW COMPLETED HABITS LOGIC
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+  const todayDate = today.getDate(); // 1-31
+
+  const isHabitCompletedToday = (habit) => {
+    if (!habit.last_completed_at) return false;
+
+    const completedDate = new Date(habit.last_completed_at);
+    const today = new Date();
+
+    return (
+      completedDate.getFullYear() === today.getFullYear() &&
+      completedDate.getMonth() === today.getMonth() &&
+      completedDate.getDate() === today.getDate()
+    );
+  };
+
+  const isHabitDueToday = (habit) => {
+    const type = habit.recurrence;
+    if (!type) return false;
+
+    switch (type) {
+      case "daily":
+        return true;
+      case "weekdays":
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
+      case "weekends":
+        return dayOfWeek === 0 || dayOfWeek === 6;
+      case "weekly": {
+        // Run weekly habit on same day of the week as it was created
+        const created = new Date(habit.created_at);
+        return created.getDay() === dayOfWeek;
+      }
+      case "monthly": {
+        // Run monthly habit on the same day of the month as it was created
+        const created = new Date(habit.created_at);
+        return created.getDate() === todayDate;
+      }
+      default:
+        return false;
+    }
+  };
+
+  const todaysHabits = habits.filter(isHabitDueToday);
+  const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+  const totalHabits = todaysHabits.length;
 
   // Get pet image based on type
   const getPetImage = (petType) => {
     if (!petType) return pixelCat; // Default to cat
 
     switch (petType.toLowerCase()) {
-      case 'cat': return pixelCat;
-      case 'dog': return pixelDog;
-      case 'duck': return pixelDuck;
-      case 'bat': return pixelBat;
-      default: return pixelCat;
+      case "cat":
+        return pixelCat;
+      case "dog":
+        return pixelDog;
+      case "duck":
+        return pixelDuck;
+      case "bat":
+        return pixelBat;
+      default:
+        return pixelCat;
     }
   };
 
-  const toggleHabitCompletion = (id) => {
-    setHabits(habits.map((habit) => (habit.id === id ? { ...habit, completed: !habit.completed } : habit)));
-    // TODO: Add API call to update habit completion status
+  const toggleHabitCompletion = async (id) => {
+    setHabits(
+      habits.map((habit) =>
+        habit.id === id ? { ...habit, completed: !habit.completed } : habit
+      )
+    );
+
+    try {
+      await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}/complete`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      fetchProfileData(); // refetch latest habit status
+    } catch (err) {
+      console.error("Failed to mark habit complete", err);
+    }
   };
 
-  const deleteHabit = (id) => {
+  const deleteHabit = async (id) => {
     setHabits(habits.filter((habit) => habit.id !== id));
     // TODO: Add API call to delete habit
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+    if (res.ok) fetchProfileData();
   };
 
-  const addHabit = (newHabit) => {
+  const addHabit = async (newHabit) => {
     setHabits([...habits, newHabit]);
-    // TODO: Add API call to create habit
+
+    const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newHabit.name,
+        recurrence: newHabit.recurrence,
+      }),
+    });
+    if (res.ok) fetchProfileData(); // reload habits
   };
 
-  const editHabit = (id, newName) => {
-    setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
-    // TODO: Add API call to update habit
+  const editHabit = async (id, newName, newRecurrence) => {
+    setHabits(
+      habits.map((habit) =>
+        habit.id === id
+          ? { ...habit, name: newName, recurrence: newRecurrence }
+          : habit
+      )
+    );
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`,
+      {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName,
+          recurrence: newRecurrence,
+        }),
+      }
+    );
+    if (res.ok) fetchProfileData();
   };
 
   const toggleSettings = () => {
@@ -338,10 +467,13 @@ export default function DashboardRedesign() {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
-          method: "GET",
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_DOMAIN}/api/weather`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -401,17 +533,22 @@ export default function DashboardRedesign() {
   const petStats = {
     happiness: profile?.pet?.happiness || 50,
     energy: profile?.pet?.energy || 50, // Not in your schema, fallback value
-    health: profile?.pet?.health || 100
+    health: profile?.pet?.health || 100,
   };
   const userName = profile?.user?.display_name || "User";
   const streak = profile?.stats?.current_streak || 0;
 
-  const toggleComponent = <DisplayToggle activeView={activeView} onToggle={handleToggleView} />;
+  const toggleComponent = (
+    <DisplayToggle activeView={activeView} onToggle={handleToggleView} />
+  );
   const petImage = getPetImage(petType);
 
   return (
     <Layout userName={userName} onToggleSettings={toggleSettings}>
-      <div className="relative min-h-screen flex flex-col" style={{ backgroundColor: "#DEF8FB" }}>
+      <div
+        className="relative min-h-screen flex flex-col"
+        style={{ backgroundColor: "#DEF8FB" }}
+      >
         {locationError && (
           <div className="text-red-500 text-center">
             Error with location: {locationError}
@@ -474,6 +611,8 @@ export default function DashboardRedesign() {
               deleteHabit={deleteHabit}
               addHabit={addHabit}
               editHabit={editHabit}
+              isHabitCompletedToday={isHabitCompletedToday}
+              isHabitDueToday={isHabitDueToday}
             />
 
             {/* Progress Section */}
@@ -490,9 +629,9 @@ export default function DashboardRedesign() {
           isOpen={showSettings}
           onClose={toggleSettings}
           userName={userName}
-          setUserName={() => { }} // Would need a function to update userName
+          setUserName={() => {}} // Would need a function to update userName
           theme="light"
-          setTheme={() => { }} // Would need a function to update theme
+          setTheme={() => {}} // Would need a function to update theme
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
         />

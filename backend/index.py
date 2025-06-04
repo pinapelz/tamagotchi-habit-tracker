@@ -594,5 +594,123 @@ def get_weather():
     finally:
         db.close()
 
+@app.route("/api/habits", methods=["GET"])
+def get_habits():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        habits = db.fetchall(
+            "SELECT id, name, recurrence_type AS recurrence, created_at, last_completed_at FROM habits WHERE user_id = %s",
+            (user["id"],)
+        )
+
+        # Optionally mark completion based on whether `last_completed_at` is today
+        today = datetime.utcnow().date()
+        for h in habits:
+            h["completed"] = h["last_completed_at"].date() == today if h["last_completed_at"] else False
+
+        return jsonify(habits), 200
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/habits", methods=["POST"])
+def create_habit():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    name = data.get("name")
+    recurrence = data.get("recurrence")
+
+    if not name or not recurrence:
+        return jsonify({ "status": "error", "message": "Missing name or recurrence" }), 400
+
+    db = create_database_connection()
+    try:
+        db.execute(
+            "INSERT INTO habits (user_id, name, recurrence_type) VALUES (%s, %s, %s)",
+            (user["id"], name, recurrence)
+        )
+        return jsonify({ "status": "ok", "message": "Habit created" }), 201
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/habits/<uuid:habit_id>/complete", methods=["POST"])
+def complete_habit(habit_id):
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        db.execute(
+            "UPDATE habits SET last_completed_at = NOW() WHERE id = %s AND user_id = %s",
+            (str(habit_id), user["id"])
+        )
+        return jsonify({ "status": "ok", "message": "Habit marked complete" }), 200
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/habits/<uuid:habit_id>", methods=["DELETE"])
+def delete_habit(habit_id):
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        db.execute("DELETE FROM habits WHERE id = %s AND user_id = %s", (str(habit_id), user["id"]))
+        return jsonify({ "status": "ok", "message": "Habit deleted" }), 200
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
+    finally:
+        db.close()
+
+@app.route("/api/habits/<uuid:habit_id>", methods=["PUT"])
+def update_habit(habit_id):
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    new_name = data.get("name")
+    new_recurrence = data.get("recurrence")
+
+    if not new_name:
+        return jsonify({ "status": "error", "message": "Missing habit name" }), 400
+
+    db = create_database_connection()
+    try:
+        db.execute(
+            "UPDATE habits SET name = %s, recurrence_type = %s WHERE id = %s AND user_id = %s",
+            (new_name, new_recurrence, str(habit_id), user["id"])
+        )
+        return jsonify({ "status": "ok", "message": "Habit updated" }), 200
+    except Exception as e:
+        return jsonify({ "status": "error", "message": str(e) }), 500
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+
