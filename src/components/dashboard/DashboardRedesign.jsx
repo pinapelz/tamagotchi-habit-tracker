@@ -303,9 +303,57 @@ export default function DashboardRedesign() {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Calculate completed habits
-  const completedHabits = habits.filter((habit) => habit.completed).length;
-  const totalHabits = habits.length;
+  // Calculate completed habits OLD CODE
+  //const completedHabits = habits.filter((habit) => habit.completed).length;
+  //const totalHabits = habits.length;
+
+  //NEW COMPLETED HABITS LOGIC
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+  const todayDate = today.getDate(); // 1-31
+
+  const isHabitCompletedToday = (habit) => {
+    if (!habit.last_completed_at) return false;
+
+    const completedDate = new Date(habit.last_completed_at);
+    const today = new Date();
+
+    return (
+      completedDate.getFullYear() === today.getFullYear() &&
+      completedDate.getMonth() === today.getMonth() &&
+      completedDate.getDate() === today.getDate()
+    );
+  };
+
+  const isHabitDueToday = (habit) => {
+    const type = habit.recurrence;
+    if (!type) return false;
+
+    switch (type) {
+      case "daily":
+        return true;
+      case "weekdays":
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
+      case "weekends":
+        return dayOfWeek === 0 || dayOfWeek === 6;
+      case "weekly": {
+        // Run weekly habit on same day of the week as it was created
+        const created = new Date(habit.created_at);
+        return created.getDay() === dayOfWeek;
+      }
+      case "monthly": {
+        // Run monthly habit on the same day of the month as it was created
+        const created = new Date(habit.created_at);
+        return created.getDate() === todayDate;
+      }
+      default:
+        return false;
+    }
+  };
+
+  const todaysHabits = habits.filter(isHabitDueToday);
+  const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+  const totalHabits = todaysHabits.length;
 
   // Get pet image based on type
   const getPetImage = (petType) => {
@@ -332,14 +380,18 @@ export default function DashboardRedesign() {
       )
     );
 
-    const res = await fetch(
-      `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}/complete`,
-      {
-        method: "PUT",
-        credentials: "include",
-      }
-    );
-    if (res.ok) fetchProfileData();
+    try {
+      await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}/complete`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      fetchProfileData(); // refetch latest habit status
+    } catch (err) {
+      console.error("Failed to mark habit complete", err);
+    }
   };
 
   const deleteHabit = async (id) => {
@@ -559,6 +611,8 @@ export default function DashboardRedesign() {
               deleteHabit={deleteHabit}
               addHabit={addHabit}
               editHabit={editHabit}
+              isHabitCompletedToday={isHabitCompletedToday}
+              isHabitDueToday={isHabitDueToday}
             />
 
             {/* Progress Section */}

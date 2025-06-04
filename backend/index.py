@@ -604,7 +604,7 @@ def get_habits():
     db = create_database_connection()
     try:
         habits = db.fetchall(
-            "SELECT id, name, recurrence_type AS recurrence, last_completed_at FROM habits WHERE user_id = %s",
+            "SELECT id, name, recurrence_type AS recurrence, created_at, last_completed_at FROM habits WHERE user_id = %s",
             (user["id"],)
         )
 
@@ -647,7 +647,7 @@ def create_habit():
         db.close()
 
 
-@app.route("/api/habits/<uuid:habit_id>/complete", methods=["PUT"])
+@app.route("/api/habits/<uuid:habit_id>/complete", methods=["POST"])
 def complete_habit(habit_id):
     session_cookie = request.cookies.get("session")
     error_response, status_code, user = cookie_check(session_cookie)

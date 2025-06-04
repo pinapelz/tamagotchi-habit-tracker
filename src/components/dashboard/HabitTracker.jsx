@@ -9,6 +9,8 @@ export default function HabitTracker({
   deleteHabit,
   addHabit,
   editHabit,
+  isHabitCompletedToday,
+  isHabitDueToday,
 }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
@@ -101,64 +103,72 @@ export default function HabitTracker({
       <div className="h-[calc(100vh-400px)] min-h-[300px] max-h-[500px] mb-4">
         <div className="h-full overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
           <ul className="space-y-3">
-            {habits.map((habit) => (
-              <li
-                key={habit.id}
-                className="group bg-white/50 rounded-lg overflow-hidden"
-              >
-                <div className="flex items-center justify-between p-2.5">
-                  <button
-                    onClick={() => toggleHabit(habit.id)}
-                    className="flex items-center gap-3 flex-1 text-left"
-                  >
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        habit.completed
-                          ? "bg-green-500 border-green-500"
-                          : "border-gray-300 group-hover:border-gray-400"
+            {habits.map((habit) => {
+              const dueToday = isHabitDueToday(habit);
+
+              return (
+                <li
+                  key={habit.id}
+                  className="group bg-white/50 rounded-lg overflow-hidden"
+                >
+                  <div className="flex items-center justify-between p-2.5">
+                    <button
+                      onClick={() => dueToday && toggleHabit(habit.id)}
+                      className={`flex items-center gap-3 flex-1 text-left ${
+                        dueToday
+                          ? "cursor-pointer"
+                          : "opacity-60 cursor-not-allowed"
                       }`}
                     >
-                      {habit.completed && (
-                        <Check size={16} className="text-white" />
-                      )}
-                    </div>
-                    <div className="flex flex-col">
-                      <span
-                        className={`text-gray-700 ${
-                          habit.completed ? "text-gray-400" : ""
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          isHabitCompletedToday(habit)
+                            ? "bg-green-500 border-green-500"
+                            : "border-gray-300 group-hover:border-gray-400"
                         }`}
                       >
-                        {habit.name}
-                      </span>
-                      {habit.recurrence && (
-                        <span className="text-xs text-gray-500 flex items-center">
-                          <Calendar size={12} className="mr-1" />
-                          {habit.recurrence.charAt(0).toUpperCase() +
-                            habit.recurrence.slice(1)}
+                        {isHabitCompletedToday(habit) && (
+                          <Check size={16} className="text-white" />
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span
+                          className={`text-gray-700 ${
+                            isHabitCompletedToday(habit) ? "text-gray-400" : ""
+                          }`}
+                        >
+                          {habit.name}
                         </span>
-                      )}
+                        {habit.recurrence && (
+                          <span className="text-xs text-gray-500 flex items-center">
+                            <Calendar size={12} className="mr-1" />
+                            {habit.recurrence.charAt(0).toUpperCase() +
+                              habit.recurrence.slice(1)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                        onClick={() => openEditHabitForm(habit)}
+                      >
+                        <Pencil size={16} className="text-gray-600" />
+                      </button>
+                      <button
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteHabit(habit.id);
+                        }}
+                      >
+                        <Trash2 size={16} className="text-gray-600" />
+                      </button>
                     </div>
-                  </button>
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                      onClick={() => openEditHabitForm(habit)}
-                    >
-                      <Pencil size={16} className="text-gray-600" />
-                    </button>
-                    <button
-                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteHabit(habit.id);
-                      }}
-                    >
-                      <Trash2 size={16} className="text-gray-600" />
-                    </button>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
