@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import { ChevronDown, ChevronUp, PawPrint, Users, Trophy, Bell, Clock, Star } from "lucide-react";
@@ -6,6 +6,15 @@ import { ChevronDown, ChevronUp, PawPrint, Users, Trophy, Bell, Clock, Star } fr
 export default function Help() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openSection, setOpenSection] = useState(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const faqs = [
     {
