@@ -14,6 +14,8 @@ import NotificationsPage from './pages/NotificationsPage';
 import About from './pages/About';
 import ViewProfile from './pages/ViewProfile';
 import Help from './pages/Help';
+import Settings from './pages/Settings';
+import Logout from './pages/Logout';
 
 export default function App() {
   return (
@@ -32,6 +34,8 @@ export default function App() {
       <Route path="/leaderboard" element={<Leaderboard/>}/>
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/help" element={<Help />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/logout" element={<Logout />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
