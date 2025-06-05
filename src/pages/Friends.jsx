@@ -170,8 +170,8 @@ export default function FriendsPage() {
                     {/* Page Content */}
                     <div className="relative z-10">
                         {/* Header and Search */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                            <h1 className="text-3xl font-sniglet text-[#486085] mb-4 md:mb-0">My Friends</h1>
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+                            <h1 className="text-3xl font-sniglet text-[#486085] mb-4 md:mb-0 text-center md:text-left">My Friends</h1>
 
                             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                 {/* Search Bar */}
