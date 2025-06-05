@@ -1232,15 +1232,15 @@ def update_pet_time():
         new_happiness = max(0, pet["happiness"] - 2)  # Decrease happiness by 2, min 0
         new_health = max(0, pet["health"] - 1)  # Decrease health by 1, min 0
 
-        # Create notifications for low stats
-        if new_happiness < 30:
+        # Create notifications for low stats only when crossing below 30%
+        if new_happiness < 30 and pet["happiness"] >= 30:
             create_notification(
                 db,
                 user["id"],
                 "pet",
                 f"{pet['name']} is feeling sad! Maybe it's time for some attention? 🐾"
             )
-        if new_health < 30:
+        if new_health < 30 and pet["health"] >= 30:
             create_notification(
                 db,
                 user["id"],
