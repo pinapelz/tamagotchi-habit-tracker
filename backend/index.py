@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from database import PostgresHandler
+from .database import PostgresHandler
 from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
