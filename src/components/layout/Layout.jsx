@@ -41,7 +41,7 @@ export default function Layout({ children, userName }) {
   }, []);
 
   const menuItems = [
-    { icon: <Home size={20} />, label: 'Home', href: '/dashboard' },
+    { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <User size={20} />, label: 'Profile', href: '/profile' },
     { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
     { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
