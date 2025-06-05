@@ -13,6 +13,7 @@ import Leaderboard from './pages/Leaderboard';
 import NotificationsPage from './pages/NotificationsPage';
 import About from './pages/About';
 import ViewProfile from './pages/ViewProfile';
+import Help from './pages/Help';
 
 export default function App() {
   return (
@@ -28,9 +29,10 @@ export default function App() {
       <Route path="/profile/:userId" element={<ViewProfile/>}/>
       <Route path="/petcreation" element={<PetCreation/>}/>
       <Route path="/friends" element={<FriendsPage/>}/>
-      <Route path="*" element={<NotFoundPage />} />
       <Route path="/leaderboard" element={<Leaderboard/>}/>
       <Route path="/notifications" element={<NotificationsPage />} />
+      <Route path="/help" element={<Help />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
