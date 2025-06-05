@@ -12,6 +12,7 @@ import FriendsPage from './pages/Friends';
 import Leaderboard from './pages/Leaderboard';
 import NotificationsPage from './pages/NotificationsPage';
 import About from './pages/About';
+import ViewProfile from './pages/ViewProfile';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/loading" element={<Loading />} />
       <Route path="/profile" element={<ProfilePage/>}/>
+      <Route path="/profile/:userId" element={<ViewProfile/>}/>
       <Route path="/petcreation" element={<PetCreation/>}/>
       <Route path="/friends" element={<FriendsPage/>}/>
       <Route path="*" element={<NotFoundPage />} />
