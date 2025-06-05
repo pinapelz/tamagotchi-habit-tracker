@@ -1,6 +1,83 @@
 import { X } from 'lucide-react'
+import { useState } from 'react'
 
 export default function SettingsModal({ isOpen, onClose, userName, setUserName, theme, setTheme, onSave, onReset }) {
+  const [locationError, setLocationError] = useState(null)
+  const [latitude, setLatitude] = useState("")
+  const [longitude, setLongitude] = useState("")
+  const [accuracy, setAccuracy] = useState(null)
+
+  const handleSetLocationAutomatically = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.")
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords
+        setLatitude(latitude)
+        setLongitude(longitude)
+        setAccuracy(accuracy)
+
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ latitude, longitude, accuracy }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to update location.")
+          }
+
+          setLocationError(null)
+          console.log("Location updated successfully.")
+        } catch (err) {
+          console.error("Error sending location to API:", err)
+          setLocationError("Failed to update location automatically.")
+        }
+      },
+      (error) => {
+        console.error("Error getting geolocation:", error)
+        setLocationError("Unable to retrieve your location. Please set it manually.")
+      }
+    )
+  }
+
+  const handleSetLocationManually = async () => {
+    if (!latitude || !longitude) {
+      setLocationError("Please provide both latitude and longitude.")
+      return
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ latitude: parseFloat(latitude), longitude: parseFloat(longitude), accuracy: null }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update location.")
+      }
+
+      setLocationError(null)
+      console.log("Location updated successfully.")
+      window.location.reload()
+    } catch (err) {
+      console.error("Error sending location to API:", err)
+      alert("Failed to update location manually");
+      setLocationError("Failed to update location manually. Ensure your inputs are valid latitude and longitude coordinates");
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -68,11 +145,42 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <label className="text-base font-sniglet w-28 text-gray-700">Change Pet:</label>
-              <button className="bg-[#cbffc6] text-gray-700 px-6 py-2 rounded-full font-sniglet text-base hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]">
-                Choose New Pet
+            {/* Location Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-sniglet text-gray-800">Set Location</h3>
+              {locationError && <div className="text-red-500">{locationError}</div>}
+              <button
+                onClick={handleSetLocationAutomatically}
+                className="bg-[#c8c6ff] text-gray-700 px-6 py-2 rounded-full font-sniglet text-base hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+              >
+                Set Location Automatically
               </button>
+              <div className="relative">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="text"
+                    placeholder="Latitude"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Longitude"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex justify-start">
+                  <button
+                    onClick={handleSetLocationManually}
+                    className="bg-[#cbffc6] text-gray-700 px-6 py-4 rounded-full font-sniglet text-base hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                  >
+                    Set Manually
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-center mt-10">

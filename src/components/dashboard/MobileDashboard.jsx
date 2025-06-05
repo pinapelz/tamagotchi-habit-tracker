@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -32,22 +32,29 @@ import {
   Eye,
   EyeOff,
   Calendar,
-} from "lucide-react"
+} from "lucide-react";
 
 // Import images
-import catGif from "../../assets/pets/pixel-cat.gif"
-import rainyBg from "../../assets/pet_bg/rainy.gif"
+import catGif from "../../assets/pets/pixel-cat.gif";
+import dogGif from "../../assets/pets/pixel-dog.gif";
+import batGif from "../../assets/pets/pixel-bat.gif";
+import duckGif from "../../assets/pets/pixel-duck.gif";
+import rainyBg from "../../assets/weather_bg/rainy.gif";
+import cloudyBg from "../../assets/weather_bg/cloudy.gif";
+import snowBg from "../../assets/weather_bg/snow.png";
+import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
+import windyBg from "../../assets/weather_bg/windy.gif";
 // Import time of day backgrounds
-import predawnNight from "../../assets/timeofday/predawn-night.jpg"
-import dawn from "../../assets/timeofday/dawn.png"
-import sunrise from "../../assets/timeofday/sunrise.png"
-import morning from "../../assets/timeofday/morning.webp"
-import noon from "../../assets/timeofday/noon.png"
-import afternoon from "../../assets/timeofday/afternoon.png"
-import evening from "../../assets/timeofday/evening.png"
-import sunset from "../../assets/timeofday/sunset.png"
-import twilight from "../../assets/timeofday/twlight.webp"
-import midnight from "../../assets/timeofday/midnight.webp"
+import predawnNight from "../../assets/timeofday/predawn-night.jpg";
+import dawn from "../../assets/timeofday/dawn.png";
+import sunrise from "../../assets/timeofday/sunrise.png";
+import morning from "../../assets/timeofday/morning.webp";
+import noon from "../../assets/timeofday/noon.png";
+import afternoon from "../../assets/timeofday/afternoon.png";
+import evening from "../../assets/timeofday/evening.png";
+import sunset from "../../assets/timeofday/sunset.png";
+import twilight from "../../assets/timeofday/twlight.webp";
+import midnight from "../../assets/timeofday/midnight.webp";
 
 /**
  * @typedef {Object} Habit
@@ -57,28 +64,32 @@ import midnight from "../../assets/timeofday/midnight.webp"
  */
 
 export default function MobileDashboard() {
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState("home")
-  const [showMenu, setShowMenu] = useState(false)
-  const [userName, setUserName] = useState("Alex")
-  const [currentTime, setCurrentTime] = useState("")
-  const [currentDate, setCurrentDate] = useState("5/6/2025")
-  const [currentWeather, setCurrentWeather] = useState("Rainy")
-  const [timeOfDay, setTimeOfDay] = useState("afternoon")
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("home");
+  const [showMenu, setShowMenu] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [currentTime, setCurrentTime] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentWeather, setCurrentWeather] = useState("Sunny");
+  const [weatherImage, setWeatherImage] = useState(sunnyBg);
+  const [timeOfDay, setTimeOfDay] = useState("afternoon");
   const [habits, setHabits] = useState([
     { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
     { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
     { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
-  ])
-  const [streak, setStreak] = useState(5)
+  ]);
+  const [streak, setStreak] = useState(0);
   const [petStats, setPetStats] = useState({
-    happiness: 85,
-    energy: 70,
-    health: 90,
-  })
-  const [season, setSeason] = useState("spring")
-  const [showShareModal, setShowShareModal] = useState(false)
-  const [showPetStats, setShowPetStats] = useState(true)
+    happiness: 50,
+    energy: 0,
+    health: 100,
+  });
+  const [petName, setPetName] = useState("No Pet");
+  const [petType, setPetType] = useState("cat");
+  const [petLevel, setPetLevel] = useState(0);
+  const [season, setSeason] = useState("spring");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showPetStats, setShowPetStats] = useState(true);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitRecurrence, setNewHabitRecurrence] = useState("daily");
   const [isAdding, setIsAdding] = useState(false);
@@ -87,6 +98,99 @@ export default function MobileDashboard() {
   const [editHabitName, setEditHabitName] = useState("");
   const [editHabitRecurrence, setEditHabitRecurrence] = useState("daily");
   const editFormRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [accuracy, setAccuracy] = useState(null);
+
+  // Check if the user has a pet
+  useEffect(() => {
+    const checkPetStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/has-pet`, {
+          method: "GET",
+          credentials: "include", // Include cookies for session management
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (!data.has_pet) {
+            // Redirect to pet creation if the user doesn't have a pet
+            navigate("/petcreation");
+          } else {
+            setLoading(false); // Stop loading if the user has a pet
+          }
+        } else {
+          console.error("Error checking pet status:", data.message);
+          setError(data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching pet status:", err);
+        setError("An unexpected error occurred.");
+      }
+    };
+
+    checkPetStatus();
+  }, [navigate]);
+
+  // Load profile data from the API
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login')
+            return
+          }
+          throw new Error("Failed to fetch profile data")
+        }
+
+        const { data } = await response.json()
+        
+        // Set user data from API
+        if (data.user) {
+          setUserName(data.user.display_name || "User")
+        }
+        
+        // Set pet data from API
+        if (data.pet) {
+          setPetName(data.pet.name || "No Pet")
+          setPetType(data.pet.type || "cat")
+          setPetLevel(data.pet.lvl || 0)
+          setPetStats({
+            happiness: data.pet.happiness || 50,
+            energy: data.pet.xp || 0,
+            health: data.pet.health || 100,
+          })
+        }
+        
+        // Set stats data from API
+        if (data.stats) {
+          setStreak(data.stats.current_streak || 0)
+        }
+        
+        setLoading(false)
+      } catch (err) {
+        console.error("Error fetching profile:", err)
+        setError(err.message)
+        setLoading(false)
+      }
+    }
+
+    fetchProfileData()
+    
+    // Set current date
+    const options = { year: 'numeric', month: 'numeric', day: 'numeric' }
+    setCurrentDate(new Date().toLocaleDateString(undefined, options))
+  }, [navigate])
 
   // Update time in real-time
   useEffect(() => {
@@ -129,7 +233,19 @@ export default function MobileDashboard() {
         setTimeOfDay("night")
       }
       
-      // Determine how often to check time based on how close we are to any time transition
+      // Set season based on month
+      const month = now.getMonth() // 0-11
+      if (month >= 2 && month <= 4) {
+        setSeason("spring")
+      } else if (month >= 5 && month <= 7) {
+        setSeason("summer")
+      } else if (month >= 8 && month <= 10) {
+        setSeason("autumn")
+      } else {
+        setSeason("winter")
+      }
+      
+      // Determine how often to check time
       let nextInterval = 60000; // Default is 1 minute
       
       // List of all transition hours
@@ -235,9 +351,21 @@ export default function MobileDashboard() {
       case "summer":
         return <span className="text-base">☀️</span>
       case "fall":
+      case "autumn":
         return <span className="text-base">🍂</span>
       default:
         return <span className="text-base">🌸</span>
+    }
+  }
+  
+  // Get pet image based on type
+  const getPetImage = () => {
+    switch(petType.toLowerCase()) {
+      case 'cat': return catGif;
+      case 'dog': return dogGif;
+      case 'duck': return duckGif;
+      case 'bat': return batGif;
+      default: return catGif; // Default to cat
     }
   }
 
@@ -345,6 +473,136 @@ export default function MobileDashboard() {
     }
   };
 
+  const handleSetLocationAutomatically = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setAccuracy(accuracy);
+
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ latitude, longitude, accuracy }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update location.");
+          }
+
+          setLocationError(null);
+          console.log("Location updated successfully.");
+        } catch (err) {
+          console.error("Error sending location to API:", err);
+          setLocationError("Failed to update location automatically.");
+        }
+      },
+      (error) => {
+        console.error("Error getting geolocation:", error);
+        setLocationError("Unable to retrieve your location. Please set it manually.");
+      }
+    );
+  };
+
+  const handleSetLocationManually = async () => {
+    if (!latitude || !longitude) {
+      setLocationError("Please provide both latitude and longitude.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-location`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ latitude: parseFloat(latitude), longitude: parseFloat(longitude), accuracy: null }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update location.");
+      }
+
+      setLocationError(null);
+      console.log("Location updated successfully.");
+    } catch (err) {
+      console.error("Error sending location to API:", err);
+      setLocationError("Failed to update location manually.");
+    }
+  };
+
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const weather = data.weather;
+
+        setCurrentWeather(weather);
+
+        switch (weather.toLowerCase()) {
+          case "rainy":
+            setWeatherImage(rainyBg);
+            break;
+          case "cloudy":
+            setWeatherImage(cloudyBg);
+            break;
+          case "snowy":
+            setWeatherImage(snowBg);
+            break;
+          case "sunny":
+            setWeatherImage(sunnyBg);
+            break;
+          case "windy":
+            setWeatherImage(windyBg);
+            break;
+          default:
+            setWeatherImage(sunnyBg);
+        }
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#def8fb] flex flex-col">
       {/* Mobile Header */}
@@ -360,7 +618,6 @@ export default function MobileDashboard() {
         <div className="flex items-center gap-2">
           {getWeatherIcon()}
           <span className="text-sm font-sniglet">{currentWeather}</span>
-          <span className="text-sm font-sniglet border-l border-gray-300 pl-2">{currentTime}</span>
         </div>
       </header>
 
@@ -441,20 +698,20 @@ export default function MobileDashboard() {
                 </button>
 
                 <div className={`transition-all duration-300 ${!showPetStats ? 'mt-auto mb-8' : 'mb-3'}`}>
-                  <img src={catGif} alt="Pet" className="w-[100px] h-[100px] object-contain" />
+                  <img src={getPetImage()} alt="Pet" className="w-[100px] h-[100px] object-contain" />
                 </div>
 
                 {!showPetStats && (
                   <div className="bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full text-center mb-2">
-                    <h3 className="font-sniglet text-xs">Whiskers · Lvl 3</h3>
+                    <h3 className="font-sniglet text-xs">{petName} · Lvl {petLevel}</h3>
                   </div>
                 )}
 
                 {showPetStats && (
                   <div className="w-full bg-white/50 backdrop-blur-sm rounded-xl p-3 transition-opacity duration-300">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-sniglet text-sm">Whiskers</h3>
-                      <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl 3</span>
+                      <h3 className="font-sniglet text-sm">{petName}</h3>
+                      <span className="bg-[#ffe0b2] text-xs px-2 py-0.5 rounded-full font-sniglet">Lvl {petLevel}</span>
                     </div>
 
                     <div className="space-y-2">
@@ -464,10 +721,10 @@ export default function MobileDashboard() {
                             <Star size={14} className="text-yellow-500" />
                             <span className="text-xs font-sniglet">XP</span>
                           </div>
-                          <span className="text-xs font-sniglet">{petStats.energy}/1000</span>
+                          <span className="text-xs font-sniglet">{petStats.energy}/100</span>
                         </div>
                         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / 1000) * 100}%` }}></div>
+                          <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
                         </div>
                       </div>
 
@@ -539,10 +796,10 @@ export default function MobileDashboard() {
               className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-2xl overflow-hidden relative"
               style={{ height: "280px" }}
             >
-              {/* Rainy GIF Background */}
+              {/* Weather Background */}
               <div className="absolute inset-0 z-0">
                 <img
-                  src={rainyBg}
+                  src={weatherImage}
                   alt="Weather"
                   className="w-full h-full object-cover"
                 />
@@ -722,6 +979,40 @@ export default function MobileDashboard() {
               <div className="pt-1 flex justify-center">
                 <button className="text-[#f51616] border border-[#f51616] px-4 py-1.5 rounded-md font-sniglet text-sm hover:bg-red-50 transition-colors">
                   Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Location Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-sniglet text-gray-800">Set Location</h3>
+              {locationError && <div className="text-red-500">{locationError}</div>}
+              <button
+                onClick={handleSetLocationAutomatically}
+                className="bg-[#c8c6ff] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+              >
+                Set Location Automatically
+              </button>
+              <div className="flex flex-col gap-4">
+                <input
+                  type="text"
+                  placeholder="Latitude"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSetLocationManually}
+                  className="w-full bg-[#cbffc6] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                >
+                  Set Manually
                 </button>
               </div>
             </div>
