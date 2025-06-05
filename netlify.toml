@@ -1,2 +1,7 @@
 [build]
 ignore = "./ignore-build.sh"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
