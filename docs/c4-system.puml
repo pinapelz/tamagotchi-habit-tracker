@@ -1,0 +1,9 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+' Define Person (user)
+Person(user, "User", "An individual trying to build good habits")
+' Define the System (Tamagotchi Habit Tracker)
+System(system, "Tamagotchi Habit Tracker", "A gamified habit-tracking app with virtual pets")
+' Relationship
+Rel(user, system, "Uses via browser or mobile PWA", "HTTPS")
+@enduml

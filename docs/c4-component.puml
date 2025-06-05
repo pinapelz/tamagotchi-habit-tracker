@@ -1,0 +1,43 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' External Systems
+System_Ext(dicebear, "Dicebear Avatars API", "Generates profile pictures")
+System_Ext(openmeteo, "Open-Meteo API", "Returns current weather data")
+ContainerDb(database, "PostgreSQL", "Supabase", "Stores persistent user, habit, and pet data")
+Container(frontend, "Frontend Web App", "React", "Sends HTTP requests to Flask backend")
+
+' Flask Backend Boundary
+Container_Boundary(c1, "Backend API (Flask)") {
+    Component(authController, "Auth Controller", "Flask Blueprint", "Handles login and registration with username/password")
+    Component(habitManager, "Habit Manager", "Python module", "Manages user-defined habits, completion tracking, and streak logic")
+    Component(petEngine, "Pet Engine", "Python module", "Updates Tamagotchi pet stats based on habit progress and time")
+    Component(dbAccess, "Database Access Layer", "SQLAlchemy or Raw SQL", "Reads and writes user, habit, and pet data")
+    Component(notifService, "Notification Service", "Internal module", "Triggers frontend-visible updates when habit/pet state changes")
+    Component(avatarService, "Avatar Service", "Python module", "Fetches default avatars from Dicebear")
+    Component(weatherAdapter, "Weather Adapter", "Python module", "Calls Open-Meteo to influence pet/environment appearance")
+}
+
+' Frontend uses public API components
+Rel(frontend, authController, "Uses", "REST/JSON")
+Rel(frontend, habitManager, "Uses", "REST/JSON")
+Rel(frontend, petEngine, "Uses", "REST/JSON")
+
+' Internal component relationships
+Rel(authController, dbAccess, "Reads/Writes", "SQL")
+Rel(authController, avatarService, "Fetches avatar", "Internal Call")
+Rel(habitManager, dbAccess, "Reads/Writes", "SQL")
+Rel(habitManager, notifService, "Triggers", "Internal Call")
+Rel(petEngine, dbAccess, "Reads/Writes", "SQL")
+Rel(petEngine, habitManager, "Uses", "Internal Call")
+Rel(petEngine, notifService, "Triggers", "Internal Call")
+Rel(petEngine, weatherAdapter, "Fetches weather", "Internal Call")
+
+' External API calls from backend
+Rel(avatarService, dicebear, "Fetches avatars", "HTTPS")
+Rel(weatherAdapter, openmeteo, "Gets weather data", "HTTPS")
+
+' Backend DB access
+Rel(dbAccess, database, "Reads/Writes", "SQL")
+
+@enduml

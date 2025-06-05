@@ -1,0 +1,21 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "An individual trying to build good habits")
+
+System_Boundary(s1, "Tamagotchi Habit Tracker") {
+    Container(frontend, "Frontend Web App", "React + Vite", "PWA interface for interacting with the app. Hosted on Netlify.")
+    Container(backend, "Backend API", "Flask (Python)", "Handles auth, habit tracking, pet logic, and API integrations. Hosted on Vercel.")
+    ContainerDb(database, "PostgreSQL Database", "Supabase", "Stores users, habits, and pet state.")
+}
+
+System_Ext(dicebear, "Dicebear Avatars API", "Generates default profile pictures")
+System_Ext(openmeteo, "Open-Meteo API", "Provides weather data used for theming")
+
+Rel(user, frontend, "Uses", "HTTPS")
+Rel(frontend, backend, "API calls", "REST/JSON")
+Rel(backend, database, "Reads/Writes", "SQL")
+Rel(backend, dicebear, "Fetches avatars", "HTTPS")
+Rel(backend, openmeteo, "Fetches weather data", "HTTPS")
+
+@enduml
