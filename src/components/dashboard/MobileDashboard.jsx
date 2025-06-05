@@ -860,9 +860,7 @@ export default function MobileDashboard() {
                   >
                     <div className="flex items-center gap-2 flex-1">
                       <div className={`text-sm font-sniglet text-left flex items-center gap-2 ${
-                        onClick={() => toggleHabitCompletion(habit.id)}
                         habit.completed ? "line-through text-gray-500" : ""
-                        className={`text-sm font-sniglet text-left flex items-center gap-2 ${
                       }`}>
                         {habit.completed && <Check size={16} className="text-green-500" />}
                         <div className="flex flex-col">
