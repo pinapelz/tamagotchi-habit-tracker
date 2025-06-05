@@ -149,19 +149,19 @@ export default function ViewProfile() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg p-3 text-center">
+            <div className="bg-white rounded-lg p-3 text-center border border-gray-100 shadow-sm">
               <div className="text-lg text-[#4abe9c] font-medium">
                 {userProfile.stats?.current_streak || 0}
               </div>
               <div className="text-xs text-gray-500">Day Streak</div>
             </div>
-            <div className="bg-white rounded-lg p-3 text-center">
+            <div className="bg-white rounded-lg p-3 text-center border border-gray-100 shadow-sm">
               <div className="text-lg text-[#4abe9c] font-medium">
                 {userProfile.stats?.total_habits_completed || 0}
               </div>
               <div className="text-xs text-gray-500">Habits</div>
             </div>
-            <div className="bg-white rounded-lg p-3 text-center">
+            <div className="bg-white rounded-lg p-3 text-center border border-gray-100 shadow-sm">
               <div className="text-lg text-[#4abe9c] font-medium">
                 {userProfile.pet?.happiness || 0}%
               </div>
@@ -170,19 +170,19 @@ export default function ViewProfile() {
           </div>
 
           {/* Bio */}
-          <div className="bg-white rounded-lg p-4 mb-6">
+          <div className="bg-white rounded-lg p-4 mb-6 border border-gray-100 shadow-sm">
             <h2 className="text-[#4abe9c] text-sm font-medium mb-2">About</h2>
             <p className="text-[#486085] text-sm">{userProfile.bio}</p>
           </div>
 
           {/* Achievements */}
-          <div className="bg-white rounded-lg p-4">
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
             <h2 className="text-[#4abe9c] text-sm font-medium mb-3">Achievements</h2>
             <div className="flex flex-wrap gap-2">
               {userProfile.achievements?.map((achievement, index) => (
                 <div
                   key={index}
-                  className="bg-[#eaf6f0] px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  className="bg-[#eaf6f0] px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-[#4abe9c]/20"
                 >
                   <div className="bg-[#4abe9c] text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
                     ✓
