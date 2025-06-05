@@ -184,10 +184,10 @@ export default function Leaderboard() {
               {leaderboardData.map((user, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center p-4 hover:bg-gray-50 transition-colors"
                 >
                   {/* Rank + User Info */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 mb-3 sm:mb-0 sm:flex-1">
                     <div className="w-8 text-center">
                       <span className="text-lg font-medium text-[#486085]">#{index + 1}</span>
                     </div>
@@ -203,7 +203,7 @@ export default function Leaderboard() {
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center justify-end gap-6 sm:gap-8">
                     <div className="text-center">
                       <div className="text-sm text-gray-500">Streak</div>
                       <div className="font-medium text-[#4abe9c]">{user.streak} days</div>
