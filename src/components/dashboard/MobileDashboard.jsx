@@ -33,6 +33,7 @@ import {
   EyeOff,
   Calendar,
 } from "lucide-react";
+import ShareModal from "../ShareModal";
 
 // Import images
 import catGif from "../../assets/pets/pixel-cat.gif";
@@ -852,17 +853,17 @@ export default function MobileDashboard() {
                 {habits.map((habit) => (
                   <div
                     key={habit.id}
-                    className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                    className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
                       habit.completed ? "bg-green-100" : "bg-white"
                     }`}
+                    onClick={() => toggleHabitCompletion(habit.id)}
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      <button
+                      <div className={`text-sm font-sniglet text-left flex items-center gap-2 ${
                         onClick={() => toggleHabitCompletion(habit.id)}
+                        habit.completed ? "line-through text-gray-500" : ""
                         className={`text-sm font-sniglet text-left flex items-center gap-2 ${
-                          habit.completed ? "line-through text-gray-500" : ""
-                        }`}
-                      >
+                      }`}>
                         {habit.completed && <Check size={16} className="text-green-500" />}
                         <div className="flex flex-col">
                           <span>{habit.name}</span>
@@ -873,9 +874,9 @@ export default function MobileDashboard() {
                             </span>
                           )}
                         </div>
-                      </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         className="p-1 hover:bg-gray-100 rounded-full"
                         onClick={() => openEditHabitForm(habit)}
@@ -1150,6 +1151,12 @@ export default function MobileDashboard() {
           </div>
         </div>
       )}
+
+      {/* Share Modal */}
+      <ShareModal 
+        show={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+      />
 
       {/* Bottom Navigation */}
       <nav className="bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
