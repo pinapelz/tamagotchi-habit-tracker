@@ -82,6 +82,14 @@ CREATE TABLE cookies (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL CHECK (type IN ('habit', 'pet', 'friend', 'achievement')),
+    message TEXT NOT NULL,
+    read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- TODO: authentication table for external sign-in 
 -- TODO: achievements table?

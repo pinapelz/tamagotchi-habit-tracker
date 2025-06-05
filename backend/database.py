@@ -10,11 +10,16 @@ class PostgresHandler:
             dbname=database,
             port=port
         )
-        self.conn.autocommit = True
+        self.conn.autocommit = False
 
     def execute(self, query, params=None):
         with self.conn.cursor() as cursor:
-            cursor.execute(query, params)
+            try:
+                cursor.execute(query, params)
+                self.conn.commit()
+            except Exception as e:
+                self.conn.rollback()
+                raise e
 
     def fetchall(self, query, params=None):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -27,4 +32,5 @@ class PostgresHandler:
             return cursor.fetchone()
 
     def close(self):
-        self.conn.close()
+        if self.conn:
+            self.conn.close()

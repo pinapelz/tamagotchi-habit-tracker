@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from .database import PostgresHandler
+from database import PostgresHandler
 from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
@@ -371,6 +371,14 @@ def create_pet():
             (user["id"], pet_name, pet_type)
         )
 
+        # Create notification for new pet
+        create_notification(
+            db,
+            user["id"],
+            "pet",
+            f"Welcome {pet_name} the {pet_type}! Your new pet has joined your journey! 🐾"
+        )
+
         # Fetch the created pet
         pet = db.fetchone(
             "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
@@ -647,6 +655,24 @@ def create_habit():
         db.close()
 
 
+def create_notification(db, user_id, type, message):
+    """
+    Creates a notification for a user.
+    """
+    try:
+        print(f"Creating notification: user_id={user_id}, type={type}, message={message}")
+        db.execute(
+            """
+            INSERT INTO notifications (user_id, type, message)
+            VALUES (%s, %s, %s)
+            """,
+            (user_id, type, message)
+        )
+        print("Notification created successfully")
+    except Exception as e:
+        print(f"Error creating notification: {str(e)}")
+        raise e  # Re-raise the exception so it can be handled by the caller
+
 @app.route("/api/habits/<uuid:habit_id>/complete", methods=["POST"])
 def complete_habit(habit_id):
     session_cookie = request.cookies.get("session")
@@ -656,10 +682,59 @@ def complete_habit(habit_id):
 
     db = create_database_connection()
     try:
+        # Get habit name before updating
+        habit = db.fetchone(
+            "SELECT name FROM habits WHERE id = %s AND user_id = %s",
+            (str(habit_id), user["id"])
+        )
+        if not habit:
+            return jsonify({ "status": "error", "message": "Habit not found" }), 404
+
+        # Update habit completion
         db.execute(
             "UPDATE habits SET last_completed_at = NOW() WHERE id = %s AND user_id = %s",
             (str(habit_id), user["id"])
         )
+
+        # Get current pet stats
+        pet = db.fetchone(
+            "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        if pet:
+            # Calculate new stats
+            new_happiness = min(100, pet["happiness"] + 5)  # Increase happiness by 5, max 100
+            new_health = min(100, pet["health"] + 2)  # Increase health by 2, max 100
+            new_xp = pet["xp"] + 10  # Increase XP by 10
+
+            # Check for level up
+            if new_xp >= 100:
+                new_xp = new_xp % 100  # Reset XP to remainder
+                new_level = pet["lvl"] + 1
+                # Create level up notification
+                create_notification(
+                    db,
+                    user["id"],
+                    "pet",
+                    f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
+                )
+            else:
+                new_level = pet["lvl"]
+
+            # Update pet stats
+            db.execute(
+                "UPDATE pets SET happiness = %s, health = %s, xp = %s, lvl = %s WHERE user_id = %s",
+                (new_happiness, new_health, new_xp, new_level, user["id"])
+            )
+
+        # Create habit completion notification
+        create_notification(
+            db,
+            user["id"],
+            "habit",
+            f"You completed your habit: {habit['name']}!"
+        )
+
         return jsonify({ "status": "ok", "message": "Habit marked complete" }), 200
     except Exception as e:
         return jsonify({ "status": "error", "message": str(e) }), 500
@@ -709,6 +784,493 @@ def update_habit(habit_id):
     finally:
         db.close()
 
+@app.route("/api/notifications", methods=["GET"])
+def get_notifications():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        notifications = db.fetchall(
+            """
+            SELECT id, type, message, read, created_at
+            FROM notifications
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            """,
+            (user["id"],)
+        )
+        return jsonify({
+            "status": "ok",
+            "notifications": notifications
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/notifications/<uuid:notification_id>/read", methods=["PUT"])
+def mark_notification_read(notification_id):
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+    
+    db = create_database_connection()
+    try:
+        # Convert UUID to string for database query
+        notification_id_str = str(notification_id)
+        user_id_str = str(user["id"])
+        
+        db.execute(
+            """
+            UPDATE notifications
+            SET read = TRUE
+            WHERE id = %s AND user_id = %s
+            """,
+            (notification_id_str, user_id_str)
+        )
+        return jsonify({
+            "status": "ok",
+            "message": "Notification marked as read"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/notifications/<uuid:notification_id>", methods=["DELETE"])
+def delete_notification(notification_id):
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+    
+    db = create_database_connection()
+    try:
+        # Convert UUID to string for database query
+        notification_id_str = str(notification_id)
+        user_id_str = str(user["id"])
+        
+        db.execute(
+            """
+            DELETE FROM notifications
+            WHERE id = %s AND user_id = %s
+            """,
+            (notification_id_str, user_id_str)
+        )
+        return jsonify({
+            "status": "ok",
+            "message": "Notification deleted"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/notifications/unread-count", methods=["GET"])
+def get_unread_notification_count():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+    
+    db = create_database_connection()
+    try:
+        count = db.fetchone(
+            """
+            SELECT COUNT(*) as count
+            FROM notifications
+            WHERE user_id = %s AND read = FALSE
+            """,
+            (user["id"],)
+        )
+        return jsonify({
+            "status": "ok",
+            "count": count["count"]
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/friends/request", methods=["POST"])
+def send_friend_request():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "friend_id" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'friend_id' is required."
+        }), 400
+
+    friend_id = data["friend_id"]
+    db = create_database_connection()
+    try:
+        # Get friend's display name
+        friend = db.fetchone(
+            "SELECT display_name FROM users WHERE id = %s",
+            (friend_id,)
+        )
+        if not friend:
+            return jsonify({
+                "status": "error",
+                "message": "User not found."
+            }), 404
+
+        # Create notification for friend
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"{user['display_name']} sent you a friend request!"
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Friend request sent successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/friends/accept", methods=["POST"])
+def accept_friend_request():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "friend_id" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'friend_id' is required."
+        }), 400
+
+    friend_id = data["friend_id"]
+    db = create_database_connection()
+    try:
+        # Get friend's display name
+        friend = db.fetchone(
+            "SELECT display_name FROM users WHERE id = %s",
+            (friend_id,)
+        )
+        if not friend:
+            return jsonify({
+                "status": "error",
+                "message": "User not found."
+            }), 404
+
+        # Create notification for friend
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"{user['display_name']} accepted your friend request!"
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Friend request accepted successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/pet/update-status", methods=["POST"])
+def update_pet_status():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or not all(key in data for key in ("happiness", "health")):
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'happiness' and 'health' are required."
+        }), 400
+
+    happiness = data["happiness"]
+    health = data["health"]
+    db = create_database_connection()
+    try:
+        # Get pet info
+        pet = db.fetchone(
+            "SELECT name, type FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        if not pet:
+            return jsonify({
+                "status": "error",
+                "message": "Pet not found."
+            }), 404
+
+        # Update pet status
+        db.execute(
+            "UPDATE pets SET happiness = %s, health = %s WHERE user_id = %s",
+            (happiness, health, user["id"])
+        )
+
+        # Create notifications for significant changes
+        if happiness < 30:
+            create_notification(
+                db,
+                user["id"],
+                "pet",
+                f"{pet['name']} is feeling sad! Maybe it's time for some attention? 🐾"
+            )
+        elif health < 30:
+            create_notification(
+                db,
+                user["id"],
+                "pet",
+                f"{pet['name']} is not feeling well! Maybe it needs some care? 🐾"
+            )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Pet status updated successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/pet/level-up", methods=["POST"])
+def pet_level_up():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get pet info
+        pet = db.fetchone(
+            "SELECT name, type, lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        if not pet:
+            return jsonify({
+                "status": "error",
+                "message": "Pet not found."
+            }), 404
+
+        # Update pet level
+        new_level = pet["lvl"] + 1
+        db.execute(
+            "UPDATE pets SET lvl = %s WHERE user_id = %s",
+            (new_level, user["id"])
+        )
+
+        # Create notification for level up
+        create_notification(
+            db,
+            user["id"],
+            "pet",
+            f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Pet leveled up successfully.",
+            "new_level": new_level
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements/unlock", methods=["POST"])
+def unlock_achievement():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or not all(key in data for key in ("name", "description")):
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'name' and 'description' are required."
+        }), 400
+
+    achievement_name = data["name"]
+    achievement_description = data["description"]
+
+    db = create_database_connection()
+    try:
+        # Create notification for achievement
+        create_notification(
+            db,
+            user["id"],
+            "achievement",
+            f"Achievement Unlocked: {achievement_name} - {achievement_description} 🏆"
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Achievement unlocked successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/friends/message", methods=["POST"])
+def send_friend_message():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or not all(key in data for key in ("friend_id", "message")):
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'friend_id' and 'message' are required."
+        }), 400
+
+    friend_id = data["friend_id"]
+    message = data["message"]
+
+    db = create_database_connection()
+    try:
+        # Get friend's display name
+        friend = db.fetchone(
+            "SELECT display_name FROM users WHERE id = %s",
+            (friend_id,)
+        )
+        if not friend:
+            return jsonify({
+                "status": "error",
+                "message": "User not found."
+            }), 404
+
+        # Create notification for friend
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"New message from {user['display_name']}: '{message}'"
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Message sent successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/pet/update-time", methods=["POST"])
+def update_pet_time():
+    """
+    Updates pet stats based on time passed.
+    This should be called periodically by the frontend.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get current pet stats
+        pet = db.fetchone(
+            "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        if not pet:
+            return jsonify({
+                "status": "error",
+                "message": "Pet not found."
+            }), 404
+
+        # Calculate new stats (decrease over time)
+        new_happiness = max(0, pet["happiness"] - 2)  # Decrease happiness by 2, min 0
+        new_health = max(0, pet["health"] - 1)  # Decrease health by 1, min 0
+
+        # Create notifications for low stats only when crossing below 30%
+        if new_happiness < 30 and pet["happiness"] >= 30:
+            create_notification(
+                db,
+                user["id"],
+                "pet",
+                f"{pet['name']} is feeling sad! Maybe it's time for some attention? 🐾"
+            )
+        if new_health < 30 and pet["health"] >= 30:
+            create_notification(
+                db,
+                user["id"],
+                "pet",
+                f"{pet['name']} is not feeling well! Maybe it needs some care? 🐾"
+            )
+
+        # Update pet stats
+        db.execute(
+            "UPDATE pets SET happiness = %s, health = %s WHERE user_id = %s",
+            (new_happiness, new_health, user["id"])
+        )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Pet status updated successfully.",
+            "data": {
+                "happiness": new_happiness,
+                "health": new_health,
+                "xp": pet["xp"],
+                "lvl": pet["lvl"]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     app.run(debug=True)
