@@ -160,12 +160,14 @@ export default function Settings() {
       description: "Switch between light and dark theme",
       setting: "darkMode"
     },
+    // Comment out if not needed
     {
       icon: settings.sound ? <Volume2 className="text-[#4abe9c]" size={24} /> : <VolumeX className="text-[#4abe9c]" size={24} />,
       title: "Sound Effects",
       description: "Enable or disable sound effects",
       setting: "sound"
     },
+    // Comment out if not needed
     {
       icon: <User className="text-[#4abe9c]" size={24} />,
       title: "Email Updates",
