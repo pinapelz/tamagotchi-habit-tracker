@@ -83,48 +83,42 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/20 z-40"
         onClick={onClose}
       />
       {/* Main Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
         <div
-          className="bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-xl w-full relative pointer-events-auto shadow-xl border border-gray-100"
+          className="bg-white rounded-lg p-6 max-w-sm w-full relative pointer-events-auto shadow-lg animate-fadeIn max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center mb-8">
-            <button
-              className="text-[#f51616] text-base border border-[#f51616] px-4 py-2 rounded-md font-sniglet hover:bg-red-50 transition-colors"
-              onClick={onReset}
-            >
-              Reset
-            </button>
-            <h2 className="text-2xl font-sniglet text-gray-800">Settings</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <X size={24} />
+          <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-2">
+            <h2 className="text-lg font-medium text-gray-800">Settings</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors text-3xl font-light">
+              ×
             </button>
           </div>
 
-          <div className="space-y-8">
-            <div className="flex items-center gap-4">
-              <label htmlFor="name" className="text-base font-sniglet w-28 text-gray-700">
-                Name:
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Name
               </label>
               <input
                 type="text"
                 id="name"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
               />
             </div>
 
-            <div className="flex items-center gap-4">
-              <label className="text-base font-sniglet w-28 text-gray-700">Theme:</label>
-              <div className="flex gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Theme</label>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setTheme("light")}
-                  className={`px-6 py-2 rounded-full font-sniglet text-base transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-sm transition-all ${
                     theme === "light"
                       ? "bg-white border-2 border-purple-200 text-purple-600"
                       : "bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-600"
@@ -134,7 +128,7 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
                 </button>
                 <button
                   onClick={() => setTheme("dark")}
-                  className={`px-6 py-2 rounded-full font-sniglet text-base transition-all ${
+                  className={`px-4 py-1.5 rounded-full text-sm transition-all ${
                     theme === "dark"
                       ? "bg-gray-800 text-white border-2 border-gray-600"
                       : "bg-gray-100 hover:bg-gray-200 text-gray-600"
@@ -145,48 +139,58 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
               </div>
             </div>
 
+            {/* Change Pet Section */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Change Pet</label>
+              <button className="w-full bg-[#cce5ff] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b8d4f0] transition-colors border border-[#b8d4f0]">
+                Choose New Pet
+              </button>
+            </div>
+
             {/* Location Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-sniglet text-gray-800">Set Location</h3>
-              {locationError && <div className="text-red-500">{locationError}</div>}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-700">Set Location</h3>
+              {locationError && <div className="text-red-500 text-sm">{locationError}</div>}
               <button
                 onClick={handleSetLocationAutomatically}
-                className="bg-[#c8c6ff] text-gray-700 px-6 py-2 rounded-full font-sniglet text-base hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+                className="w-full bg-[#c8c6ff] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
               >
                 Set Location Automatically
               </button>
-              <div className="relative">
-                <div className="flex items-center gap-4">
-                  <input
-                    type="text"
-                    placeholder="Latitude"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Longitude"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 font-sniglet text-base bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
-                  />
-                </div>
-                <div className="flex justify-start">
-                  <button
-                    onClick={handleSetLocationManually}
-                    className="bg-[#cbffc6] text-gray-700 px-6 py-4 rounded-full font-sniglet text-base hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
-                  >
-                    Set Manually
-                  </button>
-                </div>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Latitude"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSetLocationManually}
+                  className="w-full bg-[#cbffc6] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                >
+                  Set Manually
+                </button>
               </div>
             </div>
 
-            <div className="flex justify-center mt-10">
+            <div className="flex gap-3 justify-end pt-4">
+              <button
+                onClick={onReset}
+                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm"
+              >
+                Reset
+              </button>
               <button
                 onClick={onSave}
-                className="bg-[#c8c6ff] text-gray-700 px-10 py-3 rounded-full font-sniglet text-lg hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+                className="bg-[#ffd700] text-gray-700 px-4 py-1.5 rounded text-sm hover:bg-[#e6c200]"
               >
                 Save Changes
               </button>
