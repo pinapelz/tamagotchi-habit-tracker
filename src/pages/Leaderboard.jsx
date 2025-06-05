@@ -3,169 +3,223 @@ import { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import LoadingPage from "./Loading";
-import snowBg from "../assets/pet_bg/snow.png";
-import meadowBg from "../assets/pet_bg/meadow_day.png";
-import { fetchUserProfile } from "../utils/profileHelpers";
+import { Users, Globe } from "lucide-react";
 
-
+// Mock data for testing
 const mainLeaderboard = [
-  { username: "USERNAME", petLevel: 12 },
-  { username: "USERNAME2", petLevel: 12 },
-  { username: "USERNAME3", petLevel: 12 },
-  { username: "USERNAME4", petLevel: 12 },
-  { username: "USERNAME5", petLevel: 12 },
-  { username: "USERNAME6", petLevel: 12},
-  { username: "USERNAME7", petLevel: 12},
-  { username: "USERNAME8", petLevel: 12},
-  { username: "USERNAME9", petLevel: 12},
-  { username: "USERNAME10", petLevel: 12},
-  { username: "USERNAME11", petLevel: 12},
+  {
+    username: "PetLover123",
+    petName: "Toto",
+    petType: "cat",
+    petLevel: 15,
+    streak: 45,
+    habitsCompleted: 120,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=PetLover123"
+  },
+  {
+    username: "HabitHero",
+    petName: "Fluffy",
+    petType: "cat",
+    petLevel: 14,
+    streak: 38,
+    habitsCompleted: 98,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=HabitHero"
+  },
+  {
+    username: "TamaQueen",
+    petName: "Sparkle",
+    petType: "cat",
+    petLevel: 13,
+    streak: 32,
+    habitsCompleted: 85,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=TamaQueen"
+  },
+  {
+    username: "PixelMaster",
+    petName: "Byte",
+    petType: "cat",
+    petLevel: 12,
+    streak: 28,
+    habitsCompleted: 76,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=PixelMaster"
+  },
+  {
+    username: "PetPal",
+    petName: "Buddy",
+    petType: "cat",
+    petLevel: 11,
+    streak: 25,
+    habitsCompleted: 65,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=PetPal"
+  },
+  {
+    username: "USERNAME6",
+    petName: "Max",
+    petType: "cat",
+    petLevel: 12,
+    streak: 20,
+    habitsCompleted: 60,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME6"
+  },
+  {
+    username: "USERNAME7",
+    petName: "Luna",
+    petType: "cat",
+    petLevel: 12,
+    streak: 18,
+    habitsCompleted: 55,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME7"
+  },
+  {
+    username: "USERNAME8",
+    petName: "Charlie",
+    petType: "cat",
+    petLevel: 12,
+    streak: 15,
+    habitsCompleted: 50,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME8"
+  },
+  {
+    username: "USERNAME9",
+    petName: "Bella",
+    petType: "cat",
+    petLevel: 12,
+    streak: 12,
+    habitsCompleted: 45,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME9"
+  },
+  {
+    username: "USERNAME10",
+    petName: "Rocky",
+    petType: "cat",
+    petLevel: 12,
+    streak: 10,
+    habitsCompleted: 40,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME10"
+  },
+  {
+    username: "USERNAME11",
+    petName: "Daisy",
+    petType: "cat",
+    petLevel: 12,
+    streak: 8,
+    habitsCompleted: 35,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=USERNAME11"
+  }
 ];
 
 const friendsLeaderboard = [
-  { username: "FRIEND1", petLevel: 12 },
-  { username: "FRIEND2", petLevel: 12 },
+  {
+    username: "PetLover123",
+    petName: "Toto",
+    petType: "cat",
+    petLevel: 15,
+    streak: 45,
+    habitsCompleted: 120,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=PetLover123"
+  },
+  {
+    username: "HabitHero",
+    petName: "Fluffy",
+    petType: "cat",
+    petLevel: 14,
+    streak: 38,
+    habitsCompleted: 98,
+    avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=HabitHero"
+  }
 ];
 
-export default function Leaderboard({ userId }) {
-    const [mode, setMode] = useState("global");
-    const [userProfile, setUserProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    
+export default function Leaderboard() {
+  const [mode, setMode] = useState("global");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-    const backgrounds = [snowBg, meadowBg];
-    const backgroundIndex = userId
-        ? userId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
-        backgrounds.length
-        : 0;
-    const backgroundImage = backgrounds[backgroundIndex];
-
-    useEffect(() => {
-        const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-        };
-
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    useEffect(() => {
-    const getUserProfile = async () => {
-        try {
-        const profileData = await fetchUserProfile(userId);
-        setUserProfile(profileData);
-        } catch (err) {
-        setError(err.message);
-        } finally {
-        setLoading(false);
-        }
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
     };
-    getUserProfile();
-    }, [userId]);
 
-    if (loading)
-    return (
-        <LoadingPage />
-    );
-    if (error)
-    return (
-        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
-        Error: {error}
-        </div>
-    );
-    if (!userProfile)
-    return (
-        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
-        No profile found.
-        </div>
-    );
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-    const leaderboardData =
-      mode === "friends" ? friendsLeaderboard : mainLeaderboard;
-    
-    const LayoutComponent = isMobile ? MobileLayout : Layout;
-    
-    
+  const leaderboardData = mode === "friends" ? friendsLeaderboard : mainLeaderboard;
+  const LayoutComponent = isMobile ? MobileLayout : Layout;
+
   return (
-    <LayoutComponent userName={userProfile.username}>
-      <div
-        className="min-h-screen font-sniglet pt-12"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: 0.9,
-        }}
-      >
-        <div className="max-w-3xl mx-auto bg-[#FDFFE9] border border-[#4abe9c] rounded-xl shadow-sm mt-8 p-6 space-y-6">
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={() => setMode("friends")}
-              className={`px-4 py-1 rounded-full font-bold transition ${
-                mode === "friends"
-                  ? "bg-[#4abe9c] text-white"
-                  : "bg-white text-[#4abe9c] border border-[#4abe9c]"
-              }`}
-            >
-              Friends
-            </button>
-            <button
-              onClick={() => setMode("global")}
-              className={`px-4 py-1 rounded-full font-bold transition ${
-                mode === "global"
-                  ? "bg-[#4abe9c] text-white"
-                  : "bg-white text-[#4abe9c] border border-[#4abe9c]"
-              }`}
-            >
-              Global
-            </button>
+    <LayoutComponent userName="User">
+      <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl text-[#486085] font-medium mb-4">Leaderboard</h1>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setMode("friends")}
+                className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                  mode === "friends"
+                    ? "bg-[#4abe9c] text-white shadow-md"
+                    : "bg-white text-[#4abe9c] border border-[#4abe9c] hover:bg-[#4abe9c]/10"
+                }`}
+              >
+                <Users size={18} />
+                Friends
+              </button>
+              <button
+                onClick={() => setMode("global")}
+                className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                  mode === "global"
+                    ? "bg-[#4abe9c] text-white shadow-md"
+                    : "bg-white text-[#4abe9c] border border-[#4abe9c] hover:bg-[#4abe9c]/10"
+                }`}
+              >
+                <Globe size={18} />
+                Global
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-3xl font-bold text-center text-[#4abe9c]">
-            {" "}
-            {mode === "friends"
-              ? "Friend Leaderboard"
-              : "Global Leaderboard"}{" "}
-          </h1>
-
-          {/* Leaderboard Rows */}
-          <div className="flex flex-col gap-2">
-            {leaderboardData.map((user, index) => {
-              return (
+          {/* Leaderboard */}
+          <div className="bg-white rounded-xl border border-[#4abe9c] shadow-sm overflow-hidden">
+            <div className="divide-y divide-gray-100">
+              {leaderboardData.map((user, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-gray-200 shadow-sm"
+                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                 >
-                  {/* Avatar + Username */}
-                  <div className="flex items-center gap-3">
+                  {/* Rank + User Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 text-center">
+                      <span className="text-lg font-medium text-[#486085]">#{index + 1}</span>
+                    </div>
                     <img
-                      src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.username}`}
-                      alt="avatar"
-                      className="w-10 h-10 rounded-full bg-white border"
+                      src={user.avatar}
+                      alt={user.username}
+                      className="w-10 h-10 rounded-full border-2 border-[#4abe9c]"
                     />
-                    <span className="font-bold text-[#486085]">
-                      #{index + 1} - {user.username}
-                    </span>
+                    <div>
+                      <div className="font-medium text-[#486085]">{user.username}</div>
+                      <div className="text-sm text-gray-500">{user.petName} the {user.petType}</div>
+                    </div>
                   </div>
 
-                  {/* Pet Image + Level */}
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={user.petImage}
-                      alt={user.petType}
-                      className="w-10 h-10 rounded-full object-cover border border-[#4abe9c] shadow"
-                    />
-                    <div className="text-right">
-                      <div className="text-[#4abe9c] font-semibold">
-                        Level {user.petLevel}
-                      </div>
+                  {/* Stats */}
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-500">Streak</div>
+                      <div className="font-medium text-[#4abe9c]">{user.streak} days</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-500">Habits</div>
+                      <div className="font-medium text-[#4abe9c]">{user.habitsCompleted}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-500">Level</div>
+                      <div className="font-medium text-[#4abe9c]">{user.petLevel}</div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </div>
