@@ -3,6 +3,7 @@ import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import { Link } from "react-router-dom";
 import { UserPlus, Search, MessageSquare, Award, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function FriendsPage() {
     const [friends, setFriends] = useState([]);
@@ -15,6 +16,8 @@ export default function FriendsPage() {
     const [successMessage, setSuccessMessage] = useState(null);
     const [isSending, setIsSending] = useState(false);
     const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
+    const [userProfile, setUserProfile] = useState(null);
+    const navigate = useNavigate();
     const [sentRequests, setSentRequests] = useState([
         {
             id: 1,
@@ -42,6 +45,34 @@ export default function FriendsPage() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Fetch user profile data
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        navigate('/login');
+                        return;
+                    }
+                    throw new Error("Failed to fetch profile data");
+                }
+
+                const { data } = await response.json();
+                setUserProfile(data);
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+                setError(err.message);
+            }
+        };
+
+        fetchProfileData();
+    }, [navigate]);
 
     useEffect(() => {
         const getFriends = async () => {
@@ -164,7 +195,7 @@ export default function FriendsPage() {
     const LayoutComponent = isMobile ? MobileLayout : Layout;
 
     return (
-        <LayoutComponent userName="User">
+        <LayoutComponent userName={userProfile?.user?.display_name || "User"}>
             <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}

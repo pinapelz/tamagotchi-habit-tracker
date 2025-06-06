@@ -144,8 +144,7 @@ export default function DashboardRedesign() {
       const { data } = await response.json();
       setProfile(data);
 
-      // Initialize habits from backend data (you'll need to create this endpoint)
-      // For now, using sample habits
+      // Initialize habits from backend data
       const habitsRes = await fetch(
         `${import.meta.env.VITE_API_DOMAIN}/api/habits`,
         {
@@ -156,6 +155,7 @@ export default function DashboardRedesign() {
       const habitsData = await habitsRes.json();
       setHabits(habitsData);
 
+      // Only set loading to false after we have all the data
       setLoading(false);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -187,9 +187,8 @@ export default function DashboardRedesign() {
           if (!data.has_pet) {
             // Redirect to pet creation if the user doesn't have a pet
             navigate("/petcreation");
-          } else {
-            setLoading(false); // Stop loading if the user has a pet
           }
+          // Don't set loading to false here, wait for profile data
         } else {
           console.error("Error checking pet status:", data.message);
           setError(data.message);
@@ -540,7 +539,14 @@ export default function DashboardRedesign() {
   }, []);
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4abe9c]"></div>
+          <p className="text-[#486085] font-sniglet">Loading your pet...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

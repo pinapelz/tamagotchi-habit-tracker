@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import { ChevronDown, ChevronUp, PawPrint, Users, Trophy, Bell, Clock, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Help() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openSection, setOpenSection] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -15,6 +19,34 @@ export default function Help() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+          throw new Error("Failed to fetch profile data");
+        }
+
+        const { data } = await response.json();
+        setUserProfile(data);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError(err.message);
+      }
+    };
+
+    fetchProfileData();
+  }, [navigate]);
 
   const faqs = [
     {
@@ -83,7 +115,7 @@ export default function Help() {
   const LayoutComponent = isMobile ? MobileLayout : Layout;
 
   return (
-    <LayoutComponent userName="User">
+    <LayoutComponent userName={userProfile?.user?.display_name || "User"}>
       <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
         <div className="max-w-4xl mx-auto">
           {/* Header */}

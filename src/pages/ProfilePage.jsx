@@ -169,10 +169,16 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <LoadingPage />
+      <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4abe9c]"></div>
+          <p className="text-[#486085] font-sniglet">Loading profile...</p>
+        </div>
+      </div>
     );
+  }
   if (error)
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">

@@ -5,7 +5,7 @@ import { Menu, X, Home, User, Users, Trophy, Bell, HelpCircle, Settings, LogOut,
 export default function MobileLayout({ children, userName, onToggleSettings }) {
   const [showMenu, setShowMenu] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
-  const [currentWeather, setCurrentWeather] = useState("Rainy")
+  const [currentWeather, setCurrentWeather] = useState("")
   const [timeOfDay, setTimeOfDay] = useState("morning")
 
   // Update time in real-time
@@ -50,6 +50,32 @@ export default function MobileLayout({ children, userName, onToggleSettings }) {
     const intervalId = setInterval(updateTime, 1000)
     return () => clearInterval(intervalId)
   }, [])
+
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/weather`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const weather = data.weather;
+        const formattedWeather = weather.charAt(0).toUpperCase() + weather.slice(1);
+        setCurrentWeather(formattedWeather);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+        setCurrentWeather("Sunny"); // Fallback weather
+      }
+    };
+
+    fetchWeather();
+  }, []);
 
   const getWeatherIcon = () => {
     if (currentWeather.toLowerCase().includes("rain")) {

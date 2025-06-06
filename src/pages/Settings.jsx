@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import { Bell, Moon, Sun, User, MapPin, Volume2, VolumeX, AlertCircle, Loader2, Download } from "lucide-react";
+import LoadingPage from './Loading';
 
 export default function Settings() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -17,6 +19,9 @@ export default function Settings() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -26,6 +31,35 @@ export default function Settings() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate('/login');
+          return;
+        }
+        throw new Error("Failed to fetch profile data");
+      }
+
+      const { data } = await response.json();
+      setUserProfile(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [navigate]);
 
   const handleToggle = async (setting) => {
     setIsLoading(true);
@@ -182,10 +216,14 @@ export default function Settings() {
     }
   ];
 
+  if (loading) return <LoadingPage />;
+  if (error) return <div>Error: {error}</div>;
+  if (!userProfile) return <div>No profile found.</div>;
+
   const LayoutComponent = isMobile ? MobileLayout : Layout;
 
   return (
-    <LayoutComponent userName="User">
+    <LayoutComponent userName={userProfile.user.display_name}>
       <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
