@@ -176,17 +176,17 @@ const Achievements = ({ userAchievements = [] }) => {
   ];
 
   useEffect(() => {
-    // If user has no achievements, show sample achievements as locked
-    if (userAchievements.length === 0) {
-      setAchievements(sampleAchievements.map(achievement => ({
-        ...achievement,
-        unlocked: false
-      })));
-    } else {
-      // Map user's achievements to the sample achievements structure
+    // If user has achievements, map them to the sample achievements structure
+    if (userAchievements && userAchievements.length > 0) {
       setAchievements(sampleAchievements.map(achievement => ({
         ...achievement,
         unlocked: userAchievements.includes(achievement.name)
+      })));
+    } else {
+      // If no achievements, show all as locked
+      setAchievements(sampleAchievements.map(achievement => ({
+        ...achievement,
+        unlocked: false
       })));
     }
     setLoading(false);
@@ -220,7 +220,7 @@ const Achievements = ({ userAchievements = [] }) => {
   }
 
   // Show welcome message for new users (if all achievements are locked)
-  if (achievements.length > 0 && unlockedCount === 0) {
+  if (achievements.length > 0 && achievements.every(a => !a.unlocked)) {
     return (
       <div className="space-y-8">
         {/* Welcome Message */}
