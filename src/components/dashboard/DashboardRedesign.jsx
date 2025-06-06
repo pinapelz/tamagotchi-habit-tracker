@@ -9,6 +9,7 @@ import DisplayToggle from "./DisplayToggle";
 import HabitTracker from "./HabitTracker";
 import ProgressBar from "./ProgressBar";
 import Layout from "../layout/Layout";
+import Loading from "../../pages/Loading";
 import {
   getTimeOfDayIcon,
   getWeatherIcon,
@@ -374,21 +375,39 @@ export default function DashboardRedesign() {
   };
 
   const toggleHabitCompletion = async (id) => {
-    setHabits(
-      habits.map((habit) =>
-        habit.id === id ? { ...habit, completed: !habit.completed } : habit
-      )
-    );
-
+    // Store the original order of habits
+    const originalOrder = habits.map(h => h.id);
+    
     try {
       await fetch(
-        `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}/complete`,
+        `${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`,
         {
           method: "POST",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ habit_id: id }),
         }
       );
-      fetchProfileData(); // refetch latest habit status
+      
+      // Fetch the updated habits
+      const response = await fetch(
+        `${import.meta.env.VITE_API_DOMAIN}/api/habits`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      
+      if (response.ok) {
+        const updatedHabits = await response.json();
+        // Sort the updated habits to match the original order
+        const sortedHabits = originalOrder.map(id => 
+          updatedHabits.find(h => h.id === id)
+        ).filter(Boolean);
+        setHabits(sortedHabits);
+      }
     } catch (err) {
       console.error("Failed to mark habit complete", err);
     }
@@ -513,17 +532,24 @@ export default function DashboardRedesign() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500"></div>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-red-500">Error: {error}</div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center text-red-500">
+          <p>Error loading dashboard: {error}</p>
+          <button 
+            onClick={() => {
+              console.log("Retrying dashboard initialization...");
+              initializeDashboard();
+            }} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
