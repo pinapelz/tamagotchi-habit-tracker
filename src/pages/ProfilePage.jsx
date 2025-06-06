@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
-import LoadingPage from "./Loading";
 import pixelCat from "../assets/pets/pixel-cat.gif";
 import pixelBat from "../assets/pets/pixel-bat.gif";
 import pixelDuck from "../assets/pets/pixel-duck.gif";
@@ -10,6 +9,7 @@ import pixelDog from "../assets/pets/pixel-dog.gif";
 import snowBg from "../assets/pet_bg/snow.png";
 import meadowBg from "../assets/pet_bg/meadow_day.png";
 import Achievements from '../components/Achievements';
+import doorImage from '../assets/images/door.png'
 
 // Helper for randomly picking a background image (but maintaining consistency)
 String.prototype.hashCode = function () {
@@ -68,19 +68,19 @@ export default function ProfilePage() {
 
       const profileData = await response.json();
       console.log("Profile data received:", profileData);
-      
+
       // Also fetch habits to get accurate completion stats
       const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
         method: "GET",
         credentials: "include",
       });
-      
+
       if (habitsResponse.ok) {
         const habitsData = await habitsResponse.json();
         // Update profile data with accurate habit stats
         const totalCompleted = habitsData.filter(habit => habit.last_completed_at).length;
         profileData.data.stats.total_habits_completed = totalCompleted;
-        
+
         // Update user_stats table with accurate count
         await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/stats/update`, {
           method: "POST",
@@ -161,7 +161,7 @@ export default function ProfilePage() {
       setIsEditingBio(false);
       setBioError(null);
       console.log("Profile updated successfully.");
-      
+
       // Refresh profile data to get the latest changes
       fetchProfileData();
     } catch (err) {
