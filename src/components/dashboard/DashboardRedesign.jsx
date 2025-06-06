@@ -481,8 +481,9 @@ export default function DashboardRedesign() {
 
         const data = await response.json();
         const weather = data.weather;
+        const formattedWeather = weather.charAt(0).toUpperCase() + weather.slice(1);
 
-        setCurrentWeather(weather);
+        setCurrentWeather(formattedWeather);
 
         switch (weather.toLowerCase()) {
           case "rainy":
