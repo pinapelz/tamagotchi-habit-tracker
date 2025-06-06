@@ -374,12 +374,8 @@ export default function DashboardRedesign() {
   };
 
   const toggleHabitCompletion = async (id) => {
-    // Store the original order of habits
-    const originalOrder = habits.map(h => h.id);
-    
     try {
-      // Mark habit as complete
-      const completeResponse = await fetch(
+      const response = await fetch(
         `${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`,
         {
           method: "POST",
@@ -391,32 +387,32 @@ export default function DashboardRedesign() {
         }
       );
 
-      if (!completeResponse.ok) {
+      if (!response.ok) {
         throw new Error("Failed to complete habit");
       }
-      
-      // Fetch the updated habits
-      const response = await fetch(
+
+      // After successful completion, fetch the updated habits list
+      const habitsResponse = await fetch(
         `${import.meta.env.VITE_API_DOMAIN}/api/habits`,
         {
           method: "GET",
           credentials: "include",
         }
       );
-      
-      if (response.ok) {
-        const updatedHabits = await response.json();
-        // Sort the updated habits to match the original order
-        const sortedHabits = originalOrder.map(id => 
-          updatedHabits.find(h => h.id === id)
-        ).filter(Boolean);
-        setHabits(sortedHabits);
-        
-        // Refresh profile data to update achievements and stats
-        await fetchProfileData();
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
       }
+
+      const habitsData = await habitsResponse.json();
+      console.log('Updated habits after completion:', habitsData);
+      setHabits(habitsData);
+
+      // Refresh profile data to update stats
+      await fetchProfileData();
     } catch (err) {
-      console.error("Failed to mark habit complete", err);
+      console.error("Error completing habit:", err);
+      setError(err.message);
     }
   };
 
