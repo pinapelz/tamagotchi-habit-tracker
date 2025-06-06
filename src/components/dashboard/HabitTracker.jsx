@@ -150,19 +150,19 @@ export default function HabitTracker({
                     </button>
                     <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-12 hover:bg-blue-50"
                         onClick={() => openEditHabitForm(habit)}
                       >
-                        <Pencil size={16} className="text-gray-600" />
+                        <Pencil size={16} className="text-gray-600 transition-colors duration-300 hover:text-blue-500" />
                       </button>
                       <button
-                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-12 hover:bg-red-50"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteHabit(habit.id);
                         }}
                       >
-                        <Trash2 size={16} className="text-gray-600" />
+                        <Trash2 size={16} className="text-gray-600 transition-colors duration-300 hover:text-red-500" />
                       </button>
                     </div>
                   </div>
