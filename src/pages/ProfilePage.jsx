@@ -30,8 +30,9 @@ export default function ProfilePage() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("");
   const [bioError, setBioError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const backgrounds = [snowBg, meadowBg];
-  const navigate = useNavigate(); // Add this line to get navigation function
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -42,56 +43,127 @@ export default function ProfilePage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const fetchProfileData = async () => {
+    try {
+      // First initialize achievements
+      await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/initialize`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      // Then fetch profile data
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          navigate('/login');
+          return;
+        }
+        throw new Error(errorData.message || "Failed to fetch profile data.");
+      }
+
+      const profileData = await response.json();
+      console.log("Profile data received:", profileData);
+      
+      // Also fetch habits to get accurate completion stats
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      if (habitsResponse.ok) {
+        const habitsData = await habitsResponse.json();
+        // Update profile data with accurate habit stats
+        const totalCompleted = habitsData.filter(habit => habit.last_completed_at).length;
+        profileData.data.stats.total_habits_completed = totalCompleted;
+        
+        // Update user_stats table with accurate count
+        await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/stats/update`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ total_habits_completed: totalCompleted }),
+        });
+      }
+
+      // Check for any new achievements based on current stats and pet level
+      const achievementsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/check`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (achievementsResponse.ok) {
+        const achievementsData = await achievementsResponse.json();
+        if (achievementsData.status === "ok") {
+          // Update profile data with latest achievements
+          profileData.data.achievements = achievementsData.achievements;
+        }
+      }
+
+      setUserProfile(profileData.data);
+      setBio(profileData.data.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err.message);
+      setLoading(false);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const getUserProfile = async () => {
+    const initializeAchievements = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
-          method: "GET",
+        // Initialize achievements first
+        await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/initialize`, {
+          method: "POST",
           credentials: "include",
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (response.status === 401) {
-            navigate('/login');
-            return;
-          }
-          throw new Error(errorData.message || "Failed to fetch profile data.");
-        }
-
-        const profileData = await response.json();
-        setUserProfile(profileData.data);
-        setBio(profileData.data.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
+        // Then refresh profile data
+        fetchProfileData();
       } catch (err) {
-        setError(err.message);
-        navigate('/login');
-      } finally {
-        setLoading(false);
+        console.error("Error initializing achievements:", err);
+        fetchProfileData(); // Still try to refresh profile even if achievement init fails
       }
     };
 
-    getUserProfile();
-  }, [navigate]);
+    initializeAchievements();
+  }, []);
 
-  const handleSaveBio = async () => {
+  const handleSaveProfile = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/set-bio`, {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile/update`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ bio }),
+        body: JSON.stringify({
+          bio,
+          location: userProfile.profile?.location,
+          interests: userProfile.profile?.interests,
+          favorite_pet_type: userProfile.profile?.favorite_pet_type
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update bio.");
+        throw new Error(errorData.message || "Failed to update profile.");
       }
 
       setIsEditingBio(false);
       setBioError(null);
-      console.log("Bio updated successfully.");
+      console.log("Profile updated successfully.");
+      
+      // Refresh profile data to get the latest changes
+      fetchProfileData();
     } catch (err) {
       setBioError(err.message);
     }
@@ -141,6 +213,25 @@ export default function ProfilePage() {
                 <h1 className="text-2xl text-[#486085]">
                   {userProfile.user.display_name}
                 </h1>
+                <button
+                  onClick={fetchProfileData}
+                  disabled={isRefreshing}
+                  className="mt-2 text-sm text-[#4abe9c] hover:text-[#3aa87c] transition-colors flex items-center gap-1"
+                >
+                  {isRefreshing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4abe9c]"></div>
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Refresh Profile
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Middle: Pet Info */}
@@ -180,16 +271,68 @@ export default function ProfilePage() {
               </h2>
               {isEditingBio ? (
                 <div className="space-y-4">
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c] transition-all"
-                    rows="4"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c] transition-all"
+                      rows="4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <input
+                      type="text"
+                      value={userProfile.profile?.location || ''}
+                      onChange={(e) => {
+                        const updatedProfile = { ...userProfile };
+                        if (!updatedProfile.profile) updatedProfile.profile = {};
+                        updatedProfile.profile.location = e.target.value;
+                        setUserProfile(updatedProfile);
+                      }}
+                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c] transition-all"
+                      placeholder="Where are you from?"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Interests</label>
+                    <input
+                      type="text"
+                      value={userProfile.profile?.interests?.join(', ') || ''}
+                      onChange={(e) => {
+                        const updatedProfile = { ...userProfile };
+                        if (!updatedProfile.profile) updatedProfile.profile = {};
+                        updatedProfile.profile.interests = e.target.value.split(',').map(i => i.trim()).filter(i => i);
+                        setUserProfile(updatedProfile);
+                      }}
+                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c] transition-all"
+                      placeholder="Your interests (comma separated)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Favorite Pet Type</label>
+                    <select
+                      value={userProfile.profile?.favorite_pet_type || ''}
+                      onChange={(e) => {
+                        const updatedProfile = { ...userProfile };
+                        if (!updatedProfile.profile) updatedProfile.profile = {};
+                        updatedProfile.profile.favorite_pet_type = e.target.value;
+                        setUserProfile(updatedProfile);
+                      }}
+                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c] transition-all"
+                    >
+                      <option value="">Select a pet type</option>
+                      <option value="cat">Cat</option>
+                      <option value="dog">Dog</option>
+                      <option value="bat">Bat</option>
+                      <option value="duck">Duck</option>
+                    </select>
+                  </div>
                   {bioError && <div className="text-red-500 text-sm">{bioError}</div>}
                   <div className="flex gap-4">
                     <button
-                      onClick={handleSaveBio}
+                      onClick={handleSaveProfile}
                       className="bg-[#4abe9c] text-white px-4 py-2 rounded-lg hover:bg-[#3aa87c] transition-all shadow-sm hover:shadow-md"
                     >
                       Save
@@ -203,14 +346,33 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-between items-center bg-[#eaf6f0] p-4 rounded-lg">
-                  <p className="text-[#486085]">{bio}</p>
-                  <button
-                    onClick={() => setIsEditingBio(true)}
-                    className="text-[#4abe9c] hover:text-[#3aa87c] transition-colors text-sm font-medium"
-                  >
-                    Edit
-                  </button>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-[#eaf6f0] p-4 rounded-lg">
+                    <div className="space-y-2">
+                      <p className="text-[#486085]">{bio}</p>
+                      {userProfile.profile?.location && (
+                        <p className="text-[#486085] text-sm">
+                          <span className="font-medium">Location:</span> {userProfile.profile.location}
+                        </p>
+                      )}
+                      {userProfile.profile?.interests?.length > 0 && (
+                        <p className="text-[#486085] text-sm">
+                          <span className="font-medium">Interests:</span> {userProfile.profile.interests.join(', ')}
+                        </p>
+                      )}
+                      {userProfile.profile?.favorite_pet_type && (
+                        <p className="text-[#486085] text-sm">
+                          <span className="font-medium">Favorite Pet:</span> {userProfile.profile.favorite_pet_type.charAt(0).toUpperCase() + userProfile.profile.favorite_pet_type.slice(1)}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setIsEditingBio(true)}
+                      className="text-[#4abe9c] hover:text-[#3aa87c] transition-colors text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -290,7 +452,7 @@ export default function ProfilePage() {
               <h2 className="text-[#4abe9c] text-xl mb-4 pb-2 border-b border-[#4abe9c]">
                 Achievements
               </h2>
-              <Achievements userAchievements={userProfile.achievements || []} />
+              <Achievements userAchievements={userProfile.achievements} />
             </div>
           </div>
         </div>

@@ -19,6 +19,10 @@ CREATE TABLE user_geolocations (
 CREATE TABLE user_descriptions (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     bio TEXT,
+    location TEXT,
+    interests TEXT[],
+    favorite_pet_type TEXT CHECK (favorite_pet_type IN ('cat', 'duck', 'bat', 'dog')),
+    join_date TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
