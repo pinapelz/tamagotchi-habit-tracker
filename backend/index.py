@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from database import PostgresHandler
+from .database import PostgresHandler
 from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
@@ -139,6 +139,15 @@ def register_user():
             (user_id, hashed_password, "default_salt")
         )
 
+        # Create default settings for the new user
+        db.execute(
+            """
+            INSERT INTO user_settings (user_id, notifications, dark_mode, sound, email_updates, location)
+            VALUES (%s, TRUE, FALSE, TRUE, TRUE, TRUE)
+            """,
+            (user_id,)
+        )
+
         return jsonify({
             "status": "ok",
             "message": "User registered successfully."
@@ -152,11 +161,9 @@ def register_user():
             }), 400
         # Generic error response
         return jsonify({
-
             "status": "error",
             "message": str(e)
         }), 500
-
     finally:
         db.close()
 
@@ -662,10 +669,7 @@ def create_notification(db, user_id, type, message):
     try:
         print(f"Creating notification: user_id={user_id}, type={type}, message={message}")
         db.execute(
-            """
-            INSERT INTO notifications (user_id, type, message)
-            VALUES (%s, %s, %s)
-            """,
+            "INSERT INTO notifications (user_id, type, message) VALUES (%s, %s, %s)",
             (user_id, type, message)
         )
         print("Notification created successfully")
@@ -673,59 +677,140 @@ def create_notification(db, user_id, type, message):
         print(f"Error creating notification: {str(e)}")
         raise e  # Re-raise the exception so it can be handled by the caller
 
-@app.route("/api/habits/<uuid:habit_id>/complete", methods=["POST"])
-def complete_habit(habit_id):
+def check_achievements(db, user_id):
+    """Check and unlock achievements for a user based on their stats."""
+    # Get user stats
+    stats = db.fetchone(
+        """
+        SELECT 
+            current_streak,
+            longest_streak,
+            total_habits_completed
+        FROM user_stats
+        WHERE user_id = %s
+        """,
+        (user_id,)
+    )
+    
+    # Get pet level
+    pet = db.fetchone(
+        "SELECT lvl FROM pets WHERE user_id = %s",
+        (user_id,)
+    )
+    
+    # Get all achievements
+    achievements = db.fetchall("SELECT * FROM achievements")
+    
+    for achievement in achievements:
+        # Check if user already has this achievement
+        existing = db.fetchone(
+            "SELECT 1 FROM user_achievements WHERE user_id = %s AND achievement_id = %s",
+            (user_id, achievement["id"])
+        )
+        
+        if not existing:
+            # Check if achievement condition is met
+            should_unlock = False
+            
+            if achievement["condition_type"] == "streak" and stats["current_streak"] >= achievement["condition_value"]:
+                should_unlock = True
+            elif achievement["condition_type"] == "habits_completed" and stats["total_habits_completed"] >= achievement["condition_value"]:
+                should_unlock = True
+            elif achievement["condition_type"] == "pet_level" and pet and pet["lvl"] >= achievement["condition_value"]:
+                should_unlock = True
+            
+            if should_unlock:
+                # Unlock achievement
+                db.execute(
+                    "INSERT INTO user_achievements (user_id, achievement_id) VALUES (%s, %s)",
+                    (user_id, achievement["id"])
+                )
+                # Create notification
+                create_notification(
+                    db,
+                    user_id,
+                    "achievement",
+                    f"Achievement Unlocked: {achievement['name']} - {achievement['description']} {achievement['icon']}"
+                )
+
+@app.route("/api/habits/complete", methods=["POST"])
+def complete_habit():
     session_cookie = request.cookies.get("session")
     error_response, status_code, user = cookie_check(session_cookie)
     if error_response:
         return error_response, status_code
 
+    data = request.get_json()
+    if not data or "habit_id" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'habit_id' is required."
+        }), 400
+
+    habit_id = data["habit_id"]
     db = create_database_connection()
     try:
-        # Get habit name before updating
+        # Get habit
         habit = db.fetchone(
-            "SELECT name FROM habits WHERE id = %s AND user_id = %s",
-            (str(habit_id), user["id"])
+            "SELECT * FROM habits WHERE id = %s AND user_id = %s",
+            (habit_id, user["id"])
         )
         if not habit:
-            return jsonify({ "status": "error", "message": "Habit not found" }), 404
+            return jsonify({
+                "status": "error",
+                "message": "Habit not found."
+            }), 404
 
-        # Update habit completion
-        db.execute(
-            "UPDATE habits SET last_completed_at = NOW() WHERE id = %s AND user_id = %s",
-            (str(habit_id), user["id"])
-        )
-
-        # Get current pet stats
+        # Get pet
         pet = db.fetchone(
-            "SELECT name, type, happiness, xp, health, lvl FROM pets WHERE user_id = %s",
+            "SELECT * FROM pets WHERE user_id = %s",
             (user["id"],)
         )
-        if pet:
-            # Calculate new stats
-            new_happiness = min(100, pet["happiness"] + 5)  # Increase happiness by 5, max 100
-            new_health = min(100, pet["health"] + 2)  # Increase health by 2, max 100
-            new_xp = pet["xp"] + 10  # Increase XP by 10
+        if not pet:
+            return jsonify({
+                "status": "error",
+                "message": "Pet not found."
+            }), 404
 
-            # Check for level up
-            if new_xp >= 100:
-                new_xp = new_xp % 100  # Reset XP to remainder
-                new_level = pet["lvl"] + 1
-                # Create level up notification
-                create_notification(
-                    db,
-                    user["id"],
-                    "pet",
-                    f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
-                )
-            else:
-                new_level = pet["lvl"]
+        # Update habit last completed
+        db.execute(
+            "UPDATE habits SET last_completed_at = NOW() WHERE id = %s",
+            (habit_id,)
+        )
 
-            # Update pet stats
-            db.execute(
-                "UPDATE pets SET happiness = %s, health = %s, xp = %s, lvl = %s WHERE user_id = %s",
-                (new_happiness, new_health, new_xp, new_level, user["id"])
+        # Update pet XP
+        new_xp = pet["xp"] + 10
+        new_level = pet["lvl"]
+        if new_xp >= 100:
+            new_xp = new_xp % 100  # Reset XP to remainder
+            new_level = pet["lvl"] + 1
+            # Create level up notification
+            create_notification(
+                db,
+                user["id"],
+                "pet",
+                f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
             )
+
+        db.execute(
+            "UPDATE pets SET xp = %s, lvl = %s WHERE id = %s",
+            (new_xp, new_level, pet["id"])
+        )
+
+        # Update user stats
+        db.execute(
+            """
+            UPDATE user_stats 
+            SET 
+                current_streak = current_streak + 1,
+                longest_streak = GREATEST(longest_streak, current_streak + 1),
+                total_habits_completed = total_habits_completed + 1,
+                last_completed_at = NOW(),
+                updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (user["id"],)
+        )
 
         # Create habit completion notification
         create_notification(
@@ -735,12 +820,20 @@ def complete_habit(habit_id):
             f"You completed your habit: {habit['name']}!"
         )
 
-        return jsonify({ "status": "ok", "message": "Habit marked complete" }), 200
+        # Check for achievements
+        check_achievements(db, user["id"])
+
+        return jsonify({
+            "status": "ok",
+            "message": "Habit completed successfully."
+        }), 200
     except Exception as e:
-        return jsonify({ "status": "error", "message": str(e) }), 500
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
     finally:
         db.close()
-
 
 @app.route("/api/habits/<uuid:habit_id>", methods=["DELETE"])
 def delete_habit(habit_id):
@@ -937,12 +1030,12 @@ def send_friend_request():
             }), 404
 
         # Create notification for friend
-        create_notification(
-            db,
-            friend_id,
-            "friend",
-            f"{user['display_name']} sent you a friend request!"
-        )
+        # create_notification(
+        #     db,
+        #     friend_id,
+        #     "friend",
+        #     f"{user['display_name']} sent you a friend request!"
+        # )
 
         return jsonify({
             "status": "ok",
@@ -985,12 +1078,12 @@ def accept_friend_request():
             }), 404
 
         # Create notification for friend
-        create_notification(
-            db,
-            friend_id,
-            "friend",
-            f"{user['display_name']} accepted your friend request!"
-        )
+        # create_notification(
+        #     db,
+        #     friend_id,
+        #     "friend",
+        #     f"{user['display_name']} accepted your friend request!"
+        # )
 
         return jsonify({
             "status": "ok",
@@ -1185,12 +1278,12 @@ def send_friend_message():
             }), 404
 
         # Create notification for friend
-        create_notification(
-            db,
-            friend_id,
-            "friend",
-            f"New message from {user['display_name']}: '{message}'"
-        )
+        # create_notification(
+        #     db,
+        #     friend_id,
+        #     "friend",
+        #     f"New message from {user['display_name']}: '{message}'"
+        # )
 
         return jsonify({
             "status": "ok",
@@ -1232,21 +1325,40 @@ def update_pet_time():
         new_happiness = max(0, pet["happiness"] - 2)  # Decrease happiness by 2, min 0
         new_health = max(0, pet["health"] - 1)  # Decrease health by 1, min 0
 
-        # Create notifications for low stats only when crossing below 30%
-        if new_happiness < 30 and pet["happiness"] >= 30:
-            create_notification(
-                db,
-                user["id"],
-                "pet",
-                f"{pet['name']} is feeling sad! Maybe it's time for some attention? 🐾"
-            )
-        if new_health < 30 and pet["health"] >= 30:
-            create_notification(
-                db,
-                user["id"],
-                "pet",
-                f"{pet['name']} is not feeling well! Maybe it needs some care? 🐾"
-            )
+        # Check for recent similar notifications (within last hour)
+        recent_notifications = db.fetchall(
+            """
+            SELECT message, created_at 
+            FROM notifications 
+            WHERE user_id = %s 
+            AND type = 'pet' 
+            AND created_at > NOW() - INTERVAL '1 hour'
+            """,
+            (user["id"],)
+        )
+
+        # Create notifications for low stats only if no similar recent notification exists
+        if new_happiness < 30:
+            # Check if we already have a recent "feeling sad" notification
+            has_recent_sad = any("feeling sad" in n["message"] for n in recent_notifications)
+            if not has_recent_sad:
+                create_notification(
+                    db,
+                    user["id"],
+                    "pet",
+                    f"{pet['name']} is feeling sad! Maybe it's time for some attention? 🐾"
+                )
+
+        if new_health < 30:
+            # Check if we already have a recent "not feeling well" notification
+            has_recent_sick = any("not feeling well" in n["message"] for n in recent_notifications)
+            if not has_recent_sick:
+                create_notification(
+                    db,
+                    user["id"],
+                    "pet",
+                    f"{pet['name']} is not feeling well! Maybe it needs some care? 🐾"
+                )
 
         # Update pet stats
         db.execute(
@@ -1263,6 +1375,539 @@ def update_pet_time():
                 "xp": pet["xp"],
                 "lvl": pet["lvl"]
             }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/settings", methods=["GET"])
+def get_settings():
+    """
+    Retrieves the user's settings.
+    Requires authentication via session cookie.
+    Returns the user's settings or an error message.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get user settings, create default settings if none exist
+        settings = db.fetchone(
+            """
+            INSERT INTO user_settings (user_id)
+            SELECT %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_settings WHERE user_id = %s
+            )
+            RETURNING notifications, dark_mode, sound, email_updates, location;
+            """,
+            (user["id"], user["id"])
+        )
+        
+        if not settings:
+            # If no settings were created (they already existed), fetch them
+            settings = db.fetchone(
+                "SELECT notifications, dark_mode, sound, email_updates, location FROM user_settings WHERE user_id = %s",
+                (user["id"],)
+            )
+
+        return jsonify({
+            "status": "ok",
+            "settings": {
+                "notifications": settings["notifications"],
+                "darkMode": settings["dark_mode"],
+                "sound": settings["sound"],
+                "emailUpdates": settings["email_updates"],
+                "location": settings["location"]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/settings", methods=["PUT"])
+def update_settings():
+    """
+    Updates a specific user setting.
+    Requires authentication via session cookie.
+    Expects a JSON payload with 'setting' and 'value'.
+    Returns the updated settings or an error message.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "setting" not in data or "value" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'setting' and 'value' are required."
+        }), 400
+
+    setting = data["setting"]
+    value = data["value"]
+
+    # Map frontend setting names to database column names
+    setting_map = {
+        "notifications": "notifications",
+        "darkMode": "dark_mode",
+        "sound": "sound",
+        "emailUpdates": "email_updates",
+        "location": "location"
+    }
+
+    if setting not in setting_map:
+        return jsonify({
+            "status": "error",
+            "message": f"Invalid setting: {setting}"
+        }), 400
+
+    db = create_database_connection()
+    try:
+        # Update the setting
+        db.execute(
+            f"""
+            UPDATE user_settings 
+            SET {setting_map[setting]} = %s, updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (value, user["id"])
+        )
+
+        # Fetch updated settings
+        settings = db.fetchone(
+            "SELECT notifications, dark_mode, sound, email_updates, location FROM user_settings WHERE user_id = %s",
+            (user["id"],)
+        )
+
+        return jsonify({
+            "status": "ok",
+            "settings": {
+                "notifications": settings["notifications"],
+                "darkMode": settings["dark_mode"],
+                "sound": settings["sound"],
+                "emailUpdates": settings["email_updates"],
+                "location": settings["location"]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/account", methods=["DELETE"])
+def delete_account():
+    """
+    Deletes the user's account and all associated data.
+    Requires authentication via session cookie.
+    Returns a success message or an error message.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Delete user (this will cascade delete all related data due to ON DELETE CASCADE)
+        db.execute("DELETE FROM users WHERE id = %s", (user["id"],))
+        
+        return jsonify({
+            "status": "ok",
+            "message": "Account deleted successfully"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/export-data", methods=["GET"])
+def export_user_data():
+    """
+    Exports all user data for download.
+    Requires authentication via session cookie.
+    Returns a JSON object containing all user data.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get user profile data
+        profile = db.fetchone(
+            """
+            SELECT 
+                u.email,
+                u.display_name,
+                u.avatar_url,
+                u.timezone,
+                u.created_at,
+                ud.bio
+            FROM users u
+            LEFT JOIN user_descriptions ud ON u.id = ud.user_id
+            WHERE u.id = %s
+            """,
+            (user["id"],)
+        )
+
+        # Get user settings
+        settings = db.fetchone(
+            """
+            SELECT 
+                notifications,
+                dark_mode,
+                sound,
+                email_updates,
+                location
+            FROM user_settings
+            WHERE user_id = %s
+            """,
+            (user["id"],)
+        )
+
+        # Get pet data
+        pet = db.fetchone(
+            """
+            SELECT 
+                name,
+                type,
+                happiness,
+                xp,
+                health,
+                lvl,
+                created_at
+            FROM pets
+            WHERE user_id = %s
+            """,
+            (user["id"],)
+        )
+
+        # Get habits data
+        habits = db.fetchall(
+            """
+            SELECT 
+                name,
+                description,
+                recurrence_type,
+                created_at,
+                last_completed_at
+            FROM habits
+            WHERE user_id = %s AND archived = FALSE
+            """,
+            (user["id"],)
+        )
+
+        # Get user stats
+        stats = db.fetchone(
+            """
+            SELECT 
+                current_streak,
+                longest_streak,
+                total_habits_completed,
+                last_completed_at
+            FROM user_stats
+            WHERE user_id = %s
+            """,
+            (user["id"],)
+        )
+
+        # Get achievements (from notifications)
+        achievements = db.fetchall(
+            """
+            SELECT 
+                message,
+                created_at
+            FROM notifications
+            WHERE user_id = %s AND type = 'achievement'
+            ORDER BY created_at DESC
+            """,
+            (user["id"],)
+        )
+
+        # Format the data
+        export_data = {
+            "exportDate": datetime.utcnow().isoformat(),
+            "user": {
+                "email": profile["email"],
+                "displayName": profile["display_name"],
+                "avatarUrl": profile["avatar_url"],
+                "timezone": profile["timezone"],
+                "joinDate": profile["created_at"].isoformat(),
+                "bio": profile["bio"]
+            },
+            "settings": {
+                "notifications": settings["notifications"],
+                "darkMode": settings["dark_mode"],
+                "sound": settings["sound"],
+                "emailUpdates": settings["email_updates"],
+                "location": settings["location"]
+            },
+            "pet": pet and {
+                "name": pet["name"],
+                "type": pet["type"],
+                "happiness": pet["happiness"],
+                "xp": pet["xp"],
+                "health": pet["health"],
+                "level": pet["lvl"],
+                "createdAt": pet["created_at"].isoformat()
+            },
+            "habits": [{
+                "name": habit["name"],
+                "description": habit["description"],
+                "frequency": habit["recurrence_type"],
+                "createdAt": habit["created_at"].isoformat(),
+                "lastCompletedAt": habit["last_completed_at"].isoformat() if habit["last_completed_at"] else None
+            } for habit in habits],
+            "stats": stats and {
+                "currentStreak": stats["current_streak"],
+                "longestStreak": stats["longest_streak"],
+                "totalHabitsCompleted": stats["total_habits_completed"],
+                "lastCompletedAt": stats["last_completed_at"].isoformat() if stats["last_completed_at"] else None
+            },
+            "achievements": [{
+                "name": achievement["message"].split(": ")[1].split(" - ")[0],
+                "description": achievement["message"].split(" - ")[1].replace(" 🏆", ""),
+                "earnedDate": achievement["created_at"].isoformat()
+            } for achievement in achievements]
+        }
+
+        return jsonify({
+            "status": "ok",
+            "data": export_data
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements", methods=["GET"])
+def get_achievements():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get all achievements
+        achievements = db.fetchall("SELECT * FROM achievements ORDER BY condition_value")
+        
+        # Get user's unlocked achievements
+        unlocked = db.fetchall(
+            "SELECT achievement_id FROM user_achievements WHERE user_id = %s",
+            (user["id"],)
+        )
+        unlocked_ids = {row["achievement_id"] for row in unlocked}
+        
+        # Add unlocked status to achievements
+        for achievement in achievements:
+            achievement["unlocked"] = achievement["id"] in unlocked_ids
+        
+        return jsonify({
+            "status": "ok",
+            "achievements": achievements
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements/initialize", methods=["POST"])
+def initialize_achievements():
+    """Initialize the default achievements in the database."""
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+    
+    # Only allow admin users to initialize achievements
+    if not user.get("is_admin", False):
+        return jsonify({
+            "status": "error",
+            "message": "Unauthorized"
+        }), 403
+
+    db = create_database_connection()
+    try:
+        # Default achievements
+        achievements = [
+            # Habit Completion Achievements
+            {
+                "name": "Getting Started",
+                "description": "Complete your first habit",
+                "condition_type": "habits_completed",
+                "condition_value": 1,
+                "icon": "🎯"
+            },
+            {
+                "name": "Habit Master",
+                "description": "Complete 10 habits",
+                "condition_type": "habits_completed",
+                "condition_value": 10,
+                "icon": "⭐"
+            },
+            {
+                "name": "Habit Champion",
+                "description": "Complete 50 habits",
+                "condition_type": "habits_completed",
+                "condition_value": 50,
+                "icon": "🏅"
+            },
+            {
+                "name": "Habit Legend",
+                "description": "Complete 100 habits",
+                "condition_type": "habits_completed",
+                "condition_value": 100,
+                "icon": "💫"
+            },
+            {
+                "name": "Habit Virtuoso",
+                "description": "Complete 500 habits",
+                "condition_type": "habits_completed",
+                "condition_value": 500,
+                "icon": "✨"
+            },
+            {
+                "name": "Habit Deity",
+                "description": "Complete 1000 habits",
+                "condition_type": "habits_completed",
+                "condition_value": 1000,
+                "icon": "🌟"
+            },
+            # Streak Achievements
+            {
+                "name": "Streak Beginner",
+                "description": "Maintain a 3-day streak",
+                "condition_type": "streak",
+                "condition_value": 3,
+                "icon": "🔥"
+            },
+            {
+                "name": "Streak Master",
+                "description": "Maintain a 7-day streak",
+                "condition_type": "streak",
+                "condition_value": 7,
+                "icon": "⚡"
+            },
+            {
+                "name": "Streak Legend",
+                "description": "Maintain a 30-day streak",
+                "condition_type": "streak",
+                "condition_value": 30,
+                "icon": "🌪️"
+            },
+            {
+                "name": "Streak Warrior",
+                "description": "Maintain a 60-day streak",
+                "condition_type": "streak",
+                "condition_value": 60,
+                "icon": "⚔️"
+            },
+            {
+                "name": "Streak Champion",
+                "description": "Maintain a 100-day streak",
+                "condition_type": "streak",
+                "condition_value": 100,
+                "icon": "🏆"
+            },
+            {
+                "name": "Streak Immortal",
+                "description": "Maintain a 365-day streak",
+                "condition_type": "streak",
+                "condition_value": 365,
+                "icon": "👑"
+            },
+            # Pet Level Achievements
+            {
+                "name": "Pet Novice",
+                "description": "Reach pet level 5",
+                "condition_type": "pet_level",
+                "condition_value": 5,
+                "icon": "🐣"
+            },
+            {
+                "name": "Pet Master",
+                "description": "Reach pet level 10",
+                "condition_type": "pet_level",
+                "condition_value": 10,
+                "icon": "🐉"
+            },
+            {
+                "name": "Pet Legend",
+                "description": "Reach pet level 20",
+                "condition_type": "pet_level",
+                "condition_value": 20,
+                "icon": "🐲"
+            },
+            {
+                "name": "Pet Guardian",
+                "description": "Reach pet level 30",
+                "condition_type": "pet_level",
+                "condition_value": 30,
+                "icon": "🦁"
+            },
+            {
+                "name": "Pet Deity",
+                "description": "Reach pet level 50",
+                "condition_type": "pet_level",
+                "condition_value": 50,
+                "icon": "🦄"
+            },
+            {
+                "name": "Pet Celestial",
+                "description": "Reach pet level 100",
+                "condition_type": "pet_level",
+                "condition_value": 100,
+                "icon": "🌠"
+            }
+        ]
+
+        # Insert achievements
+        for achievement in achievements:
+            db.execute(
+                """
+                INSERT INTO achievements (name, description, condition_type, condition_value, icon)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (
+                    achievement["name"],
+                    achievement["description"],
+                    achievement["condition_type"],
+                    achievement["condition_value"],
+                    achievement["icon"]
+                )
+            )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Achievements initialized successfully"
         }), 200
     except Exception as e:
         return jsonify({
