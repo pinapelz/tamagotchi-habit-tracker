@@ -1,195 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Flame, PawPrint, ArrowRight, Target, Calendar, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const Achievements = ({ userAchievements = [] }) => {
+const Achievements = ({ userAchievements }) => {
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
-
-  // Sample achievements data
-  const sampleAchievements = [
-    // Habit Completion Achievements
-    {
-      id: '1',
-      name: 'Getting Started',
-      description: 'Complete your first habit',
-      condition_type: 'habits_completed',
-      condition_value: 1,
-      icon: '🎯',
-      unlocked: true
-    },
-    {
-      id: '2',
-      name: 'Habit Master',
-      description: 'Complete 10 habits',
-      condition_type: 'habits_completed',
-      condition_value: 10,
-      icon: '⭐',
-      unlocked: false
-    },
-    {
-      id: '3',
-      name: 'Habit Champion',
-      description: 'Complete 50 habits',
-      condition_type: 'habits_completed',
-      condition_value: 50,
-      icon: '🏅',
-      unlocked: false
-    },
-    {
-      id: '4',
-      name: 'Habit Legend',
-      description: 'Complete 100 habits',
-      condition_type: 'habits_completed',
-      condition_value: 100,
-      icon: '💫',
-      unlocked: false
-    },
-    {
-      id: '5',
-      name: 'Habit Virtuoso',
-      description: 'Complete 500 habits',
-      condition_type: 'habits_completed',
-      condition_value: 500,
-      icon: '✨',
-      unlocked: false
-    },
-    {
-      id: '6',
-      name: 'Habit Deity',
-      description: 'Complete 1000 habits',
-      condition_type: 'habits_completed',
-      condition_value: 1000,
-      icon: '🌟',
-      unlocked: false
-    },
-    // Streak Achievements
-    {
-      id: '7',
-      name: 'Streak Beginner',
-      description: 'Maintain a 3-day streak',
-      condition_type: 'streak',
-      condition_value: 3,
-      icon: '🔥',
-      unlocked: true
-    },
-    {
-      id: '8',
-      name: 'Streak Master',
-      description: 'Maintain a 7-day streak',
-      condition_type: 'streak',
-      condition_value: 7,
-      icon: '⚡',
-      unlocked: false
-    },
-    {
-      id: '9',
-      name: 'Streak Legend',
-      description: 'Maintain a 30-day streak',
-      condition_type: 'streak',
-      condition_value: 30,
-      icon: '🌪️',
-      unlocked: false
-    },
-    {
-      id: '10',
-      name: 'Streak Warrior',
-      description: 'Maintain a 60-day streak',
-      condition_type: 'streak',
-      condition_value: 60,
-      icon: '⚔️',
-      unlocked: false
-    },
-    {
-      id: '11',
-      name: 'Streak Champion',
-      description: 'Maintain a 100-day streak',
-      condition_type: 'streak',
-      condition_value: 100,
-      icon: '🏆',
-      unlocked: false
-    },
-    {
-      id: '12',
-      name: 'Streak Immortal',
-      description: 'Maintain a 365-day streak',
-      condition_type: 'streak',
-      condition_value: 365,
-      icon: '👑',
-      unlocked: false
-    },
-    // Pet Level Achievements
-    {
-      id: '13',
-      name: 'Pet Novice',
-      description: 'Reach pet level 5',
-      condition_type: 'pet_level',
-      condition_value: 5,
-      icon: '🐣',
-      unlocked: false
-    },
-    {
-      id: '14',
-      name: 'Pet Master',
-      description: 'Reach pet level 10',
-      condition_type: 'pet_level',
-      condition_value: 10,
-      icon: '🐉',
-      unlocked: false
-    },
-    {
-      id: '15',
-      name: 'Pet Legend',
-      description: 'Reach pet level 20',
-      condition_type: 'pet_level',
-      condition_value: 20,
-      icon: '🐲',
-      unlocked: false
-    },
-    {
-      id: '16',
-      name: 'Pet Guardian',
-      description: 'Reach pet level 30',
-      condition_type: 'pet_level',
-      condition_value: 30,
-      icon: '🦁',
-      unlocked: false
-    },
-    {
-      id: '17',
-      name: 'Pet Deity',
-      description: 'Reach pet level 50',
-      condition_type: 'pet_level',
-      condition_value: 50,
-      icon: '🦄',
-      unlocked: false
-    },
-    {
-      id: '18',
-      name: 'Pet Celestial',
-      description: 'Reach pet level 100',
-      condition_type: 'pet_level',
-      condition_value: 100,
-      icon: '🌠',
-      unlocked: false
-    }
-  ];
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // If user has achievements, map them to the sample achievements structure
-    if (userAchievements && userAchievements.length > 0) {
-      setAchievements(sampleAchievements.map(achievement => ({
-        ...achievement,
-        unlocked: userAchievements.includes(achievement.name)
-      })));
-    } else {
-      // If no achievements, show all as locked
-      setAchievements(sampleAchievements.map(achievement => ({
-        ...achievement,
-        unlocked: false
-      })));
-    }
-    setLoading(false);
+    const fetchAchievements = async () => {
+      try {
+        // If userAchievements is provided, use it directly
+        if (userAchievements && userAchievements.length > 0) {
+          setAchievements(userAchievements);
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise fetch from API
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError('Please log in to view achievements');
+            return;
+          }
+          const errorText = await response.text();
+          console.error('Server response:', errorText);
+          throw new Error(`Failed to fetch achievements: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        if (data.status === 'ok') {
+          setAchievements(data.achievements);
+        } else {
+          throw new Error(data.message || 'Failed to fetch achievements');
+        }
+      } catch (error) {
+        console.error('Error fetching achievements:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAchievements();
   }, [userAchievements]);
 
   const getCategoryIcon = (type) => {
@@ -215,6 +79,29 @@ const Achievements = ({ userAchievements = [] }) => {
     return (
       <div className="flex justify-center items-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4abe9c]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <div className="text-red-500 mb-4">{error}</div>
+        {error.includes('log in') ? (
+          <button 
+            onClick={() => navigate('/login')} 
+            className="px-4 py-2 bg-[#4abe9c] text-white rounded-lg hover:bg-[#3da88a] transition-colors"
+          >
+            Go to Login
+          </button>
+        ) : (
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-[#4abe9c] text-white rounded-lg hover:bg-[#3da88a] transition-colors"
+          >
+            Try Again
+          </button>
+        )}
       </div>
     );
   }
@@ -338,7 +225,7 @@ const Achievements = ({ userAchievements = [] }) => {
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 opacity-60"
             >
               <div className="flex items-start gap-3">
-                <div className="text-2xl opacity-50">
+                <div className={`text-2xl ${achievement.unlocked ? 'opacity-100' : 'opacity-50'}`}>
                   {achievement.icon}
                 </div>
                 <div className="flex-1">
@@ -367,7 +254,7 @@ const Achievements = ({ userAchievements = [] }) => {
               <div className="text-sm text-gray-500">Unlocked</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl text-[#486085] font-medium">18</div>
+              <div className="text-2xl text-[#486085] font-medium">{achievements.length}</div>
               <div className="text-sm text-gray-500">Total</div>
             </div>
             <div className="text-center">
