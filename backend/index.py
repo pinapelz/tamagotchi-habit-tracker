@@ -258,11 +258,22 @@ def get_profile():
             (user["id"],)
         )
 
-        # Get user bio
-        bio = db.fetchone(
-            "SELECT bio FROM user_descriptions WHERE user_id = %s",
+        # Get user profile info
+        profile = db.fetchone(
+            """
+            SELECT bio, location, interests, favorite_pet_type, join_date
+            FROM user_descriptions 
+            WHERE user_id = %s
+            """,
             (user["id"],)
         )
+
+        # Get accurate habit completion count
+        habits = db.fetchall(
+            "SELECT last_completed_at FROM habits WHERE user_id = %s",
+            (user["id"],)
+        )
+        total_completed = sum(1 for habit in habits if habit["last_completed_at"] is not None)
 
         # Build the response
         profile_data = {
@@ -273,13 +284,19 @@ def get_profile():
                 "avatar_url": user["avatar_url"],
                 "timezone": user["timezone"]
             },
-            "stats": stats if stats else {
-                "current_streak": 0,
-                "longest_streak": 0,
-                "total_habits_completed": 0
+            "stats": {
+                "current_streak": stats["current_streak"] if stats else 0,
+                "longest_streak": stats["longest_streak"] if stats else 0,
+                "total_habits_completed": total_completed
             },
             "pet": pet if pet else None,
-            "bio": bio["bio"] if bio else None
+            "profile": {
+                "bio": profile["bio"] if profile else None,
+                "location": profile["location"] if profile else None,
+                "interests": profile["interests"] if profile else [],
+                "favorite_pet_type": profile["favorite_pet_type"] if profile else None,
+                "join_date": profile["join_date"].isoformat() if profile and profile["join_date"] else None
+            }
         }
 
         return jsonify({
@@ -288,6 +305,108 @@ def get_profile():
         }), 200
 
     except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/profile/update", methods=["POST"])
+def update_profile():
+    """
+    Updates the authenticated user's profile information.
+    Requires a valid session cookie.
+    Expects a JSON payload with profile fields to update.
+    """
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. No data provided."
+        }), 400
+
+    # Validate favorite_pet_type if provided
+    if "favorite_pet_type" in data and data["favorite_pet_type"] not in ["cat", "duck", "bat", "dog", None]:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid favorite pet type."
+        }), 400
+
+    db = create_database_connection()
+    try:
+        # First, check if a record exists
+        existing = db.fetchone(
+            "SELECT 1 FROM user_descriptions WHERE user_id = %s",
+            (user["id"],)
+        )
+
+        if existing:
+            # Update existing record
+            update_fields = []
+            params = []
+            
+            for field in ["bio", "location", "favorite_pet_type"]:
+                if field in data:
+                    update_fields.append(f"{field} = %s")
+                    params.append(data[field])
+            
+            if "interests" in data:
+                update_fields.append("interests = %s")
+                params.append(data["interests"])
+            
+            if update_fields:
+                update_fields.append("updated_at = NOW()")
+                params.append(user["id"])
+                
+                query = f"""
+                    UPDATE user_descriptions 
+                    SET {', '.join(update_fields)}
+                    WHERE user_id = %s
+                """
+                
+                db.execute(query, params)
+        else:
+            # Insert new record
+            fields = []
+            values = []
+            params = []
+            
+            for field in ["bio", "location", "favorite_pet_type"]:
+                if field in data:
+                    fields.append(field)
+                    values.append("%s")
+                    params.append(data[field])
+            
+            if "interests" in data:
+                fields.append("interests")
+                values.append("%s")
+                params.append(data["interests"])
+            
+            if fields:
+                fields.append("user_id")
+                values.append("%s")
+                params.append(user["id"])
+                
+                query = f"""
+                    INSERT INTO user_descriptions ({', '.join(fields)})
+                    VALUES ({', '.join(values)})
+                """
+                
+                db.execute(query, params)
+
+        return jsonify({
+            "status": "ok",
+            "message": "Profile updated successfully."
+        }), 200
+
+    except Exception as e:
+        print(f"Error updating profile: {str(e)}")  # Add debug logging
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -679,59 +798,106 @@ def create_notification(db, user_id, type, message):
 
 def check_achievements(db, user_id):
     """Check and unlock achievements for a user based on their stats."""
-    # Get user stats
-    stats = db.fetchone(
-        """
-        SELECT 
-            current_streak,
-            longest_streak,
-            total_habits_completed
-        FROM user_stats
-        WHERE user_id = %s
-        """,
-        (user_id,)
-    )
-    
-    # Get pet level
-    pet = db.fetchone(
-        "SELECT lvl FROM pets WHERE user_id = %s",
-        (user_id,)
-    )
-    
-    # Get all achievements
-    achievements = db.fetchall("SELECT * FROM achievements")
-    
-    for achievement in achievements:
-        # Check if user already has this achievement
-        existing = db.fetchone(
-            "SELECT 1 FROM user_achievements WHERE user_id = %s AND achievement_id = %s",
-            (user_id, achievement["id"])
+    try:
+        # Get accurate habit completion count
+        habits = db.fetchall(
+            "SELECT name, last_completed_at FROM habits WHERE user_id = %s",
+            (user_id,)
         )
+        print(f"Found {len(habits)} habits for user {user_id}")
+        for habit in habits:
+            print(f"Habit: {habit['name']}, Last completed: {habit['last_completed_at']}")
         
-        if not existing:
-            # Check if achievement condition is met
-            should_unlock = False
+        total_completed = sum(1 for habit in habits if habit["last_completed_at"] is not None)
+        print(f"Total completed habits: {total_completed}")
+        
+        # Update user stats with accurate count
+        db.execute(
+            """
+            UPDATE user_stats 
+            SET total_habits_completed = %s,
+                updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (total_completed, user_id)
+        )
+        print(f"Updated user_stats with total_completed = {total_completed}")
+        
+        # Get updated user stats
+        stats = db.fetchone(
+            """
+            SELECT 
+                current_streak,
+                longest_streak,
+                total_habits_completed
+            FROM user_stats
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+        print(f"Updated stats: {stats}")
+        
+        # Get pet level
+        pet = db.fetchone(
+            "SELECT lvl FROM pets WHERE user_id = %s",
+            (user_id,)
+        )
+        print(f"Pet level: {pet['lvl'] if pet else 'No pet'}")
+        
+        # Get all achievements
+        achievements = db.fetchall("SELECT * FROM achievements")
+        print(f"Found {len(achievements)} total achievements")
+        
+        # Get user's unlocked achievements
+        unlocked = db.fetchall(
+            "SELECT achievement_id FROM user_achievements WHERE user_id = %s",
+            (user_id,)
+        )
+        unlocked_ids = {row["achievement_id"] for row in unlocked}
+        print(f"User has {len(unlocked_ids)} unlocked achievements")
+        
+        for achievement in achievements:
+            # Check if user already has this achievement
+            existing = db.fetchone(
+                "SELECT 1 FROM user_achievements WHERE user_id = %s AND achievement_id = %s",
+                (user_id, achievement["id"])
+            )
             
-            if achievement["condition_type"] == "streak" and stats["current_streak"] >= achievement["condition_value"]:
-                should_unlock = True
-            elif achievement["condition_type"] == "habits_completed" and stats["total_habits_completed"] >= achievement["condition_value"]:
-                should_unlock = True
-            elif achievement["condition_type"] == "pet_level" and pet and pet["lvl"] >= achievement["condition_value"]:
-                should_unlock = True
-            
-            if should_unlock:
-                # Unlock achievement
-                db.execute(
-                    "INSERT INTO user_achievements (user_id, achievement_id) VALUES (%s, %s)",
-                    (user_id, achievement["id"])
-                )
-                # Create notification
-                create_notification(
-                    db,
-                    user_id,
-                    "achievement",
-                    f"Achievement Unlocked: {achievement['name']} - {achievement['description']} {achievement['icon']}"
-                )
+            if not existing:
+                # Check if achievement condition is met
+                should_unlock = False
+                current_value = 0
+                
+                if achievement["condition_type"] == "streak" and stats:
+                    current_value = stats["current_streak"]
+                    should_unlock = current_value >= achievement["condition_value"]
+                    print(f"Checking streak achievement {achievement['name']}: current={current_value}, required={achievement['condition_value']}")
+                elif achievement["condition_type"] == "habits_completed":
+                    current_value = total_completed
+                    should_unlock = current_value >= achievement["condition_value"]
+                    print(f"Checking habits achievement {achievement['name']}: current={current_value}, required={achievement['condition_value']}")
+                elif achievement["condition_type"] == "pet_level" and pet:
+                    current_value = pet["lvl"]
+                    should_unlock = current_value >= achievement["condition_value"]
+                    print(f"Checking pet achievement {achievement['name']}: current={current_value}, required={achievement['condition_value']}")
+                
+                if should_unlock:
+                    print(f"Unlocking achievement: {achievement['name']} (current value: {current_value})")
+                    # Unlock achievement
+                    db.execute(
+                        "INSERT INTO user_achievements (user_id, achievement_id) VALUES (%s, %s)",
+                        (user_id, achievement["id"])
+                    )
+                    # Create notification
+                    create_notification(
+                        db,
+                        user_id,
+                        "achievement",
+                        f"Achievement Unlocked: {achievement['name']} - {achievement['description']} {achievement['icon']}"
+                    )
+    except Exception as e:
+        print(f"Error in check_achievements: {str(e)}")
+        raise e
 
 @app.route("/api/habits/complete", methods=["POST"])
 def complete_habit():
@@ -761,6 +927,8 @@ def complete_habit():
                 "message": "Habit not found."
             }), 404
 
+        print(f"Completing habit: {habit['name']} (ID: {habit_id})")
+
         # Get pet
         pet = db.fetchone(
             "SELECT * FROM pets WHERE user_id = %s",
@@ -777,6 +945,7 @@ def complete_habit():
             "UPDATE habits SET last_completed_at = NOW() WHERE id = %s",
             (habit_id,)
         )
+        print(f"Updated habit last_completed_at to NOW()")
 
         # Update pet XP
         new_xp = pet["xp"] + 10
@@ -796,6 +965,7 @@ def complete_habit():
             "UPDATE pets SET xp = %s, lvl = %s WHERE id = %s",
             (new_xp, new_level, pet["id"])
         )
+        print(f"Updated pet XP to {new_xp} and level to {new_level}")
 
         # Update user stats
         db.execute(
@@ -811,6 +981,7 @@ def complete_habit():
             """,
             (user["id"],)
         )
+        print(f"Updated user stats")
 
         # Create habit completion notification
         create_notification(
@@ -828,6 +999,7 @@ def complete_habit():
             "message": "Habit completed successfully."
         }), 200
     except Exception as e:
+        print(f"Error completing habit: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -1194,6 +1366,9 @@ def pet_level_up():
             "pet",
             f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
         )
+
+        # Check for achievements after level up
+        check_achievements(db, user["id"])
 
         return jsonify({
             "status": "ok",
@@ -1745,171 +1920,399 @@ def initialize_achievements():
     error_response, status_code, user = cookie_check(session_cookie)
     if error_response:
         return error_response, status_code
-    
-    # Only allow admin users to initialize achievements
-    if not user.get("is_admin", False):
-        return jsonify({
-            "status": "error",
-            "message": "Unauthorized"
-        }), 403
 
     db = create_database_connection()
     try:
-        # Default achievements
-        achievements = [
-            # Habit Completion Achievements
-            {
-                "name": "Getting Started",
-                "description": "Complete your first habit",
-                "condition_type": "habits_completed",
-                "condition_value": 1,
-                "icon": "🎯"
-            },
-            {
-                "name": "Habit Master",
-                "description": "Complete 10 habits",
-                "condition_type": "habits_completed",
-                "condition_value": 10,
-                "icon": "⭐"
-            },
-            {
-                "name": "Habit Champion",
-                "description": "Complete 50 habits",
-                "condition_type": "habits_completed",
-                "condition_value": 50,
-                "icon": "🏅"
-            },
-            {
-                "name": "Habit Legend",
-                "description": "Complete 100 habits",
-                "condition_type": "habits_completed",
-                "condition_value": 100,
-                "icon": "💫"
-            },
-            {
-                "name": "Habit Virtuoso",
-                "description": "Complete 500 habits",
-                "condition_type": "habits_completed",
-                "condition_value": 500,
-                "icon": "✨"
-            },
-            {
-                "name": "Habit Deity",
-                "description": "Complete 1000 habits",
-                "condition_type": "habits_completed",
-                "condition_value": 1000,
-                "icon": "🌟"
-            },
-            # Streak Achievements
-            {
-                "name": "Streak Beginner",
-                "description": "Maintain a 3-day streak",
-                "condition_type": "streak",
-                "condition_value": 3,
-                "icon": "🔥"
-            },
-            {
-                "name": "Streak Master",
-                "description": "Maintain a 7-day streak",
-                "condition_type": "streak",
-                "condition_value": 7,
-                "icon": "⚡"
-            },
-            {
-                "name": "Streak Legend",
-                "description": "Maintain a 30-day streak",
-                "condition_type": "streak",
-                "condition_value": 30,
-                "icon": "🌪️"
-            },
-            {
-                "name": "Streak Warrior",
-                "description": "Maintain a 60-day streak",
-                "condition_type": "streak",
-                "condition_value": 60,
-                "icon": "⚔️"
-            },
-            {
-                "name": "Streak Champion",
-                "description": "Maintain a 100-day streak",
-                "condition_type": "streak",
-                "condition_value": 100,
-                "icon": "🏆"
-            },
-            {
-                "name": "Streak Immortal",
-                "description": "Maintain a 365-day streak",
-                "condition_type": "streak",
-                "condition_value": 365,
-                "icon": "👑"
-            },
-            # Pet Level Achievements
-            {
-                "name": "Pet Novice",
-                "description": "Reach pet level 5",
-                "condition_type": "pet_level",
-                "condition_value": 5,
-                "icon": "🐣"
-            },
-            {
-                "name": "Pet Master",
-                "description": "Reach pet level 10",
-                "condition_type": "pet_level",
-                "condition_value": 10,
-                "icon": "🐉"
-            },
-            {
-                "name": "Pet Legend",
-                "description": "Reach pet level 20",
-                "condition_type": "pet_level",
-                "condition_value": 20,
-                "icon": "🐲"
-            },
-            {
-                "name": "Pet Guardian",
-                "description": "Reach pet level 30",
-                "condition_type": "pet_level",
-                "condition_value": 30,
-                "icon": "🦁"
-            },
-            {
-                "name": "Pet Deity",
-                "description": "Reach pet level 50",
-                "condition_type": "pet_level",
-                "condition_value": 50,
-                "icon": "🦄"
-            },
-            {
-                "name": "Pet Celestial",
-                "description": "Reach pet level 100",
-                "condition_type": "pet_level",
-                "condition_value": 100,
-                "icon": "🌠"
-            }
-        ]
+        # Check if achievements already exist
+        existing_achievements = db.fetchone("SELECT COUNT(*) as count FROM achievements")
+        
+        # Only initialize if no achievements exist
+        if existing_achievements["count"] == 0:
+            # Default achievements
+            achievements = [
+                # Habit Completion Achievements
+                {
+                    "name": "Getting Started",
+                    "description": "Complete your first habit",
+                    "condition_type": "habits_completed",
+                    "condition_value": 1,
+                    "icon": "🎯"
+                },
+                {
+                    "name": "Habit Master",
+                    "description": "Complete 10 habits",
+                    "condition_type": "habits_completed",
+                    "condition_value": 10,
+                    "icon": "⭐"
+                },
+                {
+                    "name": "Habit Champion",
+                    "description": "Complete 50 habits",
+                    "condition_type": "habits_completed",
+                    "condition_value": 50,
+                    "icon": "🏅"
+                },
+                {
+                    "name": "Habit Legend",
+                    "description": "Complete 100 habits",
+                    "condition_type": "habits_completed",
+                    "condition_value": 100,
+                    "icon": "💫"
+                },
+                {
+                    "name": "Habit Virtuoso",
+                    "description": "Complete 500 habits",
+                    "condition_type": "habits_completed",
+                    "condition_value": 500,
+                    "icon": "✨"
+                },
+                {
+                    "name": "Habit Deity",
+                    "description": "Complete 1000 habits",
+                    "condition_type": "habits_completed",
+                    "condition_value": 1000,
+                    "icon": "🌟"
+                },
+                # Streak Achievements
+                {
+                    "name": "Streak Beginner",
+                    "description": "Maintain a 3-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 3,
+                    "icon": "🔥"
+                },
+                {
+                    "name": "Streak Master",
+                    "description": "Maintain a 7-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 7,
+                    "icon": "⚡"
+                },
+                {
+                    "name": "Streak Legend",
+                    "description": "Maintain a 30-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 30,
+                    "icon": "🌪️"
+                },
+                {
+                    "name": "Streak Warrior",
+                    "description": "Maintain a 60-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 60,
+                    "icon": "⚔️"
+                },
+                {
+                    "name": "Streak Champion",
+                    "description": "Maintain a 100-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 100,
+                    "icon": "🏆"
+                },
+                {
+                    "name": "Streak Immortal",
+                    "description": "Maintain a 365-day streak",
+                    "condition_type": "streak",
+                    "condition_value": 365,
+                    "icon": "👑"
+                },
+                # Pet Level Achievements
+                {
+                    "name": "Pet Novice",
+                    "description": "Reach pet level 5",
+                    "condition_type": "pet_level",
+                    "condition_value": 5,
+                    "icon": "🐣"
+                },
+                {
+                    "name": "Pet Master",
+                    "description": "Reach pet level 10",
+                    "condition_type": "pet_level",
+                    "condition_value": 10,
+                    "icon": "🐉"
+                },
+                {
+                    "name": "Pet Legend",
+                    "description": "Reach pet level 20",
+                    "condition_type": "pet_level",
+                    "condition_value": 20,
+                    "icon": "🐲"
+                },
+                {
+                    "name": "Pet Guardian",
+                    "description": "Reach pet level 30",
+                    "condition_type": "pet_level",
+                    "condition_value": 30,
+                    "icon": "🦁"
+                },
+                {
+                    "name": "Pet Deity",
+                    "description": "Reach pet level 50",
+                    "condition_type": "pet_level",
+                    "condition_value": 50,
+                    "icon": "🦄"
+                },
+                {
+                    "name": "Pet Celestial",
+                    "description": "Reach pet level 100",
+                    "condition_type": "pet_level",
+                    "condition_value": 100,
+                    "icon": "🌠"
+                }
+            ]
 
-        # Insert achievements
-        for achievement in achievements:
-            db.execute(
-                """
-                INSERT INTO achievements (name, description, condition_type, condition_value, icon)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT DO NOTHING
-                """,
-                (
-                    achievement["name"],
-                    achievement["description"],
-                    achievement["condition_type"],
-                    achievement["condition_value"],
-                    achievement["icon"]
+            # Insert achievements
+            for achievement in achievements:
+                db.execute(
+                    """
+                    INSERT INTO achievements (name, description, condition_type, condition_value, icon)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (
+                        achievement["name"],
+                        achievement["description"],
+                        achievement["condition_type"],
+                        achievement["condition_value"],
+                        achievement["icon"]
+                    )
                 )
-            )
 
         return jsonify({
             "status": "ok",
             "message": "Achievements initialized successfully"
         }), 200
     except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements/check", methods=["POST"])
+def check_achievements_endpoint():
+    """Check and unlock achievements based on current stats."""
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Check achievements
+        check_achievements(db, user["id"])
+        
+        # Get updated achievements
+        achievements = db.fetchall("SELECT * FROM achievements ORDER BY condition_value")
+        unlocked = db.fetchall(
+            "SELECT achievement_id FROM user_achievements WHERE user_id = %s",
+            (user["id"],)
+        )
+        unlocked_ids = {row["achievement_id"] for row in unlocked}
+        
+        # Add unlocked status to achievements
+        for achievement in achievements:
+            achievement["unlocked"] = achievement["id"] in unlocked_ids
+        
+        return jsonify({
+            "status": "ok",
+            "achievements": achievements
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/stats/update", methods=["POST"])
+def update_stats():
+    """Update user stats with accurate counts."""
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "total_habits_completed" not in data:
+        return jsonify({
+            "status": "error",
+            "message": "Invalid input. 'total_habits_completed' is required."
+        }), 400
+
+    db = create_database_connection()
+    try:
+        db.execute(
+            """
+            UPDATE user_stats 
+            SET total_habits_completed = %s,
+                updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (data["total_habits_completed"], user["id"])
+        )
+        
+        # Check for achievements after updating stats
+        check_achievements(db, user["id"])
+        
+        return jsonify({
+            "status": "ok",
+            "message": "Stats updated successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements/debug", methods=["GET"])
+def debug_achievements():
+    """Debug endpoint to check achievement status and conditions."""
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get user stats
+        stats = db.fetchone(
+            """
+            SELECT 
+                current_streak,
+                longest_streak,
+                total_habits_completed
+            FROM user_stats
+            WHERE user_id = %s
+            """,
+            (user["id"],)
+        )
+        
+        # Get pet level
+        pet = db.fetchone(
+            "SELECT lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        
+        # Get all achievements
+        achievements = db.fetchall("SELECT * FROM achievements")
+        
+        # Get user's unlocked achievements
+        unlocked = db.fetchall(
+            "SELECT achievement_id FROM user_achievements WHERE user_id = %s",
+            (user["id"],)
+        )
+        unlocked_ids = {row["achievement_id"] for row in unlocked}
+        
+        # Add status to each achievement
+        for achievement in achievements:
+            achievement["unlocked"] = achievement["id"] in unlocked_ids
+            achievement["current_value"] = (
+                stats["current_streak"] if achievement["condition_type"] == "streak" and stats
+                else stats["total_habits_completed"] if achievement["condition_type"] == "habits_completed" and stats
+                else pet["lvl"] if achievement["condition_type"] == "pet_level" and pet
+                else 0
+            )
+            achievement["should_unlock"] = (
+                achievement["current_value"] >= achievement["condition_value"]
+                and not achievement["unlocked"]
+            )
+        
+        return jsonify({
+            "status": "ok",
+            "debug_info": {
+                "user_id": user["id"],
+                "stats": stats or {"current_streak": 0, "longest_streak": 0, "total_habits_completed": 0},
+                "pet_level": pet["lvl"] if pet else 0,
+                "achievements": achievements
+            }
+        }), 200
+    except Exception as e:
+        print(f"Error in debug_achievements: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/achievements/reset", methods=["POST"])
+def reset_achievements():
+    """Reset incorrectly unlocked achievements and fix stats."""
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get accurate habit completion count
+        habits = db.fetchall(
+            "SELECT name, last_completed_at FROM habits WHERE user_id = %s",
+            (user["id"],)
+        )
+        total_completed = sum(1 for habit in habits if habit["last_completed_at"] is not None)
+        print(f"Found {total_completed} completed habits")
+
+        # Update user stats with accurate count
+        db.execute(
+            """
+            UPDATE user_stats 
+            SET total_habits_completed = %s,
+                updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (total_completed, user["id"])
+        )
+
+        # Get pet level
+        pet = db.fetchone(
+            "SELECT lvl FROM pets WHERE user_id = %s",
+            (user["id"],)
+        )
+        pet_level = pet["lvl"] if pet else 0
+
+        # Get all achievements
+        achievements = db.fetchall("SELECT * FROM achievements")
+        
+        # Delete all user achievements
+        db.execute(
+            "DELETE FROM user_achievements WHERE user_id = %s",
+            (user["id"],)
+        )
+
+        # Re-unlock achievements based on actual stats
+        for achievement in achievements:
+            should_unlock = False
+            
+            if achievement["condition_type"] == "habits_completed" and total_completed >= achievement["condition_value"]:
+                should_unlock = True
+            elif achievement["condition_type"] == "pet_level" and pet_level >= achievement["condition_value"]:
+                should_unlock = True
+            
+            if should_unlock:
+                print(f"Re-unlocking achievement: {achievement['name']}")
+                db.execute(
+                    "INSERT INTO user_achievements (user_id, achievement_id) VALUES (%s, %s)",
+                    (user["id"], achievement["id"])
+                )
+                create_notification(
+                    db,
+                    user["id"],
+                    "achievement",
+                    f"Achievement Unlocked: {achievement['name']} - {achievement['description']} {achievement['icon']}"
+                )
+
+        return jsonify({
+            "status": "ok",
+            "message": "Achievements reset and stats fixed successfully."
+        }), 200
+    except Exception as e:
+        print(f"Error resetting achievements: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
