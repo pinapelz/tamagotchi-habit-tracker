@@ -74,11 +74,7 @@ export default function MobileDashboard() {
   const [currentWeather, setCurrentWeather] = useState("Sunny");
   const [weatherImage, setWeatherImage] = useState(sunnyBg);
   const [timeOfDay, setTimeOfDay] = useState("afternoon");
-  const [habits, setHabits] = useState([
-    { id: "1", name: "Drink Water", completed: false, recurrence: "hourly" },
-    { id: "2", name: "Study 1 Hour", completed: false, recurrence: "daily" },
-    { id: "3", name: "Stretch", completed: false, recurrence: "weekly" },
-  ]);
+  const [habits, setHabits] = useState([]);
   const [streak, setStreak] = useState(0);
   const [petStats, setPetStats] = useState({
     happiness: 50,
@@ -136,56 +132,57 @@ export default function MobileDashboard() {
     checkPetStatus();
   }, [navigate]);
 
+  // Move fetchProfileData outside useEffect
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate('/login')
+          return
+        }
+        throw new Error("Failed to fetch profile data")
+      }
+
+      const { data } = await response.json()
+
+      // Set user data from API
+      if (data.user) {
+        setUserName(data.user.display_name || "User")
+      }
+
+      // Set pet data from API
+      if (data.pet) {
+        setPetName(data.pet.name || "No Pet")
+        setPetType(data.pet.type || "cat")
+        setPetLevel(data.pet.lvl || 0)
+        setPetStats({
+          happiness: data.pet.happiness || 50,
+          energy: data.pet.xp || 0,
+          health: data.pet.health || 100,
+        })
+      }
+
+      // Set stats data from API
+      if (data.stats) {
+        setStreak(data.stats.current_streak || 0)
+      }
+
+      // Only set loading to false after we have all the data
+      setLoading(false)
+    } catch (err) {
+      console.error("Error fetching profile:", err)
+      setError(err.message)
+      setLoading(false)
+    }
+  }
+
   // Load profile data from the API
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            navigate('/login')
-            return
-          }
-          throw new Error("Failed to fetch profile data")
-        }
-
-        const { data } = await response.json()
-
-        // Set user data from API
-        if (data.user) {
-          setUserName(data.user.display_name || "User")
-        }
-
-        // Set pet data from API
-        if (data.pet) {
-          setPetName(data.pet.name || "No Pet")
-          setPetType(data.pet.type || "cat")
-          setPetLevel(data.pet.lvl || 0)
-          setPetStats({
-            happiness: data.pet.happiness || 50,
-            energy: data.pet.xp || 0,
-            health: data.pet.health || 100,
-          })
-        }
-
-        // Set stats data from API
-        if (data.stats) {
-          setStreak(data.stats.current_streak || 0)
-        }
-
-        // Only set loading to false after we have all the data
-        setLoading(false)
-      } catch (err) {
-        console.error("Error fetching profile:", err)
-        setError(err.message)
-        setLoading(false)
-      }
-    }
-
     fetchProfileData()
 
     // Set current date
@@ -300,17 +297,148 @@ export default function MobileDashboard() {
   const completedHabits = habits.filter((habit) => habit.completed).length
   const totalHabits = habits.length
 
-  const toggleHabitCompletion = (id) => {
-    setHabits(habits.map((habit) => (habit.id === id ? { ...habit, completed: !habit.completed } : habit)))
-  }
+  // Fetch habits from the API
+  useEffect(() => {
+    const fetchHabits = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+          method: "GET",
+          credentials: "include",
+        });
 
-  const deleteHabit = (id) => {
-    setHabits(habits.filter((habit) => habit.id !== id))
-  }
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+          throw new Error("Failed to fetch habits");
+        }
 
-  const addHabit = (newHabit) => {
-    setHabits([...habits, newHabit]);
-  }
+        const data = await response.json();
+        console.log('Fetched habits:', data);
+        setHabits(data || []);
+      } catch (err) {
+        console.error("Error fetching habits:", err);
+        setError(err.message);
+      }
+    };
+
+    fetchHabits();
+  }, [navigate]);
+
+  const toggleHabitCompletion = async (id) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ habit_id: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to complete habit");
+      }
+
+      // After successful completion, fetch the updated habits list
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
+      }
+
+      const habitsData = await habitsResponse.json();
+      console.log('Updated habits after completion:', habitsData);
+      setHabits(habitsData);
+
+      // Refresh profile data to update stats
+      await fetchProfileData();
+    } catch (err) {
+      console.error("Error completing habit:", err);
+      setError(err.message);
+    }
+  };
+
+  const deleteHabit = async (id) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete habit");
+      }
+
+      // After successful deletion, fetch the updated habits list
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
+      }
+
+      const habitsData = await habitsResponse.json();
+      console.log('Updated habits after deletion:', habitsData);
+      setHabits(habitsData);
+    } catch (err) {
+      console.error("Error deleting habit:", err);
+      setError(err.message);
+    }
+  };
+
+  const addHabit = async (newHabit) => {
+    try {
+      console.log('Creating habit with data:', {
+        name: newHabit.name,
+        recurrence: newHabit.recurrence,
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newHabit.name,
+          recurrence: newHabit.recurrence,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(errorData.message || "Failed to create habit");
+      }
+
+      // After successful creation, fetch the updated habits list
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
+      }
+
+      const habitsData = await habitsResponse.json();
+      console.log('Updated habits after creation:', habitsData);
+      setHabits(habitsData);
+      setIsAdding(false);
+      setNewHabitName("");
+      setNewHabitRecurrence("daily");
+    } catch (err) {
+      console.error("Error creating habit:", err);
+      setError(err.message);
+    }
+  };
 
   const editHabit = (id, newName) => {
     setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
@@ -463,14 +591,39 @@ export default function MobileDashboard() {
     setEditHabitRecurrence(habit.recurrence || "daily");
   };
 
-  const saveEditedHabit = () => {
-    if (editHabitName.trim() !== "") {
+  const saveEditedHabit = async () => {
+    if (!editHabitId) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/${editHabitId}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: editHabitName,
+          recurrence_type: editHabitRecurrence,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update habit");
+      }
+
+      // Update local state
       setHabits(habits.map(habit =>
         habit.id === editHabitId
-          ? { ...habit, name: editHabitName.trim(), recurrence: editHabitRecurrence }
+          ? { ...habit, name: editHabitName, recurrence: editHabitRecurrence }
           : habit
       ));
-      resetEditHabitForm();
+
+      setEditHabitId(null);
+      setEditHabitName("");
+      setEditHabitRecurrence("daily");
+    } catch (err) {
+      console.error("Error updating habit:", err);
+      setError(err.message);
     }
   };
 
@@ -1058,9 +1211,12 @@ export default function MobileDashboard() {
                   onChange={(e) => setNewHabitRecurrence(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
                 >
-                  <option value="daily">Hourly</option>
-                  <option value="weekly">Daily</option>
-                  <option value="monthly">Weekly</option>
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="weekdays">Weekdays only</option>
+                  <option value="weekends">Weekends only</option>
                 </select>
               </div>
 

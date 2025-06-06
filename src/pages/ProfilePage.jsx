@@ -107,7 +107,8 @@ export default function ProfilePage() {
       }
 
       setUserProfile(profileData.data);
-      setBio(profileData.data.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
+      // Set bio from profile data if it exists, otherwise use default
+      setBio(profileData.data.profile?.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
       setLoading(false);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -158,12 +159,15 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "Failed to update profile.");
       }
 
+      // Update the local profile state with the new bio
+      const updatedProfile = { ...userProfile };
+      if (!updatedProfile.profile) updatedProfile.profile = {};
+      updatedProfile.profile.bio = bio;
+      setUserProfile(updatedProfile);
+      
       setIsEditingBio(false);
       setBioError(null);
       console.log("Profile updated successfully.");
-
-      // Refresh profile data to get the latest changes
-      fetchProfileData();
     } catch (err) {
       setBioError(err.message);
     }
