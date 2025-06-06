@@ -379,7 +379,8 @@ export default function DashboardRedesign() {
     const originalOrder = habits.map(h => h.id);
     
     try {
-      await fetch(
+      // Mark habit as complete
+      const completeResponse = await fetch(
         `${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`,
         {
           method: "POST",
@@ -390,6 +391,10 @@ export default function DashboardRedesign() {
           body: JSON.stringify({ habit_id: id }),
         }
       );
+
+      if (!completeResponse.ok) {
+        throw new Error("Failed to complete habit");
+      }
       
       // Fetch the updated habits
       const response = await fetch(
@@ -407,6 +412,9 @@ export default function DashboardRedesign() {
           updatedHabits.find(h => h.id === id)
         ).filter(Boolean);
         setHabits(sortedHabits);
+        
+        // Refresh profile data to update achievements and stats
+        await fetchProfileData();
       }
     } catch (err) {
       console.error("Failed to mark habit complete", err);
