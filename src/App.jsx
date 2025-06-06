@@ -20,17 +20,17 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/dashboard" element={<Dashboard/>} />
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/about" element={<About />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/loading" element={<Loading />} />
-      <Route path="/profile" element={<ProfilePage/>}/>
-      <Route path="/profile/:userId" element={<ViewProfile/>}/>
-      <Route path="/petcreation" element={<PetCreation/>}/>
-      <Route path="/friends" element={<FriendsPage/>}/>
-      <Route path="/leaderboard" element={<Leaderboard/>}/>
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile/:userId" element={<ViewProfile />} />
+      <Route path="/petcreation" element={<PetCreation />} />
+      <Route path="/friends" element={<FriendsPage />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/help" element={<Help />} />
       <Route path="/settings" element={<Settings />} />
