@@ -169,25 +169,16 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <>
-        <div className="min-h-screen bg-[#def8fb] flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <div className="animate-pulse">
-              <img
-                src={doorImage}
-                alt="Door"
-                width={280}
-                height={593}
-                className="mx-auto"
-              />
-            </div>
-            <p className="text-[#000000] text-3xl font-sniglet -mt-1">Loading...</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4abe9c]"></div>
+          <p className="text-[#486085] font-sniglet">Loading profile...</p>
         </div>
-      </>
+      </div>
     );
+  }
   if (error)
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">

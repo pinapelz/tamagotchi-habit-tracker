@@ -2,8 +2,8 @@ import React from "react";
 import { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
-import LoadingPage from "./Loading";
-import { Users, Globe } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Trophy, Star, TrendingUp, Users } from "lucide-react";
 
 // Mock data for testing
 const mainLeaderboard = [
@@ -129,9 +129,14 @@ const friendsLeaderboard = [
   }
 ];
 
-export default function Leaderboard() {
-  const [mode, setMode] = useState("global");
+export default function LeaderboardPage() {
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [userProfile, setUserProfile] = useState(null);
+  const [mode, setMode] = useState("global");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -142,11 +147,107 @@ export default function Leaderboard() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const leaderboardData = mode === "friends" ? friendsLeaderboard : mainLeaderboard;
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            navigate('/login');
+            return;
+          }
+          throw new Error("Failed to fetch profile data");
+        }
+
+        const { data } = await response.json();
+        setUserProfile(data);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError(err.message);
+      }
+    };
+
+    fetchProfileData();
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchLeaderboardData = async () => {
+      try {
+        // Mock data for demonstration
+        const mockData = [
+          {
+            id: 1,
+            username: "TamaQueen",
+            petName: "Sparkle",
+            petType: "Pixel Cat",
+            level: 25,
+            points: 1500,
+            streak: 45,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=TamaQueen`
+          },
+          {
+            id: 2,
+            username: "PixelMaster",
+            petName: "Byte",
+            petType: "Pixel Cat",
+            level: 23,
+            points: 1450,
+            streak: 38,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=PixelMaster`
+          },
+          {
+            id: 3,
+            username: "PetLover123",
+            petName: "Toto",
+            petType: "Pixel Cat",
+            level: 20,
+            points: 1300,
+            streak: 30,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=PetLover123`
+          },
+          {
+            id: 4,
+            username: "HabitHero",
+            petName: "Fluffy",
+            petType: "Pixel Cat",
+            level: 18,
+            points: 1200,
+            streak: 25,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=HabitHero`
+          },
+          {
+            id: 5,
+            username: "TamaKing",
+            petName: "Pixel",
+            petType: "Pixel Cat",
+            level: 15,
+            points: 1000,
+            streak: 20,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=TamaKing`
+          }
+        ];
+
+        setLeaderboardData(mockData);
+      } catch (error) {
+        console.error("Error fetching leaderboard data:", error);
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeaderboardData();
+  }, []);
+
   const LayoutComponent = isMobile ? MobileLayout : Layout;
 
   return (
-    <LayoutComponent userName="User">
+    <LayoutComponent userName={userProfile?.user?.display_name || "User"}>
       <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -172,7 +273,7 @@ export default function Leaderboard() {
                     : "bg-white text-[#4abe9c] border border-[#4abe9c] hover:bg-[#4abe9c]/10"
                 }`}
               >
-                <Globe size={18} />
+                <Users size={18} />
                 Global
               </button>
             </div>
@@ -214,7 +315,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="text-center">
                       <div className="text-sm text-gray-500">Level</div>
-                      <div className="font-medium text-[#4abe9c]">{user.petLevel}</div>
+                      <div className="font-medium text-[#4abe9c]">{user.level}</div>
                     </div>
                   </div>
                 </div>

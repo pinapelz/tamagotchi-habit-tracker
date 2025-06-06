@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
 import { Bell, Users, Star, PawPrint, MessageSquare, X, Loader2, AlertCircle } from "lucide-react";
@@ -7,20 +8,49 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-        };
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [navigate]);
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate('/login');
+          return;
+        }
+        throw new Error("Failed to fetch profile data");
+      }
+
+      const { data } = await response.json();
+      setUserProfile(data);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err.message);
+    }
+  };
 
   // Fetch notifications on component mount
-    useEffect(() => {
+  useEffect(() => {
     fetchNotifications();
   }, []);
 
@@ -29,12 +59,11 @@ export default function NotificationsPage() {
     setError(null);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/notifications`, {
-        credentials: 'include' // Important for cookies
+        credentials: 'include'
       });
       const data = await response.json();
       
       if (data.status === 'ok') {
-        // Format the notifications to match frontend needs
         const formattedNotifications = data.notifications.map(notif => ({
           id: notif.id,
           type: notif.type,
@@ -126,10 +155,10 @@ export default function NotificationsPage() {
     }
   };
 
-    const LayoutComponent = isMobile ? MobileLayout : Layout;
+  const LayoutComponent = isMobile ? MobileLayout : Layout;
 
   return (
-    <LayoutComponent userName="User">
+    <LayoutComponent userName={userProfile?.user?.display_name || "User"}>
       <div className="min-h-screen font-sniglet pt-12 pb-8 px-4 sm:px-6 bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef]">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
@@ -199,12 +228,12 @@ export default function NotificationsPage() {
                 <Bell className="mx-auto mb-4 text-gray-400" size={40} />
                 <p className="text-lg">No notifications</p>
                 <p className="text-sm text-gray-500 mt-1">You're all caught up!</p>
-            </div>
-          ) : (
+              </div>
+            ) : (
               <div className="divide-y divide-gray-100">
                 {filteredNotifications.map(notif => (
-                <div
-                  key={notif.id}
+                  <div
+                    key={notif.id}
                     className={`p-4 hover:bg-gray-50 transition-colors ${notif.read ? 'bg-blue-50' : ''}`}
                     onClick={() => !notif.read && markAsRead(notif.id)}
                   >
@@ -236,10 +265,10 @@ export default function NotificationsPage() {
                         </button>
                       </div>
                     </div>
-                </div>
-              ))}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

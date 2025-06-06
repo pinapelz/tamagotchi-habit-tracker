@@ -121,9 +121,8 @@ export default function MobileDashboard() {
           if (!data.has_pet) {
             // Redirect to pet creation if the user doesn't have a pet
             navigate("/petcreation");
-          } else {
-            setLoading(false); // Stop loading if the user has a pet
           }
+          // Don't set loading to false here, wait for profile data
         } else {
           console.error("Error checking pet status:", data.message);
           setError(data.message);
@@ -178,6 +177,7 @@ export default function MobileDashboard() {
           setStreak(data.stats.current_streak || 0)
         }
 
+        // Only set loading to false after we have all the data
         setLoading(false)
       } catch (err) {
         console.error("Error fetching profile:", err)
@@ -591,8 +591,11 @@ export default function MobileDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4abe9c]"></div>
+          <p className="text-[#486085] font-sniglet">Loading your pet...</p>
+        </div>
       </div>
     );
   }
@@ -620,6 +623,7 @@ export default function MobileDashboard() {
         <div className="flex items-center gap-2">
           {getWeatherIcon()}
           <span className="text-sm font-sniglet">{currentWeather}</span>
+          <span className="text-sm font-sniglet border-l border-gray-300 pl-2">{currentTime}</span>
         </div>
       </header>
 
