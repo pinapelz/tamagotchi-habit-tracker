@@ -91,6 +91,32 @@ CREATE TABLE notifications (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE achievements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    condition_type TEXT NOT NULL CHECK (condition_type IN ('streak', 'habits_completed', 'pet_level', 'total_habits')),
+    condition_value INTEGER NOT NULL,
+    icon TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE user_achievements (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    achievement_id UUID REFERENCES achievements(id) ON DELETE CASCADE,
+    unlocked_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, achievement_id)
+);
+
+CREATE TABLE user_settings (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    notifications BOOLEAN DEFAULT TRUE,
+    dark_mode BOOLEAN DEFAULT FALSE,
+    sound BOOLEAN DEFAULT TRUE,
+    email_updates BOOLEAN DEFAULT TRUE,
+    location BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- TODO: authentication table for external sign-in 
--- TODO: achievements table?
 -- TODO: preset list of habits table
