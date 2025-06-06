@@ -155,12 +155,12 @@ export default function MobileDashboard() {
         }
 
         const { data } = await response.json()
-        
+
         // Set user data from API
         if (data.user) {
           setUserName(data.user.display_name || "User")
         }
-        
+
         // Set pet data from API
         if (data.pet) {
           setPetName(data.pet.name || "No Pet")
@@ -172,12 +172,12 @@ export default function MobileDashboard() {
             health: data.pet.health || 100,
           })
         }
-        
+
         // Set stats data from API
         if (data.stats) {
           setStreak(data.stats.current_streak || 0)
         }
-        
+
         setLoading(false)
       } catch (err) {
         console.error("Error fetching profile:", err)
@@ -187,7 +187,7 @@ export default function MobileDashboard() {
     }
 
     fetchProfileData()
-    
+
     // Set current date
     const options = { year: 'numeric', month: 'numeric', day: 'numeric' }
     setCurrentDate(new Date().toLocaleDateString(undefined, options))
@@ -233,7 +233,7 @@ export default function MobileDashboard() {
       } else {
         setTimeOfDay("night")
       }
-      
+
       // Set season based on month
       const month = now.getMonth() // 0-11
       if (month >= 2 && month <= 4) {
@@ -245,49 +245,49 @@ export default function MobileDashboard() {
       } else {
         setSeason("winter")
       }
-      
+
       // Determine how often to check time
       let nextInterval = 60000; // Default is 1 minute
-      
+
       // List of all transition hours
       const transitions = [0, 3, 5, 6, 7, 11, 13, 17, 19, 20, 21, 23];
-      
+
       // Check if we're near any transition (1 minute before or after)
       const isNearTransition = transitions.some(hour => {
         // If we're at the transition hour and within first minute
         if (currentHour === hour && minutes <= 1) return true;
-        
+
         // If we're at the hour before transition and within last minute
         const prevHour = (hour === 0) ? 23 : hour - 1;
         if (currentHour === prevHour && minutes >= 59) return true;
-        
+
         return false;
       });
-      
+
       // Check if we're approaching a transition (10 minutes before or after)
       const isApproachingTransition = transitions.some(hour => {
         // If we're at the transition hour and within first 10 minutes
         if (currentHour === hour && minutes <= 10) return true;
-        
+
         // If we're at the hour before transition and within last 10 minutes
         const prevHour = (hour === 0) ? 23 : hour - 1;
         if (currentHour === prevHour && minutes >= 50) return true;
-        
+
         return false;
       });
-      
+
       if (isNearTransition) {
         nextInterval = 1000; // Check every second right around transitions
       } else if (isApproachingTransition) {
         nextInterval = 5000; // Check every 5 seconds near transitions
       }
-      
+
       return nextInterval;
     }
 
     // Update time immediately
     let nextCheckDelay = updateTime()
-    
+
     // Use a recursive setTimeout instead of setInterval to allow dynamic timing
     let timeoutId = setTimeout(function checkTime() {
       nextCheckDelay = updateTime();
@@ -311,7 +311,7 @@ export default function MobileDashboard() {
   const addHabit = (newHabit) => {
     setHabits([...habits, newHabit]);
   }
-  
+
   const editHabit = (id, newName) => {
     setHabits(habits.map(habit => habit.id === id ? { ...habit, name: newName } : habit));
   }
@@ -358,7 +358,7 @@ export default function MobileDashboard() {
         return <span className="text-base">🌸</span>
     }
   }
-  
+
   // Get pet image based on type
   const getPetImage = () => {
     switch(petType.toLowerCase()) {
@@ -420,7 +420,7 @@ export default function MobileDashboard() {
         resetAddHabitForm();
       }
     }
-    
+
     if (isAdding) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -428,7 +428,7 @@ export default function MobileDashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isAdding]);
-  
+
   const resetAddHabitForm = () => {
     setNewHabitName("");
     setNewHabitRecurrence("daily");
@@ -558,8 +558,9 @@ export default function MobileDashboard() {
 
         const data = await response.json();
         const weather = data.weather;
+        const formattedWeather = weather.charAt(0).toUpperCase() + weather.slice(1);
 
-        setCurrentWeather(weather);
+        setCurrentWeather(formattedWeather);
 
         switch (weather.toLowerCase()) {
           case "rainy":
@@ -684,7 +685,7 @@ export default function MobileDashboard() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              
+
               {/* Content overlay */}
               <div className="relative z-10 flex flex-col items-center w-full h-full">
                 {/* Toggle button */}
@@ -692,8 +693,8 @@ export default function MobileDashboard() {
                   onClick={() => setShowPetStats(!showPetStats)}
                   className="absolute top-2 right-2 p-1.5 bg-white/60 backdrop-blur-sm rounded-full hover:bg-white/80 transition-colors z-20"
                 >
-                  {showPetStats ? 
-                    <Eye size={18} className="text-gray-700" /> : 
+                  {showPetStats ?
+                    <Eye size={18} className="text-gray-700" /> :
                     <EyeOff size={18} className="text-gray-700" />
                   }
                 </button>
@@ -839,7 +840,7 @@ export default function MobileDashboard() {
                 <h2 className="text-xl font-medium">Habit Tracker</h2>
                 <p className="font-sniglet text-sm text-gray-600">{currentDate}</p>
               </div>
-              <button 
+              <button
                 className="bg-[#5dd6e8] text-black px-3 py-1.5 rounded-full font-sniglet text-sm flex items-center"
                 onClick={() => setShowShareModal(true)}
               >
@@ -881,8 +882,8 @@ export default function MobileDashboard() {
                       >
                         <Pencil size={16} />
                       </button>
-                      <button 
-                        className="p-1 hover:bg-gray-100 rounded-full" 
+                      <button
+                        className="p-1 hover:bg-gray-100 rounded-full"
                         onClick={() => deleteHabit(habit.id)}
                       >
                         <Trash2 size={16} />
@@ -1022,7 +1023,7 @@ export default function MobileDashboard() {
       {/* Add Habit Popup for Mobile */}
       {isAdding && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             ref={formRef}
             className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm animate-fadeIn"
           >
@@ -1042,7 +1043,7 @@ export default function MobileDashboard() {
                   autoFocus
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="recurrence" className="block text-sm font-medium text-gray-700 mb-1">
                   Recurrence
@@ -1058,10 +1059,10 @@ export default function MobileDashboard() {
                   <option value="monthly">Weekly</option>
                 </select>
               </div>
-              
+
               <div className="flex gap-2 justify-end pt-2">
-                <button 
-                  onClick={resetAddHabitForm} 
+                <button
+                  onClick={resetAddHabitForm}
                   className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded"
                 >
                   Cancel
@@ -1151,9 +1152,9 @@ export default function MobileDashboard() {
       )}
 
       {/* Share Modal */}
-      <ShareModal 
-        show={showShareModal} 
-        onClose={() => setShowShareModal(false)} 
+      <ShareModal
+        show={showShareModal}
+        onClose={() => setShowShareModal(false)}
       />
 
       {/* Bottom Navigation */}
