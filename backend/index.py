@@ -916,18 +916,21 @@ def complete_habit():
     habit_id = data["habit_id"]
     db = create_database_connection()
     try:
+        print(f"Starting habit completion for user {user['id']}, habit {habit_id}")
+        
         # Get habit
         habit = db.fetchone(
             "SELECT * FROM habits WHERE id = %s AND user_id = %s",
             (habit_id, user["id"])
         )
         if not habit:
+            print(f"Habit not found: {habit_id}")
             return jsonify({
                 "status": "error",
                 "message": "Habit not found."
             }), 404
 
-        print(f"Completing habit: {habit['name']} (ID: {habit_id})")
+        print(f"Found habit: {habit['name']} (ID: {habit_id})")
 
         # Get pet
         pet = db.fetchone(
@@ -935,64 +938,90 @@ def complete_habit():
             (user["id"],)
         )
         if not pet:
+            print(f"Pet not found for user {user['id']}")
             return jsonify({
                 "status": "error",
                 "message": "Pet not found."
             }), 404
 
+        print(f"Found pet: {pet['name']} (ID: {pet['id']})")
+
         # Update habit last completed
-        db.execute(
-            "UPDATE habits SET last_completed_at = NOW() WHERE id = %s",
-            (habit_id,)
-        )
-        print(f"Updated habit last_completed_at to NOW()")
+        try:
+            db.execute(
+                "UPDATE habits SET last_completed_at = NOW() WHERE id = %s",
+                (habit_id,)
+            )
+            print(f"Updated habit last_completed_at to NOW()")
+        except Exception as e:
+            print(f"Error updating habit: {str(e)}")
+            raise
 
         # Update pet XP
-        new_xp = pet["xp"] + 10
-        new_level = pet["lvl"]
-        if new_xp >= 100:
-            new_xp = new_xp % 100  # Reset XP to remainder
-            new_level = pet["lvl"] + 1
-            # Create level up notification
+        try:
+            new_xp = pet["xp"] + 10
+            new_level = pet["lvl"]
+            if new_xp >= 100:
+                new_xp = new_xp % 100  # Reset XP to remainder
+                new_level = pet["lvl"] + 1
+                print(f"Pet leveling up to {new_level}")
+                # Create level up notification
+                create_notification(
+                    db,
+                    user["id"],
+                    "pet",
+                    f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
+                )
+
+            db.execute(
+                "UPDATE pets SET xp = %s, lvl = %s WHERE id = %s",
+                (new_xp, new_level, pet["id"])
+            )
+            print(f"Updated pet XP to {new_xp} and level to {new_level}")
+        except Exception as e:
+            print(f"Error updating pet: {str(e)}")
+            raise
+
+        # Update user stats
+        try:
+            db.execute(
+                """
+                UPDATE user_stats 
+                SET 
+                    current_streak = current_streak + 1,
+                    longest_streak = GREATEST(longest_streak, current_streak + 1),
+                    total_habits_completed = total_habits_completed + 1,
+                    last_completed_at = NOW(),
+                    updated_at = NOW()
+                WHERE user_id = %s
+                """,
+                (user["id"],)
+            )
+            print(f"Updated user stats")
+        except Exception as e:
+            print(f"Error updating user stats: {str(e)}")
+            raise
+
+        # Create habit completion notification
+        try:
             create_notification(
                 db,
                 user["id"],
-                "pet",
-                f"🎉 {pet['name']} has reached level {new_level}! Your pet is growing stronger! 🐾"
+                "habit",
+                f"You completed your habit: {habit['name']}!"
             )
-
-        db.execute(
-            "UPDATE pets SET xp = %s, lvl = %s WHERE id = %s",
-            (new_xp, new_level, pet["id"])
-        )
-        print(f"Updated pet XP to {new_xp} and level to {new_level}")
-
-        # Update user stats
-        db.execute(
-            """
-            UPDATE user_stats 
-            SET 
-                current_streak = current_streak + 1,
-                longest_streak = GREATEST(longest_streak, current_streak + 1),
-                total_habits_completed = total_habits_completed + 1,
-                last_completed_at = NOW(),
-                updated_at = NOW()
-            WHERE user_id = %s
-            """,
-            (user["id"],)
-        )
-        print(f"Updated user stats")
-
-        # Create habit completion notification
-        create_notification(
-            db,
-            user["id"],
-            "habit",
-            f"You completed your habit: {habit['name']}!"
-        )
+            print("Created habit completion notification")
+        except Exception as e:
+            print(f"Error creating notification: {str(e)}")
+            raise
 
         # Check for achievements
-        check_achievements(db, user["id"])
+        try:
+            check_achievements(db, user["id"])
+            print("Checked achievements")
+        except Exception as e:
+            print(f"Error checking achievements: {str(e)}")
+            raise
 
         return jsonify({
             "status": "ok",
