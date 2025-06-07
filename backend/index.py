@@ -730,6 +730,37 @@ def get_weather():
     finally:
         db.close()
 
+def check_and_reset_streak(db, user_id):
+    """Check if user has completed any habits today and reset streak if not."""
+    try:
+        # Get user's last completion time
+        stats = db.fetchone(
+            "SELECT last_completed_at FROM user_stats WHERE user_id = %s",
+            (user_id,)
+        )
+        
+        if not stats or not stats["last_completed_at"]:
+            return
+            
+        last_completed = stats["last_completed_at"]
+        today = datetime.utcnow().date()
+        last_completed_date = last_completed.date()
+        
+        # Only reset streak if last completion was before yesterday
+        if last_completed_date < today - timedelta(days=1):
+            db.execute(
+                """
+                UPDATE user_stats 
+                SET current_streak = 0,
+                    updated_at = NOW()
+                WHERE user_id = %s
+                """,
+                (user_id,)
+            )
+            print(f"Reset streak for user {user_id} - no completions in last 2 days")
+    except Exception as e:
+        print(f"Error checking streak: {str(e)}")
+
 @app.route("/api/habits", methods=["GET"])
 def get_habits():
     session_cookie = request.cookies.get("session")
@@ -739,6 +770,9 @@ def get_habits():
 
     db = create_database_connection()
     try:
+        # Check and reset streak if needed
+        check_and_reset_streak(db, user["id"])
+        
         habits = db.fetchall(
             "SELECT id, name, recurrence_type AS recurrence, created_at, last_completed_at FROM habits WHERE user_id = %s",
             (user["id"],)
@@ -986,20 +1020,48 @@ def complete_habit():
 
         # Update user stats
         try:
+            # Get current stats
+            stats = db.fetchone(
+                "SELECT current_streak, longest_streak, last_completed_at FROM user_stats WHERE user_id = %s",
+                (user["id"],)
+            )
+            
+            current_streak = stats["current_streak"] if stats else 0
+            longest_streak = stats["longest_streak"] if stats else 0
+            last_completed = stats["last_completed_at"] if stats else None
+            
+            # Check if last completion was yesterday
+            today = datetime.utcnow().date()
+            if last_completed:
+                last_completed_date = last_completed.date()
+                if last_completed_date == today:
+                    # Already completed today, don't increase streak
+                    new_streak = current_streak
+                elif last_completed_date == today - timedelta(days=1):
+                    # Last completion was yesterday, increase streak
+                    new_streak = current_streak + 1
+                else:
+                    # Last completion was before yesterday, reset streak to 1
+                    new_streak = 1
+            else:
+                # First completion ever, start streak at 1
+                new_streak = 1
+            
+            # Update stats
             db.execute(
                 """
                 UPDATE user_stats 
                 SET 
-                    current_streak = current_streak + 1,
-                    longest_streak = GREATEST(longest_streak, current_streak + 1),
+                    current_streak = %s,
+                    longest_streak = GREATEST(%s, %s),
                     total_habits_completed = total_habits_completed + 1,
                     last_completed_at = NOW(),
                     updated_at = NOW()
                 WHERE user_id = %s
                 """,
-                (user["id"],)
+                (new_streak, longest_streak, new_streak, user["id"])
             )
-            print(f"Updated user stats")
+            print(f"Updated user stats with new streak: {new_streak}")
         except Exception as e:
             print(f"Error updating user stats: {str(e)}")
             raise
@@ -1027,7 +1089,8 @@ def complete_habit():
 
         return jsonify({
             "status": "ok",
-            "message": "Habit completed successfully."
+            "message": "Habit completed successfully.",
+            "streak": new_streak
         }), 200
     except Exception as e:
         print(f"Error completing habit: {str(e)}")
