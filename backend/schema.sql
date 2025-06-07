@@ -61,6 +61,14 @@ CREATE TABLE friends (
     CHECK (user_id <> friend_id)
 );
 
+CREATE TABLE friend_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    from_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    to_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'pending', -- could be 'pending', 'accepted', 'rejected'
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE user_stats (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     current_streak INTEGER DEFAULT 0 NOT NULL, -- check if should reset on login or someone loads their profile, or friends page load

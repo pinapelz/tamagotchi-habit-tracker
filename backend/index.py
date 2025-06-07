@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from .database import PostgresHandler
+from database import PostgresHandler
 from dotenv import load_dotenv
 
 from datetime import datetime, timedelta
@@ -1204,6 +1204,67 @@ def get_unread_notification_count():
     finally:
         db.close()
 
+@app.route("/api/friends/list", methods=["GET"])
+def get_friends_list():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get all friends
+        friends = db.fetchall(
+            """
+            SELECT
+                u.id,
+                u.display_name AS username,
+                u.avatar_url,
+                p.name AS pet_name,
+                p.type AS pet_type,
+                p.lvl AS pet_level,
+                us.current_streak,
+                -- Add more fields as needed
+                u.email
+            FROM friends f
+            JOIN users u ON u.id = f.friend_id
+            LEFT JOIN pets p ON p.user_id = u.id
+            LEFT JOIN user_stats us ON us.user_id = u.id
+            WHERE f.user_id = %s
+            UNION
+            SELECT
+                u.id,
+                u.display_name AS username,
+                u.avatar_url,
+                p.name AS pet_name,
+                p.type AS pet_type,
+                p.lvl AS pet_level,
+                us.current_streak,
+                u.email
+            FROM friends f
+            JOIN users u ON u.id = f.user_id
+            LEFT JOIN pets p ON p.user_id = u.id
+            LEFT JOIN user_stats us ON us.user_id = u.id
+            WHERE f.friend_id = %s
+            """,
+            (user["id"], user["id"])
+        )
+        friends_list = [{
+            "id": f["id"],
+            "username": f["username"],
+            "avatar": f["avatar_url"],
+            "petName": f["pet_name"],
+            "petType": f["pet_type"],
+            "petLevel": f["pet_level"] or 1,
+            "streak": f["current_streak"] or 0,
+            "lastActive": "Unknown"
+        } for f in friends]
+        return jsonify(friends_list), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
 @app.route("/api/friends/request", methods=["POST"])
 def send_friend_request():
     session_cookie = request.cookies.get("session")
@@ -1231,6 +1292,46 @@ def send_friend_request():
                 "status": "error",
                 "message": "User not found."
             }), 404
+        
+        if friend_id == user["id"]:
+            return jsonify({
+                "status": "error",
+                "message": "Cannot add yourself."
+            }), 400
+        
+        # Check if already friends
+        already_friends = db.fetchone(
+            "SELECT 1 FROM friends WHERE (user_id = %s AND friend_id = %s) OR (user_id = %s AND friend_id = %s)",
+            (user["id"], friend_id, friend_id, user["id"])
+        )
+        if already_friends:
+            return jsonify({
+                "status": "error",
+                "message": "Already friends."
+            }), 409
+
+        # Check for existing request
+        pending = db.fetchone(
+            "SELECT 1 FROM friend_requests WHERE from_user_id = %s AND to_user_id = %s AND status = 'pending'",
+            (user["id"], friend_id)
+        )
+        if pending:
+            return jsonify({
+                "status": "error",
+                "message": "Friend request already sent."
+            }), 409
+
+        # Insert the friend request
+        db.execute(
+            "INSERT INTO friend_requests (from_user_id, to_user_id) VALUES (%s, %s)",
+            (user["id"], friend_id)
+        )
+
+        db.execute(
+            "INSERT INTO notifications (user_id, type, message) VALUES (%s, %s, %s)",
+            (friend_id, 'friend', f"{user['display_name']} sent you a friend request!")
+        )
+        db.commit()
 
         # Create notification for friend
         # create_notification(
@@ -1252,6 +1353,110 @@ def send_friend_request():
     finally:
         db.close()
 
+@app.route("/api/friends/requests", methods=["GET"])
+def get_incoming_friend_requests():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Find all pending requests
+        requests = db.fetchall(
+            """
+            SELECT fr.id, fr.from_user_id, u.display_name AS username, u.avatar_url
+            FROM friend_requests fr
+            JOIN users u ON fr.from_user_id = u.id
+            WHERE fr.to_user_id = %s AND fr.status = 'pending'
+            """,
+            (user["id"],)
+        )
+        return jsonify({
+            "status": "ok",
+            "requests": requests
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
+@app.route("/api/friends/reject", methods=["POST"])
+def reject_friend_request():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    data = request.get_json()
+    if not data or "request_id" not in data:
+        return jsonify({"status": "error", "message": "request_id required"}), 400
+
+    db = create_database_connection()
+    try:
+        # Just mark as rejected or delete
+        db.execute(
+            "UPDATE friend_requests SET status = 'rejected' WHERE id = %s AND to_user_id = %s",
+            (data["request_id"], user["id"])
+        )
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
+@app.route("/api/friends/sent", methods=["GET"])
+def get_sent_friend_requests():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    db = create_database_connection()
+    try:
+        # Get all pending requests sent by this user
+        sent = db.fetchall(
+            """
+            SELECT fr.id, fr.to_user_id, u.display_name AS username, u.avatar_url,
+                fr.created_at
+            FROM friend_requests fr
+            JOIN users u ON u.id = fr.to_user_id
+            WHERE fr.from_user_id = %s AND fr.status = 'pending'
+            """,
+            (user["id"],)
+        )
+        sent_list = [{
+            "id": req["id"],
+            "username": req["username"],
+            "avatar": req["avatar_url"],
+            "sentAt": req["created_at"].isoformat() if req["created_at"] else "",
+        } for req in sent]
+        return jsonify(sent_list), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
+@app.route("/api/users/lookup", methods=["POST"])
+def lookup_user():
+    data = request.get_json()
+    query = data.get("query", "")
+    db = create_database_connection()
+    try:
+        user = db.fetchone(
+            "SELECT id, display_name FROM users WHERE email = %s OR display_name = %s",
+            (query, query)
+        )
+        if user:
+            return jsonify({"user": user}), 200
+        else:
+            return jsonify({"message": "User not found"}), 404
+    finally:
+        db.close()
+
 @app.route("/api/friends/accept", methods=["POST"])
 def accept_friend_request():
     session_cookie = request.cookies.get("session")
@@ -1269,24 +1474,28 @@ def accept_friend_request():
     friend_id = data["friend_id"]
     db = create_database_connection()
     try:
-        # Get friend's display name
-        friend = db.fetchone(
-            "SELECT display_name FROM users WHERE id = %s",
-            (friend_id,)
+        req = db.fetchone(
+            "SELECT id FROM friend_requests WHERE from_user_id = %s AND to_user_id = %s AND status = 'pending'",
+            (friend_id, user["id"])
         )
-        if not friend:
-            return jsonify({
-                "status": "error",
-                "message": "User not found."
-            }), 404
+        if not req:
+            return jsonify({"status": "error", "message": "Friend request not found."}), 404
 
-        # Create notification for friend
-        # create_notification(
-        #     db,
-        #     friend_id,
-        #     "friend",
-        #     f"{user['display_name']} accepted your friend request!"
-        # )
+        # Mark request as accepted
+        db.execute(
+            "UPDATE friend_requests SET status = 'accepted' WHERE id = %s",
+            (req["id"],)
+        )
+        # Add to friends
+        db.execute(
+            "INSERT INTO friends (user_id, friend_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (user["id"], friend_id)
+        )
+        db.execute(
+            "INSERT INTO friends (user_id, friend_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (friend_id, user["id"])
+        )
+        db.commit()
 
         return jsonify({
             "status": "ok",

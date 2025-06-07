@@ -18,6 +18,7 @@ export default function FriendsPage() {
     const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
     const [userProfile, setUserProfile] = useState(null);
     const navigate = useNavigate();
+    const [incomingRequests, setIncomingRequests] = useState([]);
     const [sentRequests, setSentRequests] = useState([
         {
             id: 1,
@@ -74,61 +75,57 @@ export default function FriendsPage() {
         fetchProfileData();
     }, [navigate]);
 
+    const fetchFriendsData = async () => {
+        setIsLoading(true);
+        try {
+            // Friends list
+            const friendsRes = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/list`, {
+                credentials: "include",
+            });
+            const friendsData = friendsRes.ok ? await friendsRes.json() : [];
+
+            // Incoming friend requests
+            const incomingRes = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/requests`, {
+                credentials: "include",
+            });
+            const incomingData = incomingRes.ok ? await incomingRes.json() : [];
+
+            // Sent friend requests
+            const sentRes = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/sent`, {
+                credentials: "include",
+            });
+            const sentData = sentRes.ok ? await sentRes.json() : [];
+
+            setFriends(friendsData || []);
+            console.log("Fetched friends:", friendsData);
+            setIncomingRequests(Array.isArray(incomingData.requests) ? incomingData.requests : []);
+            setSentRequests(Array.isArray(sentData) ? sentData : []);
+        } catch (err) {
+            setError("Failed to fetch friends data");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const getFriends = async () => {
+        fetchFriendsData();
+    }, []);
+
+    useEffect(() => {
+        async function fetchIncomingRequests() {
             try {
-                const mockFriends = [
-                    {
-                        id: 1,
-                        username: "PetLover123",
-                        petName: "Toto",
-                        petType: "Pixel Cat",
-                        petLevel: 5,
-                        streak: 12,
-                        lastActive: "2 hours ago",
-                        avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=PetLover123`
-                    },
-                    {
-                        id: 2,
-                        username: "HabitHero",
-                        petName: "Fluffy",
-                        petType: "Pixel Cat",
-                        petLevel: 8,
-                        streak: 23,
-                        lastActive: "Just now",
-                        avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=HabitHero`
-                    },
-                    {
-                        id: 3,
-                        username: "TamaQueen",
-                        petName: "Sparkle",
-                        petType: "Pixel Cat",
-                        petLevel: 10,
-                        streak: 45,
-                        lastActive: "5 days ago",
-                        avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=TamaQueen`
-                    },
-                    {
-                        id: 4,
-                        username: "PixelMaster",
-                        petName: "Byte",
-                        petType: "Pixel Cat",
-                        petLevel: 7,
-                        streak: 19,
-                        lastActive: "Yesterday",
-                        avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=PixelMaster`
-                    }
-                ];
-
-                setFriends(mockFriends);
+                const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/requests`, {
+                    credentials: "include",
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setIncomingRequests(Array.isArray(data.requests) ? data.requests : []);
+                }
             } catch (error) {
-                console.error("Error fetching friends:", error);
-            } finally {
-                setIsLoading(false);
+                console.error("Error fetching requests:", error);
             }
-        };
-
-        getFriends();
+        }
+        fetchIncomingRequests();
     }, []);
 
     const handleAddFriend = async (e) => {
@@ -140,35 +137,42 @@ export default function FriendsPage() {
         setSuccessMessage(null);
 
         try {
-            // Mock API call with setTimeout to simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Mock validation
-            if (friendRequest.trim().toLowerCase() === 'invaliduser') {
-                throw new Error('User not found');
+            // Look up the friend’s user id by username/email
+            const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/users/lookup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ query: friendRequest })
+            });
+            const lookup = await res.json();
+            if (!res.ok || !lookup.user) {
+                throw new Error(lookup.message || "User not found");
             }
 
-            if (friendRequest.trim().toLowerCase() === 'existingfriend') {
-                throw new Error('You are already friends with this user');
+            // Send the friend request
+            const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/request`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ friend_id: lookup.user.id })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send friend request");
             }
-
-            // Mock successful response
-            setSuccessMessage(`Friend request sent to ${friendRequest}!`);
-            
-            // Clear input and hide form
+            setSuccessMessage(`Friend request sent to ${lookup.user.display_name}!`);
             setFriendRequest("");
             setShowAddFriend(false);
-
-            setTimeout(() => {
-                setSuccessMessage(null);
-            }, 3000);
-
+            setTimeout(() => setSuccessMessage(null), 3000);
+            fetchFriendsData();
         } catch (err) {
             setError(err.message);
         } finally {
             setIsSending(false);
         }
     };
+
+
 
     const handleCancelRequest = async (requestId) => {
         try {
@@ -182,10 +186,68 @@ export default function FriendsPage() {
             setTimeout(() => {
                 setSuccessMessage(null);
             }, 3000);
+            fetchFriendsData();
         } catch (err) {
             setError("Failed to cancel friend request");
         }
     };
+
+    async function handleAccept(requestId, fromUserId) {
+        try {
+            // Send API request to accept the friend
+            const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/accept`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ friend_id: fromUserId }),
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message || "Failed to accept friend request");
+
+            // Remove from incoming requests
+            setIncomingRequests(prev =>
+            prev.filter(req => req.id !== requestId)
+            );
+
+            const acceptedRequest = incomingRequests.find(req => req.id === requestId);
+            if (acceptedRequest) {
+            setFriends(prev => [
+                ...prev,
+                {
+                id: acceptedRequest.fromUserId,
+                username: acceptedRequest.username,
+                petName: acceptedRequest.petName,
+                petType: acceptedRequest.petType,
+                petLevel: acceptedRequest.petLevel,
+                streak: acceptedRequest.streak,
+                lastActive: "Just now",
+                avatar: acceptedRequest.avatar_url,
+                }
+            ]);
+            }
+            setSuccessMessage("Friend added!");
+            fetchFriendsData();
+            setTimeout(() => setSuccessMessage(null), 2000);
+        } catch (err) {
+            setError(err.message);
+        }
+    }
+    async function handleReject(requestId) {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/friends/reject`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ request_id: requestId }),
+            });
+            if (res.ok) {
+                setIncomingRequests(prev => prev.filter(r => r.id !== requestId));
+            }
+            fetchFriendsData();
+        } catch (error) {
+            console.error("Error handling reject:", error);
+        }
+    }
 
     const filteredFriends = friends.filter(friend =>
         friend.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -299,6 +361,16 @@ export default function FriendsPage() {
                                 Friends List
                             </button>
                             <button
+                                onClick={() => setActiveTab('incoming')}
+                                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+                                    activeTab === 'incoming'
+                                        ? 'text-[#4abe9c] border-b-2 border-[#4abe9c]'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Incoming Requests
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('requests')}
                                 className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
                                     activeTab === 'requests'
@@ -327,9 +399,9 @@ export default function FriendsPage() {
                                                         {/* Avatar */}
                                                         <div className="w-14 h-14 rounded-full border-2 border-[#4abe9c] overflow-hidden shadow-sm flex-shrink-0">
                                                             <img
-                                                                src={friend.avatar}
-                                                                alt={`${friend.username}'s avatar`}
-                                                                className="w-full h-full object-cover"
+                                                            src={friend.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${friend.username}`}
+                                                            alt={`${friend.username}'s avatar`}
+                                                            className="w-full h-full object-cover"
                                                             />
                                                         </div>
 
@@ -375,6 +447,45 @@ export default function FriendsPage() {
                                             ) : (
                                                 <p className="text-gray-600">You haven't added any friends yet. Use the Add Friend button to get started!</p>
                                             )}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : activeTab === 'incoming' ? (
+                                // Incoming Requests Content
+                                <div>
+                                    {incomingRequests.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <h3 className="text-xl text-[#486085] mb-3">No Incoming Requests</h3>
+                                            <p className="text-gray-600">No one has sent you a friend request yet.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {incomingRequests.map(req => (
+                                                <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                                                    <div className="flex gap-3 items-center">
+                                                        <div className="w-14 h-14 rounded-full border-2 border-[#4abe9c] overflow-hidden shadow-sm flex-shrink-0">
+                                                            <img src={req.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-base text-[#486085] font-medium truncate">{req.username}</h3>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-gray-100">
+                                                        <button
+                                                            onClick={() => handleAccept(req.id, req.from_user_id)}
+                                                            className="bg-[#4abe9c] text-white px-4 py-2 rounded-lg hover:bg-[#3a9880] transition-colors"
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReject(req.id)}
+                                                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
