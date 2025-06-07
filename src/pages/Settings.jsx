@@ -96,58 +96,22 @@ export default function Settings() {
     setIsExporting(true);
     setError(null);
     try {
-      // Simulate API call to get user data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/export-data`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export data");
+      }
+
+      const { data } = await response.json();
       
-      const exportDate = new Date().toISOString();
-      
-      const userData = {
-        exportDate,
-        user: {
-          username: "User", // From user context
-          joinDate: "2024-01-01" // From user context
-        },
-        settings: {
-          notifications: settings.notifications,
-          darkMode: settings.darkMode,
-          sound: settings.sound,
-          emailUpdates: settings.emailUpdates,
-          location: settings.location
-        },
-        pet: {
-          name: "Fluffy", // From pet state
-          type: "cat", // From pet state
-          level: 5 // From pet state
-        },
-        habits: [
-          {
-            name: "Morning Walk",
-            streak: 7,
-            frequency: "daily"
-          },
-          {
-            name: "Read Books",
-            streak: 3,
-            frequency: "daily"
-          }
-        ],
-        achievements: [
-          {
-            name: "Early Bird",
-            earnedDate: "2024-03-15"
-          },
-          {
-            name: "Streak Master",
-            earnedDate: "2024-03-18"
-          }
-        ]
-      };
-      
-      const blob = new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tamagotchi-data-${exportDate.split('T')[0]}.json`;
+      a.download = `tamagotchi-data-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       window.URL.revokeObjectURL(url);
       setShowExportConfirm(false);
@@ -168,9 +132,17 @@ export default function Settings() {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Redirect to login page after successful deletion
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/account`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      // Clear any local storage or cookies if needed
+      // Then redirect to login page
       window.location.href = '/login';
     } catch (error) {
       setError("Failed to delete account. Please try again.");
@@ -454,6 +426,21 @@ export default function Settings() {
                 </>
               )}
             </button>
+
+            {/* Warning Message */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
+                <div>
+                  <h4 className="text-red-800 font-medium mb-1">Warning: Account Deletion is Permanent</h4>
+                  <p className="text-red-600 text-sm">
+                    Deleting your account will permanently remove all your data including your pet, habits, and progress. 
+                    This action cannot be undone and you will not be able to log in with this account again.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <button
               onClick={handleDeleteAccount}
               disabled={isLoading}
