@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react"
 
-export default function StatusCard({ userName, weatherIcon, currentWeather }) {
+export default function StatusCard({ userName, weatherIcon, currentWeather, dailyMessage, petStatusMessage }) {
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm lg:max-w-[99%] 2xl:max-w-[98.5%]">
       <div className="flex justify-between items-center mb-4">
@@ -16,12 +16,12 @@ export default function StatusCard({ userName, weatherIcon, currentWeather }) {
 
       <div className="flex items-center gap-3 mb-4">
         <MessageCircle size={18} className="text-[#e79c2d]" />
-        <p className="font-sniglet text-base">"You're doing great! Keep going!"</p>
+        <p className="font-sniglet text-base">{dailyMessage}</p>
       </div>
 
       <div className="flex items-center gap-3">
         <span className="text-lg">🐾</span>
-        <p className="font-sniglet text-sm">Your pet looks happy today. Keep up the good habits!</p>
+        <p className="font-sniglet text-sm">{petStatusMessage}</p>
       </div>
     </div>
   )

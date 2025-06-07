@@ -24,7 +24,7 @@ import cloudyBg from "../../assets/weather_bg/cloudy.gif";
 import snowBg from "../../assets/weather_bg/snowy.gif";
 import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
 import windyBg from "../../assets/weather_bg/windy.gif";
-import thunderBg from "../../assets/weather_bg/thunder.webp";
+import thunderBg from "../../assets/weather_bg/thunder.gif";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { Calendar } from "lucide-react";
 
@@ -837,6 +837,8 @@ export default function DashboardRedesign() {
                 userName={userName}
                 weatherIcon={getWeatherIcon(currentWeather)}
                 currentWeather={currentWeather}
+                dailyMessage={getDailyMessage()}
+                petStatusMessage={getPetStatusMessage()}
               />
             </div>
 
