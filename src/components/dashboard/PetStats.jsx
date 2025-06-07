@@ -19,10 +19,10 @@ export default function PetStats({ petName, petType, petLevel, petStats }) {
               <Star size={14} className="text-yellow-500 lg:w-6 lg:h-6 2xl:w-8 2xl:h-8" />
               <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">XP</span>
             </div>
-            <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">{petStats.energy}/1000</span>
+            <span className="text-[10px] lg:text-base 2xl:text-lg font-sniglet">{petStats.energy}/{petStats.xpToNextLevel}</span>
           </div>
           <div className="h-1 lg:h-2 2xl:h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / 1000) * 100}%` }}></div>
+            <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / petStats.xpToNextLevel) * 100}%` }}></div>
           </div>
         </div>
 
