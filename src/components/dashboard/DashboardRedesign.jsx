@@ -27,6 +27,7 @@ import windyBg from "../../assets/weather_bg/windy.gif";
 import thunderBg from "../../assets/weather_bg/thunder.gif";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { Calendar } from "lucide-react";
+import ShareModal from "../ShareModal";
 
 export default function DashboardRedesign() {
   const navigate = useNavigate();
@@ -770,6 +771,27 @@ export default function DashboardRedesign() {
     }
   };
 
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/');
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
@@ -909,6 +931,17 @@ export default function DashboardRedesign() {
           setTheme={() => {}} // Would need a function to update theme
           onSave={handleSaveSettings}
           onReset={handleResetSettings}
+        />
+
+        {/* Share Modal */}
+        <ShareModal
+          show={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          shareData={{
+            title: "My Tamagotchi Progress",
+            text: `I've completed ${habits.filter(h => isHabitCompletedToday(h)).length} out of ${habits.length} habits today! My pet is ${profile?.pet?.name || 'doing great'} and the weather is ${currentWeather.toLowerCase()}. Check out my progress on Tamagotchi!`,
+            url: window.location.href
+          }}
         />
       </div>
     </Layout>

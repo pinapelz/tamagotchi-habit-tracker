@@ -665,9 +665,7 @@ export default function MobileDashboard() {
 
   const addHabit = async (newHabit) => {
     try {
-      const updatedHabits = [...habits, { ...newHabit, created_at: new Date().toISOString() }];
-      setHabits(sortHabits(updatedHabits));
-
+      // Remove client-side ID generation
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
         method: "POST",
         credentials: "include",
@@ -767,8 +765,23 @@ export default function MobileDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    navigate("/")
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/');
+    }
   }
 
   const menuItems = [
@@ -1350,7 +1363,7 @@ export default function MobileDashboard() {
             </div>
 
             <div className="bg-[#f0e8ff] rounded-2xl p-4">
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2">
                 {habits.map((habit) => {
                   const dueToday = isHabitDueToday(habit);
                   const completedToday = isHabitCompletedToday(habit);
@@ -1655,7 +1668,6 @@ export default function MobileDashboard() {
                   onClick={() => {
                     if (newHabitName.trim() !== "") {
                       const newHabit = {
-                        id: Date.now().toString(),
                         name: newHabitName.trim(),
                         recurrence: newHabitRecurrence,
                         completed: false
@@ -1739,6 +1751,11 @@ export default function MobileDashboard() {
       <ShareModal
         show={showShareModal}
         onClose={() => setShowShareModal(false)}
+        shareData={{
+          title: "My Tamagotchi Progress",
+          text: `I've completed ${habits.filter(h => isHabitCompletedToday(h)).length} out of ${habits.length} habits today! Check out my progress on Tamagotchi!`,
+          url: window.location.href
+        }}
       />
 
       {/* Export Confirmation Modal */}
