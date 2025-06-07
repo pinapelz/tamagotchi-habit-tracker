@@ -87,7 +87,7 @@ export default function SignupPage() {
 
       if (response.ok) {
         console.log("Signup successful:", data);
-        navigate("/loading?fromSignup=true");
+        navigate(`/loading?fromSignup=true&email=${encodeURIComponent(formData.email)}`);
       } else {
         console.error("Signup failed:", data.message);
         setErrors((prev) => ({
