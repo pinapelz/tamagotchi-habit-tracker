@@ -303,8 +303,66 @@ export default function MobileDashboard() {
     return () => clearTimeout(timeoutId);
   }, [])
 
-  const completedHabits = habits.filter((habit) => habit.completed).length
-  const totalHabits = habits.length
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+  const todayDate = today.getDate(); // 1-31
+
+  const isHabitCompletedToday = (habit) => {
+    if (!habit.last_completed_at) return false;
+
+    const completedDate = new Date(habit.last_completed_at);
+    const today = new Date();
+
+    return (
+      completedDate.getFullYear() === today.getFullYear() &&
+      completedDate.getMonth() === today.getMonth() &&
+      completedDate.getDate() === today.getDate()
+    );
+  };
+
+  const isHabitDueToday = (habit) => {
+    const type = habit.recurrence;
+    if (!type) return false;
+
+    switch (type) {
+      case "daily":
+        return true;
+      case "weekdays":
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
+      case "weekends":
+        return dayOfWeek === 0 || dayOfWeek === 6;
+      case "weekly": {
+        // Run weekly habit on same day of the week as it was created
+        const created = new Date(habit.created_at);
+        return created.getDay() === dayOfWeek;
+      }
+      case "monthly": {
+        // Run monthly habit on the same day of the month as it was created
+        const created = new Date(habit.created_at);
+        return created.getDate() === todayDate;
+      }
+      default:
+        return false;
+    }
+  };
+
+  const todaysHabits = habits.filter(isHabitDueToday);
+  const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+  const totalHabits = todaysHabits.length;
+
+  // Add sorting function
+  const sortHabits = (habitsList) => {
+    return [...habitsList].sort((a, b) => {
+      // First sort by completion status (incomplete first)
+      const aCompleted = isHabitCompletedToday(a);
+      const bCompleted = isHabitCompletedToday(b);
+      if (aCompleted !== bCompleted) {
+        return aCompleted ? 1 : -1;
+      }
+      // Then sort by creation date (newest first)
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  };
 
   // Fetch habits from the API
   useEffect(() => {
@@ -324,8 +382,7 @@ export default function MobileDashboard() {
         }
 
         const data = await response.json();
-        console.log('Fetched habits:', data);
-        setHabits(data || []);
+        setHabits(sortHabits(data));
       } catch (err) {
         console.error("Error fetching habits:", err);
         setError(err.message);
@@ -343,11 +400,12 @@ export default function MobileDashboard() {
       setCompletingHabitId(id);
 
       // Optimistically update the UI
-      setHabits(habits.map(habit => 
+      const updatedHabits = habits.map(habit => 
         habit.id === id 
           ? { ...habit, last_completed_at: new Date().toISOString() }
           : habit
-      ));
+      );
+      setHabits(sortHabits(updatedHabits));
 
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
         method: "POST",
@@ -359,7 +417,13 @@ export default function MobileDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to complete habit");
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Server error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || `Failed to complete habit: ${response.statusText}`);
       }
 
       // After successful completion, fetch the updated habits list
@@ -369,22 +433,29 @@ export default function MobileDashboard() {
       });
 
       if (!habitsResponse.ok) {
-        throw new Error("Failed to fetch updated habits");
+        const errorData = await habitsResponse.json().catch(() => ({}));
+        console.error('Server error response:', {
+          status: habitsResponse.status,
+          statusText: habitsResponse.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || `Failed to fetch updated habits: ${habitsResponse.statusText}`);
       }
 
       const habitsData = await habitsResponse.json();
-      setHabits(habitsData);
+      setHabits(sortHabits(habitsData));
 
-      // Refresh profile data to update stats
+      // Refresh profile data to update stats including streak
       await fetchProfileData();
     } catch (err) {
       console.error("Error completing habit:", err);
       // Revert optimistic update on error
-      setHabits(habits.map(habit => 
+      const revertedHabits = habits.map(habit => 
         habit.id === id 
           ? { ...habit, last_completed_at: null }
           : habit
-      ));
+      );
+      setHabits(sortHabits(revertedHabits));
       setError(err.message);
     } finally {
       setIsCompletingHabit(false);
@@ -394,6 +465,9 @@ export default function MobileDashboard() {
 
   const deleteHabit = async (id) => {
     try {
+      const updatedHabits = habits.filter((habit) => habit.id !== id);
+      setHabits(sortHabits(updatedHabits));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`, {
         method: "DELETE",
         credentials: "include",
@@ -414,8 +488,7 @@ export default function MobileDashboard() {
       }
 
       const habitsData = await habitsResponse.json();
-      console.log('Updated habits after deletion:', habitsData);
-      setHabits(habitsData);
+      setHabits(sortHabits(habitsData));
     } catch (err) {
       console.error("Error deleting habit:", err);
       setError(err.message);
@@ -424,10 +497,8 @@ export default function MobileDashboard() {
 
   const addHabit = async (newHabit) => {
     try {
-      console.log('Creating habit with data:', {
-        name: newHabit.name,
-        recurrence: newHabit.recurrence,
-      });
+      const updatedHabits = [...habits, { ...newHabit, created_at: new Date().toISOString() }];
+      setHabits(sortHabits(updatedHabits));
 
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
         method: "POST",
@@ -442,9 +513,7 @@ export default function MobileDashboard() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server response:', errorData);
-        throw new Error(errorData.message || "Failed to create habit");
+        throw new Error("Failed to create habit");
       }
 
       // After successful creation, fetch the updated habits list
@@ -458,8 +527,7 @@ export default function MobileDashboard() {
       }
 
       const habitsData = await habitsResponse.json();
-      console.log('Updated habits after creation:', habitsData);
-      setHabits(habitsData);
+      setHabits(sortHabits(habitsData));
       setIsAdding(false);
       setNewHabitName("");
       setNewHabitRecurrence("daily");
@@ -626,6 +694,13 @@ export default function MobileDashboard() {
     if (!editHabitId) return;
 
     try {
+      const updatedHabits = habits.map(habit =>
+        habit.id === editHabitId
+          ? { ...habit, name: editHabitName, recurrence: editHabitRecurrence }
+          : habit
+      );
+      setHabits(sortHabits(updatedHabits));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/${editHabitId}`, {
         method: "PUT",
         credentials: "include",
@@ -642,12 +717,18 @@ export default function MobileDashboard() {
         throw new Error("Failed to update habit");
       }
 
-      // Update local state
-      setHabits(habits.map(habit =>
-        habit.id === editHabitId
-          ? { ...habit, name: editHabitName, recurrence: editHabitRecurrence }
-          : habit
-      ));
+      // After successful update, fetch the updated habits list
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
+      }
+
+      const habitsData = await habitsResponse.json();
+      setHabits(sortHabits(habitsData));
 
       setEditHabitId(null);
       setEditHabitName("");
@@ -832,49 +913,6 @@ export default function MobileDashboard() {
       alert("Failed to save settings. Please try again.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const isHabitCompletedToday = (habit) => {
-    if (!habit.last_completed_at) return false;
-
-    const completedDate = new Date(habit.last_completed_at);
-    const today = new Date();
-
-    return (
-      completedDate.getFullYear() === today.getFullYear() &&
-      completedDate.getMonth() === today.getMonth() &&
-      completedDate.getDate() === today.getDate()
-    );
-  };
-
-  const isHabitDueToday = (habit) => {
-    const type = habit.recurrence;
-    if (!type) return false;
-
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const todayDate = today.getDate();
-
-    switch (type) {
-      case "daily":
-        return true;
-      case "weekdays":
-        return dayOfWeek >= 1 && dayOfWeek <= 5;
-      case "weekends":
-        return dayOfWeek === 0 || dayOfWeek === 6;
-      case "weekly": {
-        // Run weekly habit on same day of the week as it was created
-        const created = new Date(habit.created_at);
-        return created.getDay() === dayOfWeek;
-      }
-      case "monthly": {
-        // Run monthly habit on the same day of the month as it was created
-        const created = new Date(habit.created_at);
-        return created.getDate() === todayDate;
-      }
-      default:
-        return false;
     }
   };
 
