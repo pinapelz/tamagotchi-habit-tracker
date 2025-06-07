@@ -244,7 +244,7 @@ def get_profile():
     try:
         # Get user stats
         stats = db.fetchone(
-            "SELECT current_streak, longest_streak, total_habits_completed "
+            "SELECT current_streak, longest_streak, total_habits_completed, lifetime_habits_completed "
             "FROM user_stats "
             "WHERE user_id = %s",
             (user["id"],)
@@ -287,7 +287,8 @@ def get_profile():
             "stats": {
                 "current_streak": stats["current_streak"] if stats else 0,
                 "longest_streak": stats["longest_streak"] if stats else 0,
-                "total_habits_completed": total_completed
+                "total_habits_completed": total_completed,
+                "lifetime_habits_completed": stats["lifetime_habits_completed"] if stats else 0
             },
             "pet": pet if pet else None,
             "profile": {
@@ -1055,6 +1056,7 @@ def complete_habit():
                     current_streak = %s,
                     longest_streak = GREATEST(%s, %s),
                     total_habits_completed = total_habits_completed + 1,
+                    lifetime_habits_completed = lifetime_habits_completed + 1,
                     last_completed_at = NOW(),
                     updated_at = NOW()
                 WHERE user_id = %s
