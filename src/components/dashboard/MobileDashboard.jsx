@@ -508,7 +508,7 @@ export default function MobileDashboard() {
     { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
     { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
     { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <HelpCircle size={20} />, label: 'Help', href: '/not-found' },
+    { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
     { icon: <Settings size={20} />, label: 'Settings', href: '#', action: () => setActiveTab('settings') },
     { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
   ]
@@ -769,9 +769,7 @@ export default function MobileDashboard() {
           <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100">
             {showMenu ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <button onClick={() => navigate('/')} className="hover:opacity-80 transition">
-            <h1 className="text-lg font-sniglet">Tamagotchi Tracker</h1>
-          </button>
+          <h1 className="text-lg font-sniglet">Tamagotchi Tracker</h1>
         </div>
         <div className="flex items-center gap-2">
           {getWeatherIcon()}

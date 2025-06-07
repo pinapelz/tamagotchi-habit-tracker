@@ -1774,17 +1774,22 @@ def export_user_data():
             (user["id"],)
         )
 
-        # Get user settings
-        settings = db.fetchone(
+        # Get friends data
+        friends = db.fetchall(
             """
             SELECT 
-                notifications,
-                dark_mode,
-                sound,
-                email_updates,
-                location
-            FROM user_settings
-            WHERE user_id = %s
+                u.id,
+                u.display_name,
+                u.avatar_url,
+                p.name as pet_name,
+                p.type as pet_type,
+                p.lvl as pet_level,
+                us.current_streak
+            FROM friends f
+            JOIN users u ON f.friend_id = u.id
+            LEFT JOIN pets p ON u.id = p.user_id
+            LEFT JOIN user_stats us ON u.id = us.user_id
+            WHERE f.user_id = %s
             """,
             (user["id"],)
         )
@@ -1859,13 +1864,17 @@ def export_user_data():
                 "joinDate": profile["created_at"].isoformat(),
                 "bio": profile["bio"]
             },
-            "settings": {
-                "notifications": settings["notifications"],
-                "darkMode": settings["dark_mode"],
-                "sound": settings["sound"],
-                "emailUpdates": settings["email_updates"],
-                "location": settings["location"]
-            },
+            "friends": [{
+                "id": friend["id"],
+                "displayName": friend["display_name"],
+                "avatarUrl": friend["avatar_url"],
+                "pet": {
+                    "name": friend["pet_name"],
+                    "type": friend["pet_type"],
+                    "level": friend["pet_level"]
+                },
+                "currentStreak": friend["current_streak"]
+            } for friend in friends],
             "pet": pet and {
                 "name": pet["name"],
                 "type": pet["type"],
@@ -2351,5 +2360,4 @@ def reset_achievements():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
 
