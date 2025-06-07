@@ -209,6 +209,12 @@ export default function MobileDashboard() {
       return "Your pet has leveled up! They're ready for new adventures! 🎉";
     }
     
+    // Happiness is on a 0-100 scale where:
+    // 0-20% = Very Sad
+    // 21-40% = Sad
+    // 41-60% = Neutral
+    // 61-80% = Happy
+    // 81-100% = Very Happy
     if (happiness >= 90 && health >= 90 && energy >= 90) {
       return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
     } else if (happiness >= 80 && health >= 80 && energy >= 80) {
@@ -547,13 +553,35 @@ export default function MobileDashboard() {
       );
       setHabits(sortHabits(updatedHabits));
 
+      // Calculate happiness increase based on completion rate
+      const todaysHabits = habits.filter(isHabitDueToday);
+      const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+      const totalHabits = todaysHabits.length;
+      const completionRate = (completedHabits + 1) / totalHabits;
+      
+      let happinessIncrease;
+      if (completionRate >= 0.8) {
+        happinessIncrease = 15;
+      } else if (completionRate >= 0.5) {
+        happinessIncrease = 12;
+      } else if (completionRate >= 0.25) {
+        happinessIncrease = 8;
+      } else {
+        happinessIncrease = 5;
+      }
+
+      const newHappiness = Math.min(100, Math.max(0, petStats.happiness + happinessIncrease));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ habit_id: id }),
+        body: JSON.stringify({ 
+          habit_id: id,
+          happiness: newHappiness 
+        }),
       });
 
       if (!response.ok) {
@@ -567,20 +595,6 @@ export default function MobileDashboard() {
       }
 
       const data = await response.json();
-
-      // Calculate happiness increase based on completion rate
-      const completionRate = (completedHabits + 1) / totalHabits;
-      let happinessIncrease;
-      
-      if (completionRate >= 0.8) {
-        happinessIncrease = 15;
-      } else if (completionRate >= 0.5) {
-        happinessIncrease = 12;
-      } else if (completionRate >= 0.25) {
-        happinessIncrease = 8;
-      } else {
-        happinessIncrease = 5;
-      }
 
       // Calculate XP gain (10 XP per habit completion)
       const xpGain = 10;
@@ -596,14 +610,14 @@ export default function MobileDashboard() {
         setPetLevel(newLevel);
         setPetStats(prevStats => ({
           ...prevStats,
-          happiness: Math.min(100, Math.max(0, prevStats.happiness + happinessIncrease)),
+          happiness: newHappiness,
           energy: remainingXP,
           xpToNextLevel: nextLevelXP
         }));
       } else {
         setPetStats(prevStats => ({
           ...prevStats,
-          happiness: Math.min(100, Math.max(0, prevStats.happiness + happinessIncrease)),
+          happiness: newHappiness,
           energy: newEnergy
         }));
       }
@@ -629,9 +643,6 @@ export default function MobileDashboard() {
 
       // Update streak
       setStreak(data.streak);
-
-      // Refresh profile data to update stats including streak
-      await fetchProfileData();
     } catch (err) {
       console.error("Error completing habit:", err);
       // Revert optimistic update on error
@@ -1118,6 +1129,34 @@ export default function MobileDashboard() {
       setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    // Sync with backend every 5 minutes to keep profile stats updated
+    const syncInterval = setInterval(() => {
+      fetchProfileData();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
+
+  // Also sync when switching to the profile tab
+  useEffect(() => {
+    if (activeTab === "profile") {
+      fetchProfileData();
+    }
+  }, [activeTab]);
+
+  // Add periodic sync with backend
+  useEffect(() => {
+    // Sync with backend every 15 minutes to keep profile stats updated
+    // We use a longer interval to avoid overwriting local state changes
+    // with potentially stale data from the backend
+    const syncInterval = setInterval(() => {
+      fetchProfileData();
+    }, 15 * 60 * 1000); // 15 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
 
   if (loading) {
     return (
