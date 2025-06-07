@@ -32,6 +32,7 @@ import {
   Eye,
   EyeOff,
   Calendar,
+  Wind,
 } from "lucide-react";
 import ShareModal from "../ShareModal";
 
@@ -107,6 +108,8 @@ export default function MobileDashboard() {
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isCompletingHabit, setIsCompletingHabit] = useState(false);
+  const [completingHabitId, setCompletingHabitId] = useState(null);
 
   // Check if the user has a pet
   useEffect(() => {
@@ -333,7 +336,19 @@ export default function MobileDashboard() {
   }, [navigate]);
 
   const toggleHabitCompletion = async (id) => {
+    if (isCompletingHabit) return; // Prevent multiple clicks
+    
     try {
+      setIsCompletingHabit(true);
+      setCompletingHabitId(id);
+
+      // Optimistically update the UI
+      setHabits(habits.map(habit => 
+        habit.id === id 
+          ? { ...habit, last_completed_at: new Date().toISOString() }
+          : habit
+      ));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
         method: "POST",
         credentials: "include",
@@ -358,14 +373,22 @@ export default function MobileDashboard() {
       }
 
       const habitsData = await habitsResponse.json();
-      console.log('Updated habits after completion:', habitsData);
       setHabits(habitsData);
 
       // Refresh profile data to update stats
       await fetchProfileData();
     } catch (err) {
       console.error("Error completing habit:", err);
+      // Revert optimistic update on error
+      setHabits(habits.map(habit => 
+        habit.id === id 
+          ? { ...habit, last_completed_at: null }
+          : habit
+      ));
       setError(err.message);
+    } finally {
+      setIsCompletingHabit(false);
+      setCompletingHabitId(null);
     }
   };
 
@@ -455,8 +478,10 @@ export default function MobileDashboard() {
       return <CloudRain className="text-blue-500" size={20} />
     } else if (currentWeather.toLowerCase().includes("cloud")) {
       return <Cloud className="text-blue-400" size={20} />
-    } else if (timeOfDay === "night") {
-      return <Moon className="text-indigo-400" size={20} />
+    } else if (currentWeather.toLowerCase().includes("wind")) {
+      return <Wind className="text-gray-400" size={20} />
+    } else if (currentWeather.toLowerCase().includes("snow")) {
+      return <Snowflake className="text-blue-300" size={20} />
     } else {
       return <Sun className="text-yellow-400" size={20} />
     }
@@ -509,7 +534,7 @@ export default function MobileDashboard() {
   }
 
   const menuItems = [
-    { icon: <Home size={20} />, label: 'Home', href: '/dashboard' },
+    { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <User size={20} />, label: 'Profile', href: '/profile' },
     { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
     { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
@@ -810,6 +835,49 @@ export default function MobileDashboard() {
     }
   };
 
+  const isHabitCompletedToday = (habit) => {
+    if (!habit.last_completed_at) return false;
+
+    const completedDate = new Date(habit.last_completed_at);
+    const today = new Date();
+
+    return (
+      completedDate.getFullYear() === today.getFullYear() &&
+      completedDate.getMonth() === today.getMonth() &&
+      completedDate.getDate() === today.getDate()
+    );
+  };
+
+  const isHabitDueToday = (habit) => {
+    const type = habit.recurrence;
+    if (!type) return false;
+
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const todayDate = today.getDate();
+
+    switch (type) {
+      case "daily":
+        return true;
+      case "weekdays":
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
+      case "weekends":
+        return dayOfWeek === 0 || dayOfWeek === 6;
+      case "weekly": {
+        // Run weekly habit on same day of the week as it was created
+        const created = new Date(habit.created_at);
+        return created.getDay() === dayOfWeek;
+      }
+      case "monthly": {
+        // Run monthly habit on the same day of the month as it was created
+        const created = new Date(habit.created_at);
+        return created.getDate() === todayDate;
+      }
+      default:
+        return false;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
@@ -1074,46 +1142,57 @@ export default function MobileDashboard() {
 
             <div className="bg-[#f0e8ff] rounded-2xl p-4">
               <div className="space-y-3 mb-4">
-                {habits.map((habit) => (
-                  <div
-                    key={habit.id}
-                    className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
-                      habit.completed ? "bg-green-100" : "bg-white"
-                    }`}
-                    onClick={() => toggleHabitCompletion(habit.id)}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <div className={`text-sm font-sniglet text-left flex items-center gap-2 ${
-                        habit.completed ? "line-through text-gray-500" : ""
-                      }`}>
-                        {habit.completed && <Check size={16} className="text-green-500" />}
-                        <div className="flex flex-col">
-                          <span>{habit.name}</span>
-                          {habit.recurrence && (
-                            <span className="text-xs text-gray-500 flex items-center">
-                              <Calendar size={12} className="mr-1" />
-                              {habit.recurrence.charAt(0).toUpperCase() + habit.recurrence.slice(1)}
-                            </span>
-                          )}
+                {habits.map((habit) => {
+                  const dueToday = isHabitDueToday(habit);
+                  const completedToday = isHabitCompletedToday(habit);
+                  const isCompleting = completingHabitId === habit.id;
+
+                  return (
+                    <div
+                      key={habit.id}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                        isCompleting ? 'opacity-50' : 'cursor-pointer'
+                      } ${
+                        completedToday ? "bg-green-100" : "bg-white"
+                      }`}
+                      onClick={() => !isCompleting && dueToday && !completedToday && toggleHabitCompletion(habit.id)}
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className={`text-sm font-sniglet text-left flex items-center gap-2 ${
+                          completedToday ? "line-through text-gray-500" : ""
+                        }`}>
+                          {completedToday && <Check size={16} className="text-green-500" />}
+                          {isCompleting && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-green-500"></div>}
+                          <div className="flex flex-col">
+                            <span>{habit.name}</span>
+                            {habit.recurrence && (
+                              <span className="text-xs text-gray-500 flex items-center">
+                                <Calendar size={12} className="mr-1" />
+                                {habit.recurrence.charAt(0).toUpperCase() + habit.recurrence.slice(1)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          onClick={() => openEditHabitForm(habit)}
+                          disabled={isCompleting}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                          onClick={() => deleteHabit(habit.id)}
+                          disabled={isCompleting}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded-full"
-                        onClick={() => openEditHabitForm(habit)}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded-full"
-                        onClick={() => deleteHabit(habit.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="w-full">
