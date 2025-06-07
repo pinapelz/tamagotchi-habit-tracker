@@ -7,18 +7,19 @@ export default function LoadingPage() {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const fromSignup = searchParams.get("fromSignup") === "true"
+  const email = searchParams.get("email")
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (fromSignup) {
-        navigate("/login")
+        navigate(`/login${email ? `?email=${email}` : ''}`);
       } else {
         navigate("/dashboard")
       }
     }, 3000)
 
     return () => clearTimeout(timer)
-  }, [navigate, fromSignup])
+  }, [navigate, fromSignup, email])
 
   return (
     <div className="min-h-screen bg-[#def8fb] flex items-center justify-center">
