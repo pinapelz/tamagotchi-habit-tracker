@@ -101,6 +101,12 @@ export default function MobileDashboard() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [accuracy, setAccuracy] = useState(null);
+  const [timezone, setTimezone] = useState("America/Los_Angeles");
+  const [theme, setTheme] = useState("light");
+  const [isSaving, setIsSaving] = useState(false);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Check if the user has a pet
   useEffect(() => {
@@ -742,6 +748,68 @@ export default function MobileDashboard() {
     fetchWeather();
   }, []);
 
+  const handleReset = async () => {
+    try {
+      // Fetch the original profile data
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile data");
+      }
+
+      const { data } = await response.json();
+
+      // Reset all settings to their original values
+      setUserName(data.user.display_name || "User");
+      setTimezone(data.user.timezone || "America/Los_Angeles");
+      setTheme(data.user.theme || "light");
+      setLatitude("");
+      setLongitude("");
+      setAccuracy(null);
+      setLocationError(null);
+
+    } catch (err) {
+      console.error("Error resetting settings:", err);
+      alert("Failed to reset settings. Please try again.");
+    }
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          display_name: userName,
+          timezone: timezone,
+          theme: theme,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save settings");
+      }
+
+      // Refresh profile data to ensure everything is in sync
+      await fetchProfileData();
+      alert("Settings saved successfully!");
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      alert("Failed to save settings. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
@@ -1061,20 +1129,20 @@ export default function MobileDashboard() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl p-3 shadow-sm">
+              <div className="bg-[#fdffe9] rounded-xl p-3 shadow-sm">
                 <h3 className="text-sm font-sniglet mb-1">Completed Today</h3>
                 <p className="text-xl font-medium">
                   {completedHabits}/{totalHabits}
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-3 shadow-sm">
+              <div className="bg-[#fdffe9] rounded-xl p-3 shadow-sm">
                 <h3 className="text-sm font-sniglet mb-1">Current Streak</h3>
                 <p className="text-xl font-medium">{streak} days</p>
               </div>
             </div>
 
             {/* Status Card */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm mt-4">
+            <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm mt-4">
               <div className="flex items-center gap-2 mb-3">
                 <MessageCircle size={18} className="text-[#e79c2d]" />
                 <p className="font-sniglet text-sm">"You're doing great! Keep going!"</p>
@@ -1089,85 +1157,155 @@ export default function MobileDashboard() {
         )}
 
         {activeTab === "settings" && (
-          <div className="bg-[#fdffe9] rounded-2xl p-4">
-            <h2 className="text-center text-lg font-sniglet mb-4">Settings</h2>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-sniglet">
-                  Name
+          <div className="space-y-5">
+            {/* Settings Header */}
+            <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-sniglet">Settings</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleReset}
+                    className="px-3 py-1.5 text-gray-700 hover:bg-gray-100 rounded text-sm"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="bg-[#5dd6e8] text-black px-4 py-1.5 rounded text-sm hover:bg-[#4bc5d7] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Name Section */}
+              <div className="space-y-2 mb-4">
+                <label htmlFor="name" className="block text-sm font-sniglet text-gray-700">
+                  Display Name
                 </label>
                 <input
                   type="text"
                   id="name"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full bg-transparent border-b-2 border-gray-400 focus:border-[#e79c2d] outline-none py-2 px-1 text-sm"
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
                 />
               </div>
 
+              {/* Timezone Section */}
+              <div className="space-y-2 mb-4">
+                <label htmlFor="timezone" className="block text-sm font-sniglet text-gray-700">
+                  Timezone
+                </label>
+                <select
+                  id="timezone"
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                >
+                  {Intl.supportedValuesOf('timeZone').map((zone) => (
+                    <option key={zone} value={zone}>
+                      {zone}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Theme Section */}
               <div className="space-y-2">
-                <label className="block text-sm font-sniglet">Theme</label>
+                <label className="block text-sm font-sniglet text-gray-700">Theme</label>
                 <div className="flex gap-3">
-                  <button className="px-4 py-1.5 rounded-full text-sm font-sniglet bg-white border-2 border-gray-300">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`px-4 py-1.5 rounded-full text-sm transition-all ${
+                      theme === "light"
+                        ? "bg-white border-2 border-purple-200 text-purple-600"
+                        : "bg-gray-50 border border-gray-200 hover:bg-gray-100 text-gray-600"
+                    }`}
+                  >
                     Light
                   </button>
-                  <button className="px-4 py-1.5 rounded-full text-sm font-sniglet bg-gray-300 hover:bg-gray-400">
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`px-4 py-1.5 rounded-full text-sm transition-all ${
+                      theme === "dark"
+                        ? "bg-gray-800 text-white border-2 border-gray-600"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    }`}
+                  >
                     Dark
                   </button>
                 </div>
               </div>
-
-              {/* <div className="space-y-2">
-                <label className="block text-sm font-sniglet">Change Pet</label>
-                <button className="bg-[#cbffc6] text-black px-4 py-1.5 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors">
-                  Choose New Pet
-                </button>
-              </div> */}
-
-              <div className="pt-3 flex justify-center">
-                <button className="bg-[#c8c6ff] text-black px-8 py-2 rounded-full font-sniglet text-sm hover:bg-[#b5b3e6] transition-colors">
-                  Save Changes
-                </button>
-              </div>
-
-              <div className="pt-1 flex justify-center">
-                <button className="text-[#f51616] border border-[#f51616] px-4 py-1.5 rounded-md font-sniglet text-sm hover:bg-red-50 transition-colors">
-                  Reset
-                </button>
-              </div>
             </div>
 
-            {/* Location Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-sniglet text-gray-800">Set Location</h3>
-              {locationError && <div className="text-red-500">{locationError}</div>}
+            {/* <div className="space-y-2">
+              <label className="block text-sm font-sniglet">Change Pet</label>
+              <button className="bg-[#cbffc6] text-black px-4 py-1.5 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors">
+                Choose New Pet
+              </button>
+            </div> */}
+
+            {/* Location Settings */}
+            <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm">
+              <h3 className="text-sm font-sniglet text-gray-700 mb-3">Location Settings</h3>
+              {locationError && <div className="text-red-500 text-sm mb-3">{locationError}</div>}
+              
               <button
                 onClick={handleSetLocationAutomatically}
-                className="bg-[#c8c6ff] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6]"
+                className="w-full bg-[#c8c6ff] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b5b3e6] transition-colors border border-[#b5b3e6] mb-3"
               >
                 Set Location Automatically
               </button>
-              <div className="flex flex-col gap-4">
+              
+              <div className="space-y-3">
                 <input
                   type="text"
                   placeholder="Latitude"
                   value={latitude}
                   onChange={(e) => setLatitude(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
                 />
                 <input
                   type="text"
                   placeholder="Longitude"
                   value={longitude}
                   onChange={(e) => setLongitude(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2 font-sniglet text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
                 />
                 <button
                   onClick={handleSetLocationManually}
-                  className="w-full bg-[#cbffc6] text-black px-6 py-2 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
+                  className="w-full bg-[#cbffc6] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b8edb3] transition-colors border border-[#b8edb3]"
                 >
                   Set Manually
+                </button>
+              </div>
+            </div>
+
+            {/* Data Management Section */}
+            <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm">
+              <h3 className="text-sm font-sniglet text-gray-700 mb-3">Data Management</h3>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowExportConfirm(true)}
+                  className="w-full bg-[#e6f7ff] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b3e0ff] transition-colors border border-[#b3e0ff] flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Export Data
+                </button>
+
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Delete Account
                 </button>
               </div>
             </div>
@@ -1314,6 +1452,130 @@ export default function MobileDashboard() {
         show={showShareModal}
         onClose={() => setShowShareModal(false)}
       />
+
+      {/* Export Confirmation Modal */}
+      {showExportConfirm && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm animate-fadeIn">
+            <h3 className="text-lg font-medium mb-3">Export Data</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will download a JSON file containing your profile information, pet data, and habits.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowExportConfirm(false)}
+                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setIsExporting(true);
+                  try {
+                    const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+                      method: "GET",
+                      credentials: "include",
+                    });
+
+                    if (!response.ok) {
+                      throw new Error("Failed to fetch user data");
+                    }
+
+                    const { data } = await response.json();
+                    
+                    const exportData = {
+                      user: {
+                        display_name: data.user.display_name,
+                        timezone: data.user.timezone,
+                        theme: data.user.theme,
+                        avatar_url: data.user.avatar_url
+                      },
+                      pet: {
+                        name: data.pet.name,
+                        type: data.pet.type,
+                        lvl: data.pet.lvl,
+                        happiness: data.pet.happiness,
+                        health: data.pet.health,
+                        xp: data.pet.xp
+                      },
+                      stats: {
+                        current_streak: data.stats.current_streak
+                      },
+                      habits: habits,
+                      settings: {
+                        theme,
+                        timezone
+                      }
+                    };
+
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `tamagotchi-data-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    setShowExportConfirm(false);
+                  } catch (error) {
+                    console.error('Error exporting data:', error);
+                    alert('Failed to export data. Please try again.');
+                  } finally {
+                    setIsExporting(false);
+                  }
+                }}
+                disabled={isExporting}
+                className="bg-[#e79c2d] text-white px-3 py-1.5 rounded text-sm hover:bg-[#d38c1d] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isExporting ? "Exporting..." : "Export"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm animate-fadeIn">
+            <h3 className="text-lg font-medium mb-3">Delete Account</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will permanently delete all your data, including your pet, habits, and progress. This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                  })
+                  .then(response => {
+                    if (response.ok) {
+                      navigate('/');
+                    } else {
+                      throw new Error('Failed to delete account');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error deleting account:', error);
+                    alert('Failed to delete account. Please try again.');
+                  });
+                }}
+                className="bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="bg-white border-t border-gray-200 px-4 py-2 flex justify-around">

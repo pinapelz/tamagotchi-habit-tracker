@@ -1,11 +1,23 @@
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function SettingsModal({ isOpen, onClose, userName, setUserName, theme, setTheme, onSave, onReset }) {
   const [locationError, setLocationError] = useState(null)
   const [latitude, setLatitude] = useState("")
   const [longitude, setLongitude] = useState("")
   const [accuracy, setAccuracy] = useState(null)
+  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [originalTimezone, setOriginalTimezone] = useState(timezone)
+  const [originalName, setOriginalName] = useState(userName)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Initialize original values when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setOriginalName(userName)
+      setOriginalTimezone(timezone)
+    }
+  }, [isOpen, userName, timezone])
 
   const handleSetLocationAutomatically = () => {
     if (!navigator.geolocation) {
@@ -78,6 +90,61 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
     }
   }
 
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      // Save display name
+      const nameResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile/update`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          display_name: userName,
+        }),
+      })
+
+      if (!nameResponse.ok) {
+        throw new Error("Failed to update display name")
+      }
+
+      // Save timezone
+      const timezoneResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile/update`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          timezone: timezone,
+        }),
+      })
+
+      if (!timezoneResponse.ok) {
+        throw new Error("Failed to update timezone")
+      }
+
+      // Update original values after successful save
+      setOriginalName(userName)
+      setOriginalTimezone(timezone)
+      
+      // Call the parent's onSave function
+      onSave()
+    } catch (error) {
+      console.error("Error saving changes:", error)
+      alert("Failed to save changes. Please try again.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleReset = () => {
+    setUserName(originalName)
+    setTimezone(originalTimezone)
+    onReset()
+  }
+
   if (!isOpen) return null
 
   return (
@@ -100,19 +167,40 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
           </div>
 
           <div className="space-y-6">
+            {/* Name Section */}
             <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
+                Display Name
               </label>
               <input
                 type="text"
                 id="name"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
               />
             </div>
 
+            {/* Timezone Section */}
+            <div className="space-y-2">
+              <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">
+                Timezone
+              </label>
+              <select
+                id="timezone"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+              >
+                {Intl.supportedValuesOf('timeZone').map((zone) => (
+                  <option key={zone} value={zone}>
+                    {zone}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Theme Section */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Theme</label>
               <div className="flex gap-3">
@@ -163,14 +251,14 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
                   placeholder="Latitude"
                   value={latitude}
                   onChange={(e) => setLatitude(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
                 />
                 <input
                   type="text"
                   placeholder="Longitude"
                   value={longitude}
                   onChange={(e) => setLongitude(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
+                  className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-transparent"
                 />
                 <button
                   onClick={handleSetLocationManually}
@@ -183,16 +271,17 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
 
             <div className="flex gap-3 justify-end pt-4">
               <button
-                onClick={onReset}
-                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded text-sm"
+                onClick={handleReset}
+                className="px-3 py-1.5 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 Reset
               </button>
               <button
-                onClick={onSave}
-                className="bg-[#ffd700] text-gray-700 px-4 py-1.5 rounded text-sm hover:bg-[#e6c200]"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-[#e79c2d] text-gray-100 px-4 py-1.5 rounded text-sm hover:bg-[#d38c1d] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Changes
+                {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
