@@ -225,7 +225,7 @@ export default function ViewProfile() {
                   </div>
                   <div className="bg-white p-3 rounded-lg shadow-sm">
                     <div className="text-lg text-[#4abe9c]">
-                      {userProfile.stats?.total_habits_completed || 0}
+                      {userProfile.stats?.lifetime_habits_completed || 0}
                     </div>
                     <div className="text-xs text-gray-500">Total Habits Completed</div>
                   </div>

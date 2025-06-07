@@ -66,6 +66,7 @@ CREATE TABLE user_stats (
     current_streak INTEGER DEFAULT 0 NOT NULL, -- check if should reset on login or someone loads their profile, or friends page load
     longest_streak INTEGER DEFAULT 0 NOT NULL,
     total_habits_completed INTEGER DEFAULT 0 NOT NULL,
+    lifetime_habits_completed INTEGER DEFAULT 0 NOT NULL, 
     last_completed_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
