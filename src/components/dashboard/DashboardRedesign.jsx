@@ -143,6 +143,17 @@ export default function DashboardRedesign() {
     });
   };
 
+  // Add function to calculate XP needed for next level
+  const calculateXPForNextLevel = (currentLevel) => {
+    // Base XP requirement increases by 50 XP each level
+    // Level 1: 100 XP
+    // Level 2: 150 XP
+    // Level 3: 200 XP
+    // Level 4: 250 XP
+    // And so on...
+    return 100 + (currentLevel * 50);
+  };
+
   const fetchProfileData = async () => {
     try {
       const response = await fetch(
@@ -162,6 +173,13 @@ export default function DashboardRedesign() {
       }
 
       const { data } = await response.json();
+      
+      // Calculate XP needed for next level based on current level
+      if (data.pet) {
+        const xpToNextLevel = calculateXPForNextLevel(data.pet.lvl || 0);
+        data.pet.xpToNextLevel = xpToNextLevel;
+      }
+      
       setProfile(data);
 
       // Initialize habits from backend data
@@ -827,8 +845,9 @@ export default function DashboardRedesign() {
   const petLevel = profile?.pet?.lvl || 0;
   const petStats = {
     happiness: profile?.pet?.happiness || 50,
-    energy: profile?.pet?.energy || 50, // Not in your schema, fallback value
+    energy: profile?.pet?.xp || 0, 
     health: profile?.pet?.health || 100,
+    xpToNextLevel: calculateXPForNextLevel(petLevel) // Add xpToNextLevel calculation
   };
   const userName = profile?.user?.display_name || "User";
   const streak = profile?.stats?.current_streak || 0;
