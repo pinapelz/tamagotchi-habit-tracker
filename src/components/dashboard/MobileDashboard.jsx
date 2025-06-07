@@ -110,6 +110,91 @@ export default function MobileDashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [isCompletingHabit, setIsCompletingHabit] = useState(false);
   const [completingHabitId, setCompletingHabitId] = useState(null);
+  const [dailyMessage, setDailyMessage] = useState("");
+
+  // Add motivational messages array
+  const motivationalMessages = [
+    "You're doing great! Keep going!",
+    "Every small step counts towards your goals!",
+    "Your dedication is inspiring!",
+    "You're making amazing progress!",
+    "Stay focused, stay motivated!",
+    "You've got this! Keep pushing forward!",
+    "Your consistency is paying off!",
+    "Small steps, big results!",
+    "You're stronger than you think!",
+    "Keep up the amazing work!",
+    "Your future self thanks you!",
+    "You're building great habits!",
+    "Success is built one day at a time!",
+    "You're on the right track!",
+    "Your determination is impressive!",
+    "Today's effort is tomorrow's success!",
+    "You're creating positive change!",
+    "Every day is a new opportunity!",
+    "Your progress is remarkable!",
+    "Keep shining bright!",
+    "You're unstoppable!",
+    "Your potential is limitless!",
+    "Making habits, making history!",
+    "You're becoming your best self!",
+    "Your journey is inspiring!",
+    "Keep that momentum going!",
+    "You're crushing it!",
+    "Your dedication is paying off!",
+    "Making progress, one habit at a time!",
+    "You're a habit-forming superstar!",
+    "Your consistency is your superpower!",
+    "Keep building your success story!",
+    "You're making it happen!",
+    "Your efforts are creating change!",
+    "Stay strong, stay consistent!",
+    "You're on fire today!",
+    "Your progress is unstoppable!",
+    "Keep that positive energy flowing!",
+    "You're a habit-building champion!",
+    "Your dedication is remarkable!",
+    "Making every day count!",
+    "You're building a better future!",
+    "Your commitment is inspiring!",
+    "Keep that winning streak going!",
+    "You're a force of positive change!",
+    "Your habits are shaping your destiny!",
+    "Making progress, one day at a time!",
+    "You're a habit-forming hero!",
+    "Your consistency is your strength!",
+    "Keep building your success!"
+  ];
+
+  // Function to get a random message based on the date
+  const getDailyMessage = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const messageIndex = dayOfYear % motivationalMessages.length;
+    return motivationalMessages[messageIndex];
+  };
+
+  // Function to get pet status message based on stats
+  const getPetStatusMessage = () => {
+    const { happiness, health, energy } = petStats;
+    
+    if (happiness >= 80 && health >= 80 && energy >= 80) {
+      return "Your pet is absolutely thriving! They're so happy and healthy!";
+    } else if (happiness >= 60 && health >= 60 && energy >= 60) {
+      return "Your pet looks happy today. Keep up the good habits!";
+    } else if (happiness >= 40 && health >= 40 && energy >= 40) {
+      return "Your pet is doing okay, but could use some more attention.";
+    } else if (happiness >= 20 && health >= 20 && energy >= 20) {
+      return "Your pet seems a bit down. Maybe spend more time with them?";
+    } else {
+      return "Your pet needs your help! Try completing more habits to cheer them up!";
+    }
+  };
+
+  // Set daily message on component mount
+  useEffect(() => {
+    setDailyMessage(getDailyMessage());
+  }, []);
 
   // Check if the user has a pet
   useEffect(() => {
@@ -1262,12 +1347,12 @@ export default function MobileDashboard() {
             <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm mt-4">
               <div className="flex items-center gap-2 mb-3">
                 <MessageCircle size={18} className="text-[#e79c2d]" />
-                <p className="font-sniglet text-sm">"You're doing great! Keep going!"</p>
+                <p className="font-sniglet text-sm">{dailyMessage}</p>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-base">🐾</span>
-                <p className="font-sniglet text-xs">Your pet looks happy today. Keep up the good habits!</p>
+                <p className="font-sniglet text-xs">{getPetStatusMessage()}</p>
               </div>
             </div>
           </div>
