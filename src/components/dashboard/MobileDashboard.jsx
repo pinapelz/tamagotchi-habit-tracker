@@ -610,6 +610,9 @@ export default function MobileDashboard() {
       const habitsData = await habitsResponse.json();
       setHabits(sortHabits(habitsData));
 
+      // Update streak
+      setStreak(data.streak);
+
       // Refresh profile data to update stats including streak
       await fetchProfileData();
     } catch (err) {
