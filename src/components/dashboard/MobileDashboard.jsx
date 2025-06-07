@@ -33,6 +33,7 @@ import {
   EyeOff,
   Calendar,
   Wind,
+  CloudLightning,
 } from "lucide-react";
 import ShareModal from "../ShareModal";
 
@@ -43,9 +44,10 @@ import batGif from "../../assets/pets/pixel-bat.gif";
 import duckGif from "../../assets/pets/pixel-duck.gif";
 import rainyBg from "../../assets/weather_bg/rainy.gif";
 import cloudyBg from "../../assets/weather_bg/cloudy.gif";
-import snowBg from "../../assets/weather_bg/snow.png";
+import snowBg from "../../assets/weather_bg/snowy.gif";
 import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
 import windyBg from "../../assets/weather_bg/windy.gif";
+import thunderBg from "../../assets/weather_bg/thunder.webp";
 // Import time of day backgrounds
 import predawnNight from "../../assets/timeofday/predawn-night.jpg";
 import dawn from "../../assets/timeofday/dawn.png";
@@ -110,6 +112,135 @@ export default function MobileDashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [isCompletingHabit, setIsCompletingHabit] = useState(false);
   const [completingHabitId, setCompletingHabitId] = useState(null);
+  const [dailyMessage, setDailyMessage] = useState("");
+
+  const getWeatherMessage = (weather) => {
+    const weatherType = weather.toLowerCase();
+    
+    switch (weatherType) {
+      case 'sunny':
+        return "Your pet is basking in the sunshine!";
+      case 'rainy':
+        return "Your pet is staying dry and cozy inside!";
+      case 'cloudy':
+        return "Your pet is enjoying the cool, cloudy day!";
+      case 'snowy':
+        return "Your pet is watching the snowflakes fall!";
+      case 'windy':
+        return "Your pet's fur is blowing in the breeze!";
+      case 'thunder':
+        return "Your pet is safe and sound during the storm!";
+      case 'foggy':
+        return "Your pet is exploring the misty morning!";
+      default:
+        return `Your pet is enjoying the ${weatherType} weather!`;
+    }
+  };
+
+  // Add motivational messages array
+  const motivationalMessages = [
+    "You're doing great! Keep going!",
+    "Every small step counts towards your goals!",
+    "Your dedication is inspiring!",
+    "You're making amazing progress!",
+    "Stay focused, stay motivated!",
+    "You've got this! Keep pushing forward!",
+    "Your consistency is paying off!",
+    "Small steps, big results!",
+    "You're stronger than you think!",
+    "Keep up the amazing work!",
+    "Your future self thanks you!",
+    "You're building great habits!",
+    "Success is built one day at a time!",
+    "You're on the right track!",
+    "Your determination is impressive!",
+    "Today's effort is tomorrow's success!",
+    "You're creating positive change!",
+    "Every day is a new opportunity!",
+    "Your progress is remarkable!",
+    "Keep shining bright!",
+    "You're unstoppable!",
+    "Your potential is limitless!",
+    "Making habits, making history!",
+    "You're becoming your best self!",
+    "Your journey is inspiring!",
+    "Keep that momentum going!",
+    "You're crushing it!",
+    "Your dedication is paying off!",
+    "Making progress, one habit at a time!",
+    "You're a habit-forming superstar!",
+    "Your consistency is your superpower!",
+    "Keep building your success story!",
+    "You're making it happen!",
+    "Your efforts are creating change!",
+    "Stay strong, stay consistent!",
+    "You're on fire today!",
+    "Your progress is unstoppable!",
+    "Keep that positive energy flowing!",
+    "You're a habit-building champion!",
+    "Your dedication is remarkable!",
+    "Making every day count!",
+    "You're building a better future!",
+    "Your commitment is inspiring!",
+    "Keep that winning streak going!",
+    "You're a force of positive change!",
+    "Your habits are shaping your destiny!",
+    "Making progress, one day at a time!",
+    "You're a habit-forming hero!",
+    "Your consistency is your strength!",
+    "Keep building your success!"
+  ];
+
+  // Function to get a random message based on the date
+  const getDailyMessage = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const messageIndex = dayOfYear % motivationalMessages.length;
+    return motivationalMessages[messageIndex];
+  };
+
+  // Function to get pet status message based on stats
+  const getPetStatusMessage = () => {
+    const { happiness, health, energy } = petStats;
+    
+    // Happiness levels based on percentage:
+    // 90-100% = Ecstatic
+    // 80-89% = Thriving
+    // 70-79% = Great spirits
+    // 60-69% = Happy
+    // 50-59% = Content
+    // 40-49% = Okay
+    // 30-39% = Down
+    // 20-29% = Sad
+    // 10-19% = Struggling
+    // 0-9% = Critical
+    if (happiness >= 90 && health >= 90 && energy >= 90) {
+      return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
+    } else if (happiness >= 80 && health >= 80 && energy >= 80) {
+      return "Your pet is thriving and full of energy! They're so happy! 🎉";
+    } else if (happiness >= 70 && health >= 70 && energy >= 70) {
+      return "Your pet is in great spirits! They're loving life! 😊";
+    } else if (happiness >= 60 && health >= 60 && energy >= 60) {
+      return "Your pet looks happy today. Keep up the good habits! 🎆";
+    } else if (happiness >= 50 && health >= 50 && energy >= 50) {
+      return "Your pet is content, but could use some more attention. 🐱";
+    } else if (happiness >= 40 && health >= 40 && energy >= 40) {
+      return "Your pet is doing okay, but seems a bit bored. Maybe play with them? ⚽";
+    } else if (happiness >= 30 && health >= 30 && energy >= 30) {
+      return "Your pet seems a bit down. They could use some extra love! 💕";
+    } else if (happiness >= 20 && health >= 20 && energy >= 20) {
+      return "Your pet is feeling sad. They miss spending time with you! 😢";
+    } else if (happiness >= 10 && health >= 10 && energy >= 10) {
+      return "Your pet is really struggling. They need your help right now! 🆘";
+    } else {
+      return "Your pet is in critical condition! Please complete some habits to cheer them up! 🚨";
+    }
+  };
+
+  // Set daily message on component mount
+  useEffect(() => {
+    setDailyMessage(getDailyMessage());
+  }, []);
 
   // Check if the user has a pet
   useEffect(() => {
@@ -426,6 +557,40 @@ export default function MobileDashboard() {
         throw new Error(errorData.message || `Failed to complete habit: ${response.statusText}`);
       }
 
+      const data = await response.json();
+
+      // Calculate happiness increase based on completion rate
+      // Happiness is on a 0-100 scale where:
+      // 0-20% = Very Sad
+      // 21-40% = Sad
+      // 41-60% = Neutral
+      // 61-80% = Happy
+      // 81-100% = Very Happy
+      const completionRate = (completedHabits + 1) / totalHabits;
+      let happinessIncrease;
+      
+      if (completionRate >= 0.8) {
+        // Completing 80% or more of daily habits
+        happinessIncrease = 15; // +15% happiness
+      } else if (completionRate >= 0.5) {
+        // Completing 50-79% of daily habits
+        happinessIncrease = 12; // +12% happiness
+      } else if (completionRate >= 0.25) {
+        // Completing 25-49% of daily habits
+        happinessIncrease = 8; // +8% happiness
+      } else {
+        // Completing less than 25% of daily habits
+        happinessIncrease = 5; // +5% happiness
+      }
+
+      // Update pet stats with increased happiness
+      setPetStats(prevStats => ({
+        ...prevStats,
+        // Ensure happiness stays between 0-100%
+        happiness: Math.min(100, Math.max(0, prevStats.happiness + happinessIncrease)),
+        energy: Math.min(100, prevStats.energy + 10)
+      }));
+
       // After successful completion, fetch the updated habits list
       const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
         method: "GET",
@@ -444,6 +609,9 @@ export default function MobileDashboard() {
 
       const habitsData = await habitsResponse.json();
       setHabits(sortHabits(habitsData));
+
+      // Update streak
+      setStreak(data.streak);
 
       // Refresh profile data to update stats including streak
       await fetchProfileData();
@@ -542,7 +710,9 @@ export default function MobileDashboard() {
   }
 
   const getWeatherIcon = () => {
-    if (currentWeather.toLowerCase().includes("rain")) {
+    if (currentWeather.toLowerCase().includes("thunder")) {
+      return <CloudLightning className="text-indigo-500" size={20} />
+    } else if (currentWeather.toLowerCase().includes("rain")) {
       return <CloudRain className="text-blue-500" size={20} />
     } else if (currentWeather.toLowerCase().includes("cloud")) {
       return <Cloud className="text-blue-400" size={20} />
@@ -842,6 +1012,9 @@ export default function MobileDashboard() {
             break;
           case "windy":
             setWeatherImage(windyBg);
+            break;
+          case "thunder":
+            setWeatherImage(thunderBg);
             break;
           default:
             setWeatherImage(sunnyBg);
@@ -1152,9 +1325,7 @@ export default function MobileDashboard() {
 
                 <div className="bg-white/70 backdrop-blur-sm px-3 py-2 rounded-lg mt-auto">
                   <p className="font-sniglet text-sm text-center">
-                    Your pet{" "}
-                    {currentWeather.toLowerCase().includes("rain") ? "is staying dry during the" : "enjoys the"}{" "}
-                    {currentWeather.toLowerCase()} weather!
+                    {getWeatherMessage(currentWeather)}
                   </p>
                 </div>
               </div>
@@ -1262,12 +1433,12 @@ export default function MobileDashboard() {
             <div className="bg-[#fdffe9] rounded-2xl p-4 shadow-sm mt-4">
               <div className="flex items-center gap-2 mb-3">
                 <MessageCircle size={18} className="text-[#e79c2d]" />
-                <p className="font-sniglet text-sm">"You're doing great! Keep going!"</p>
+                <p className="font-sniglet text-sm">{dailyMessage}</p>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-base">🐾</span>
-                <p className="font-sniglet text-xs">Your pet looks happy today. Keep up the good habits!</p>
+                <p className="font-sniglet text-xs">{getPetStatusMessage()}</p>
               </div>
             </div>
           </div>
