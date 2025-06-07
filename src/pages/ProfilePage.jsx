@@ -449,7 +449,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="bg-white p-4 rounded-lg shadow-sm">
                     <div className="text-xl text-[#4abe9c]">
-                      {userProfile.stats?.total_habits_completed || 0}
+                      {userProfile.stats?.lifetime_habits_completed || 0}
                     </div>
                     <div className="text-sm text-gray-500">Total Habits Completed</div>
                   </div>
