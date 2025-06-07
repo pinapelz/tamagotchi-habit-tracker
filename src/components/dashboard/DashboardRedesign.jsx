@@ -751,23 +751,34 @@ export default function DashboardRedesign() {
   const getPetStatusMessage = () => {
     const { happiness, health, energy } = petStats;
     
-    if (happiness >= 90 && health >= 90 && energy >= 90) {
+    // If energy is 0 but happiness and health are high, it's likely a level up
+    if (energy === 0 && happiness >= 50 && health >= 50) {
+      return "Your pet has leveled up! They're ready for new adventures! 🎉";
+    }
+    
+    // Happiness is on a 0-100 scale where:
+    // 0-20% = Very Sad
+    // 21-40% = Sad
+    // 41-60% = Neutral
+    // 61-80% = Happy
+    // 81-100% = Very Happy
+    if (happiness >= 90 && health >= 90) {
       return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
-    } else if (happiness >= 80 && health >= 80 && energy >= 80) {
+    } else if (happiness >= 80 && health >= 80) {
       return "Your pet is thriving and full of energy! They're so happy! 🎉";
-    } else if (happiness >= 70 && health >= 70 && energy >= 70) {
+    } else if (happiness >= 70 && health >= 70) {
       return "Your pet is in great spirits! They're loving life! 😊";
-    } else if (happiness >= 60 && health >= 60 && energy >= 60) {
+    } else if (happiness >= 60 && health >= 60) {
       return "Your pet looks happy today. Keep up the good habits! 🎆";
-    } else if (happiness >= 50 && health >= 50 && energy >= 50) {
+    } else if (happiness >= 50 && health >= 50) {
       return "Your pet is content, but could use some more attention. 🐱";
-    } else if (happiness >= 40 && health >= 40 && energy >= 40) {
+    } else if (happiness >= 40 && health >= 40) {
       return "Your pet is doing okay, but seems a bit bored. Maybe play with them? ⚽";
-    } else if (happiness >= 30 && health >= 30 && energy >= 30) {
+    } else if (happiness >= 30 && health >= 30) {
       return "Your pet seems a bit down. They could use some extra love! 💕";
-    } else if (happiness >= 20 && health >= 20 && energy >= 20) {
+    } else if (happiness >= 20 && health >= 20) {
       return "Your pet is feeling sad. They miss spending time with you! 😢";
-    } else if (happiness >= 10 && health >= 10 && energy >= 10) {
+    } else if (happiness >= 10 && health >= 10) {
       return "Your pet is really struggling. They need your help right now! 🆘";
     } else {
       return "Your pet is in critical condition! Please complete some habits to cheer them up! 🚨";
