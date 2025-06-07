@@ -202,7 +202,7 @@ export default function MobileDashboard() {
 
   // Function to get pet status message based on stats
   const getPetStatusMessage = () => {
-    const { happiness, health } = petStats;
+    const { happiness, health, energy } = petStats;
     
     // If energy is 0 but happiness and health are high, it's likely a level up
     if (energy === 0 && happiness >= 50 && health >= 50) {
