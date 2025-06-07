@@ -140,12 +140,12 @@ export default function SettingsModal({ isOpen, onClose, userName, setUserName, 
             </div>
 
             {/* Change Pet Section */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Change Pet</label>
               <button className="w-full bg-[#cce5ff] text-gray-700 px-4 py-2 rounded-full text-sm hover:bg-[#b8d4f0] transition-colors border border-[#b8d4f0]">
                 Choose New Pet
               </button>
-            </div>
+            </div> */}
 
             {/* Location Section */}
             <div className="space-y-3">
