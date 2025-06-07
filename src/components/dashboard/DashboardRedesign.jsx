@@ -21,9 +21,10 @@ import pixelDuck from "../../assets/pets/pixel-duck.gif";
 import pixelDog from "../../assets/pets/pixel-dog.gif";
 import rainyBg from "../../assets/weather_bg/rainy.gif";
 import cloudyBg from "../../assets/weather_bg/cloudy.gif";
-import snowBg from "../../assets/weather_bg/snow.png";
+import snowBg from "../../assets/weather_bg/snowy.gif";
 import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
 import windyBg from "../../assets/weather_bg/windy.gif";
+import thunderBg from "../../assets/weather_bg/thunder.webp";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { Calendar } from "lucide-react";
 
@@ -587,6 +588,9 @@ export default function DashboardRedesign() {
           case "windy":
             setWeatherImage(windyBg);
             break;
+          case "thunder":
+            setWeatherImage(thunderBg);
+            break;
           default:
             setWeatherImage(sunnyBg);
         }
@@ -597,6 +601,174 @@ export default function DashboardRedesign() {
 
     fetchWeather();
   }, []);
+
+  const [dailyMessage, setDailyMessage] = useState("");
+
+  // Add motivational messages array
+  const motivationalMessages = [
+    "You're doing great! Keep going!",
+    "Every small step counts towards your goals!",
+    "Your dedication is inspiring!",
+    "You're making amazing progress!",
+    "Stay focused, stay motivated!",
+    "You've got this! Keep pushing forward!",
+    "Your consistency is paying off!",
+    "Small steps, big results!",
+    "You're stronger than you think!",
+    "Keep up the amazing work!",
+    "Your future self thanks you!",
+    "You're building great habits!",
+    "Success is built one day at a time!",
+    "You're on the right track!",
+    "Your determination is impressive!",
+    "Today's effort is tomorrow's success!",
+    "You're creating positive change!",
+    "Every day is a new opportunity!",
+    "Your progress is remarkable!",
+    "Keep shining bright!",
+    "You're unstoppable!",
+    "Your potential is limitless!",
+    "Making habits, making history!",
+    "You're becoming your best self!",
+    "Your journey is inspiring!",
+    "Keep that momentum going!",
+    "You're crushing it!",
+    "Your dedication is paying off!",
+    "Making progress, one habit at a time!",
+    "You're a habit-forming superstar!",
+    "Your consistency is your superpower!",
+    "Keep building your success story!",
+    "You're making it happen!",
+    "Your efforts are creating change!",
+    "Stay strong, stay consistent!",
+    "You're on fire today!",
+    "Your progress is unstoppable!",
+    "Keep that positive energy flowing!",
+    "You're a habit-building champion!",
+    "Your dedication is remarkable!",
+    "Making every day count!",
+    "You're building a better future!",
+    "Your commitment is inspiring!",
+    "Keep that winning streak going!",
+    "You're a force of positive change!",
+    "Your habits are shaping your destiny!",
+    "Making progress, one day at a time!",
+    "You're a habit-forming hero!",
+    "Your consistency is your strength!",
+    "Keep building your success!"
+  ];
+
+  // Function to get a random message based on the date
+  const getDailyMessage = () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const messageIndex = dayOfYear % motivationalMessages.length;
+    return motivationalMessages[messageIndex];
+  };
+
+  // Function to get pet status message based on stats
+  const getPetStatusMessage = () => {
+    const { happiness, health, energy } = petStats;
+    
+    if (happiness >= 90 && health >= 90 && energy >= 90) {
+      return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
+    } else if (happiness >= 80 && health >= 80 && energy >= 80) {
+      return "Your pet is thriving and full of energy! They're so happy! 🎉";
+    } else if (happiness >= 70 && health >= 70 && energy >= 70) {
+      return "Your pet is in great spirits! They're loving life! 😊";
+    } else if (happiness >= 60 && health >= 60 && energy >= 60) {
+      return "Your pet looks happy today. Keep up the good habits! 🎆";
+    } else if (happiness >= 50 && health >= 50 && energy >= 50) {
+      return "Your pet is content, but could use some more attention. 🐱";
+    } else if (happiness >= 40 && health >= 40 && energy >= 40) {
+      return "Your pet is doing okay, but seems a bit bored. Maybe play with them? ⚽";
+    } else if (happiness >= 30 && health >= 30 && energy >= 30) {
+      return "Your pet seems a bit down. They could use some extra love! 💕";
+    } else if (happiness >= 20 && health >= 20 && energy >= 20) {
+      return "Your pet is feeling sad. They miss spending time with you! 😢";
+    } else if (happiness >= 10 && health >= 10 && energy >= 10) {
+      return "Your pet is really struggling. They need your help right now! 🆘";
+    } else {
+      return "Your pet is in critical condition! Please complete some habits to cheer them up! 🚨";
+    }
+  };
+
+  // Set daily message on component mount
+  useEffect(() => {
+    setDailyMessage(getDailyMessage());
+  }, []);
+
+  const handleCompleteHabit = async (habitId) => {
+    if (isCompletingHabit) return;
+    setIsCompletingHabit(true);
+    setCompletingHabitId(habitId);
+
+    try {
+      const response = await fetch("/api/habits/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ habitId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to complete habit");
+      }
+
+      const data = await response.json();
+      
+      // Calculate happiness increase based on completion rate
+      // Happiness is on a 0-100 scale where:
+      // 0-20% = Very Sad
+      // 21-40% = Sad
+      // 41-60% = Neutral
+      // 61-80% = Happy
+      // 81-100% = Very Happy
+      const completionRate = (completedHabits + 1) / totalHabits;
+      let happinessIncrease;
+      
+      if (completionRate >= 0.8) {
+        // Completing 80% or more of daily habits
+        happinessIncrease = 15; // +15% happiness
+      } else if (completionRate >= 0.5) {
+        // Completing 50-79% of daily habits
+        happinessIncrease = 12; // +12% happiness
+      } else if (completionRate >= 0.25) {
+        // Completing 25-49% of daily habits
+        happinessIncrease = 8; // +8% happiness
+      } else {
+        // Completing less than 25% of daily habits
+        happinessIncrease = 5; // +5% happiness
+      }
+
+      // Update pet stats with increased happiness
+      setPetStats(prevStats => ({
+        ...prevStats,
+        // Ensure happiness stays between 0-100%
+        happiness: Math.min(100, Math.max(0, prevStats.happiness + happinessIncrease)),
+        energy: Math.min(100, prevStats.energy + 10)
+      }));
+
+      // Update habits list
+      setHabits(prevHabits =>
+        prevHabits.map(habit =>
+          habit.id === habitId
+            ? { ...habit, completed: true, completed_at: new Date().toISOString() }
+            : habit
+        )
+      );
+
+      // Update streak
+      setStreak(data.streak);
+    } catch (error) {
+      console.error("Error completing habit:", error);
+      alert("Failed to complete habit. Please try again.");
+    } finally {
+      setIsCompletingHabit(false);
+      setCompletingHabitId(null);
+    }
+  };
 
   if (loading) {
     return (
