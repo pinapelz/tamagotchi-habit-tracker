@@ -1,22 +1,36 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { Mail } from "lucide-react"
 import AuthNav from "../components/AuthNav"
 import cloudImage from '../assets/landing/cloud-pixel.webp'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  // form data - need to add validation later
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const emailFromSignup = searchParams.get("email")
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
   const [loginInfo, setLoginInfo] = useState({
-    email: "",
+    email: emailFromSignup || "",
     password: "",
   })
-  // error messages - probably need better ones
   const [errorMsgs, setErrorMsgs] = useState({
     email: "",
     password: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (emailFromSignup) {
+      setShowSuccessMessage(true)
+      // Hide success message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [emailFromSignup])
 
   // handle input changes
   const handleInputChange = (e) => {
@@ -134,6 +148,12 @@ export default function LoginPage() {
 
         <div className="bg-[#fffde7] rounded-3xl p-4 sm:p-10 w-full max-w-[90%] sm:max-w-md z-10">
           <h2 className="text-center text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-8">Welcome Back!</h2>
+
+          {showSuccessMessage && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              <p className="text-sm">Account created successfully! Please log in to continue.</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-3 sm:space-y-6">
             <div className="space-y-1 sm:space-y-2">
