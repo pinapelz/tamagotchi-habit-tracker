@@ -24,6 +24,8 @@ import cloudyBg from "../../assets/weather_bg/cloudy.gif";
 import snowBg from "../../assets/weather_bg/snow.png";
 import sunnyBg from "../../assets/weather_bg/sunny.jpeg";
 import windyBg from "../../assets/weather_bg/windy.gif";
+import { Check, Pencil, Trash2 } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 export default function DashboardRedesign() {
   const navigate = useNavigate();
@@ -122,6 +124,22 @@ export default function DashboardRedesign() {
 
   // Habit state
   const [habits, setHabits] = useState([]);
+  const [isCompletingHabit, setIsCompletingHabit] = useState(false);
+  const [completingHabitId, setCompletingHabitId] = useState(null);
+
+  // Add sorting function
+  const sortHabits = (habitsList) => {
+    return [...habitsList].sort((a, b) => {
+      // First sort by completion status (incomplete first)
+      const aCompleted = isHabitCompletedToday(a);
+      const bCompleted = isHabitCompletedToday(b);
+      if (aCompleted !== bCompleted) {
+        return aCompleted ? 1 : -1;
+      }
+      // Then sort by creation date (newest first)
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -153,7 +171,7 @@ export default function DashboardRedesign() {
         }
       );
       const habitsData = await habitsRes.json();
-      setHabits(habitsData);
+      setHabits(sortHabits(habitsData));
 
       // Only set loading to false after we have all the data
       setLoading(false);
@@ -374,51 +392,79 @@ export default function DashboardRedesign() {
   };
 
   const toggleHabitCompletion = async (id) => {
+    if (isCompletingHabit) return; // Prevent multiple clicks
+    
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ habit_id: id }),
-        }
+      setIsCompletingHabit(true);
+      setCompletingHabitId(id);
+
+      // Optimistically update the UI
+      const updatedHabits = habits.map(habit => 
+        habit.id === id 
+          ? { ...habit, last_completed_at: new Date().toISOString() }
+          : habit
       );
+      setHabits(sortHabits(updatedHabits));
+
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ habit_id: id }),
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to complete habit");
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Server error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || `Failed to complete habit: ${response.statusText}`);
       }
 
       // After successful completion, fetch the updated habits list
-      const habitsResponse = await fetch(
-        `${import.meta.env.VITE_API_DOMAIN}/api/habits`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
 
       if (!habitsResponse.ok) {
-        throw new Error("Failed to fetch updated habits");
+        const errorData = await habitsResponse.json().catch(() => ({}));
+        console.error('Server error response:', {
+          status: habitsResponse.status,
+          statusText: habitsResponse.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || `Failed to fetch updated habits: ${habitsResponse.statusText}`);
       }
 
       const habitsData = await habitsResponse.json();
-      console.log('Updated habits after completion:', habitsData);
-      setHabits(habitsData);
+      setHabits(sortHabits(habitsData));
 
-      // Refresh profile data to update stats
+      // Refresh profile data to update stats including streak
       await fetchProfileData();
     } catch (err) {
       console.error("Error completing habit:", err);
+      // Revert optimistic update on error
+      const revertedHabits = habits.map(habit => 
+        habit.id === id 
+          ? { ...habit, last_completed_at: null }
+          : habit
+      );
+      setHabits(sortHabits(revertedHabits));
       setError(err.message);
+    } finally {
+      setIsCompletingHabit(false);
+      setCompletingHabitId(null);
     }
   };
 
   const deleteHabit = async (id) => {
-    setHabits(habits.filter((habit) => habit.id !== id));
-    // TODO: Add API call to delete habit
+    const updatedHabits = habits.filter((habit) => habit.id !== id);
+    setHabits(sortHabits(updatedHabits));
 
     const res = await fetch(
       `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`,
@@ -431,28 +477,46 @@ export default function DashboardRedesign() {
   };
 
   const addHabit = async (newHabit) => {
-    setHabits([...habits, newHabit]);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newHabit.name,
+          recurrence: newHabit.recurrence,
+        }),
+      });
 
-    const res = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newHabit.name,
-        recurrence: newHabit.recurrence,
-      }),
-    });
-    if (res.ok) fetchProfileData(); // reload habits
+      if (!response.ok) {
+        throw new Error("Failed to create habit");
+      }
+
+      // After successful creation, fetch the updated habits list
+      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!habitsResponse.ok) {
+        throw new Error("Failed to fetch updated habits");
+      }
+
+      const habitsData = await habitsResponse.json();
+      setHabits(sortHabits(habitsData));
+    } catch (err) {
+      console.error("Error creating habit:", err);
+      setError(err.message);
+    }
   };
 
   const editHabit = async (id, newName, newRecurrence) => {
-    setHabits(
-      habits.map((habit) =>
-        habit.id === id
-          ? { ...habit, name: newName, recurrence: newRecurrence }
-          : habit
-      )
+    const updatedHabits = habits.map((habit) =>
+      habit.id === id
+        ? { ...habit, name: newName, recurrence: newRecurrence }
+        : habit
     );
+    setHabits(sortHabits(updatedHabits));
 
     const res = await fetch(
       `${import.meta.env.VITE_API_DOMAIN}/api/habits/${id}`,
