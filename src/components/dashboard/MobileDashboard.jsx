@@ -1365,7 +1365,7 @@ export default function MobileDashboard() {
             </div>
 
             <div className="bg-[#f0e8ff] rounded-2xl p-4">
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2">
                 {habits.map((habit) => {
                   const dueToday = isHabitDueToday(habit);
                   const completedToday = isHabitCompletedToday(habit);
@@ -1889,3 +1889,4 @@ export default function MobileDashboard() {
     </div>
   )
 }
+
