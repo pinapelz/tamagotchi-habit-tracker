@@ -1760,43 +1760,18 @@ export default function MobileDashboard() {
                 onClick={async () => {
                   setIsExporting(true);
                   try {
-                    const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+                    const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/export-data`, {
                       method: "GET",
                       credentials: "include",
                     });
 
                     if (!response.ok) {
-                      throw new Error("Failed to fetch user data");
+                      throw new Error("Failed to export data");
                     }
 
                     const { data } = await response.json();
                     
-                    const exportData = {
-                      user: {
-                        display_name: data.user.display_name,
-                        timezone: data.user.timezone,
-                        theme: data.user.theme,
-                        avatar_url: data.user.avatar_url
-                      },
-                      pet: {
-                        name: data.pet.name,
-                        type: data.pet.type,
-                        lvl: data.pet.lvl,
-                        happiness: data.pet.happiness,
-                        health: data.pet.health,
-                        xp: data.pet.xp
-                      },
-                      stats: {
-                        current_streak: data.stats.current_streak
-                      },
-                      habits: habits,
-                      settings: {
-                        theme,
-                        timezone
-                      }
-                    };
-
-                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -1840,13 +1815,13 @@ export default function MobileDashboard() {
               </button>
               <button
                 onClick={() => {
-                  fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+                  fetch(`${import.meta.env.VITE_API_DOMAIN}/api/account`, {
                     method: 'DELETE',
                     credentials: 'include',
                   })
                   .then(response => {
                     if (response.ok) {
-                      navigate('/');
+                      window.location.href = '/login';
                     } else {
                       throw new Error('Failed to delete account');
                     }
