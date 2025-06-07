@@ -749,8 +749,19 @@ export default function DashboardRedesign() {
 
   // Function to get pet status message based on stats
   const getPetStatusMessage = () => {
-    const { happiness, health } = petStats;
+    const { happiness, health, energy } = petStats;
     
+    // If energy is 0 but happiness and health are high, it's likely a level up
+    if (energy === 0 && happiness >= 50 && health >= 50) {
+      return "Your pet has leveled up! They're ready for new adventures! 🎉";
+    }
+    
+    // Happiness is on a 0-100 scale where:
+    // 0-20% = Very Sad
+    // 21-40% = Sad
+    // 41-60% = Neutral
+    // 61-80% = Happy
+    // 81-100% = Very Happy
     if (happiness >= 90 && health >= 90) {
       return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
     } else if (happiness >= 80 && health >= 80) {
