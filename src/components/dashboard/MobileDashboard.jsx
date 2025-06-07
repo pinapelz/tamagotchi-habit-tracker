@@ -665,9 +665,7 @@ export default function MobileDashboard() {
 
   const addHabit = async (newHabit) => {
     try {
-      const updatedHabits = [...habits, { ...newHabit, created_at: new Date().toISOString() }];
-      setHabits(sortHabits(updatedHabits));
-
+      // Remove client-side ID generation
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
         method: "POST",
         credentials: "include",
@@ -1670,7 +1668,6 @@ export default function MobileDashboard() {
                   onClick={() => {
                     if (newHabitName.trim() !== "") {
                       const newHabit = {
-                        id: Date.now().toString(),
                         name: newHabitName.trim(),
                         recurrence: newHabitRecurrence,
                         completed: false
@@ -1889,4 +1886,3 @@ export default function MobileDashboard() {
     </div>
   )
 }
-
