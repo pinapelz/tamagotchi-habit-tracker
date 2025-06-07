@@ -1120,12 +1120,12 @@ export default function MobileDashboard() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="block text-sm font-sniglet">Change Pet</label>
                 <button className="bg-[#cbffc6] text-black px-4 py-1.5 rounded-full font-sniglet text-sm hover:bg-[#b8edb3] transition-colors">
                   Choose New Pet
                 </button>
-              </div>
+              </div> */}
 
               <div className="pt-3 flex justify-center">
                 <button className="bg-[#c8c6ff] text-black px-8 py-2 rounded-full font-sniglet text-sm hover:bg-[#b5b3e6] transition-colors">
