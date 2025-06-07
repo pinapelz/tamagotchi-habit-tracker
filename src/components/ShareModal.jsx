@@ -1,8 +1,50 @@
 import React from "react";
 import { FaTwitter, FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
 
-export default function ShareModal({ show, onClose }) {
+export default function ShareModal({ show, onClose, shareData }) {
   if (!show) return null;
+
+  // Default share data if none provided
+  const defaultShareData = {
+    title: "My Tamagotchi Progress",
+    text: "Check out my progress on Tamagotchi!",
+    url: window.location.href
+  };
+
+  const shareContent = shareData || defaultShareData;
+
+  const handleShare = async (platform) => {
+    const { title, text, url } = shareContent;
+    
+    switch (platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '_blank');
+        break;
+      case 'instagram':
+        // Instagram doesn't support direct sharing via URL
+        alert('To share on Instagram, please take a screenshot and share it directly in the app.');
+        break;
+      default:
+        // Use Web Share API if available
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title,
+              text,
+              url
+            });
+          } catch (err) {
+            console.error('Error sharing:', err);
+          }
+        }
+    }
+  };
 
   return (
     <>
@@ -32,38 +74,50 @@ export default function ShareModal({ show, onClose }) {
           {/* Share buttons in circular layout */}
           <div className="flex justify-between items-start mb-6 px-2">
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8]">
+              <button
+                onClick={() => handleShare('twitter')}
+                className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8] transition-colors"
+              >
                 <div className="text-[#4abe9c] text-xl">
                   <FaTwitter />
                 </div>
-              </div>
+              </button>
               <span className="text-xs text-[#4abe9c]">Twitter</span>
             </div>
 
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8]">
+              <button
+                onClick={() => handleShare('facebook')}
+                className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8] transition-colors"
+              >
                 <div className="text-[#4abe9c] text-xl">
                   <FaFacebook />
                 </div>
-              </div>
+              </button>
               <span className="text-xs text-[#4abe9c]">Facebook</span>
             </div>
 
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8]">
+              <button
+                onClick={() => handleShare('whatsapp')}
+                className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8] transition-colors"
+              >
                 <div className="text-[#4abe9c] text-xl">
                   <FaWhatsapp />
                 </div>
-              </div>
+              </button>
               <span className="text-xs text-[#4abe9c]">Whatsapp</span>
             </div>
 
             <div className="flex flex-col items-center">
-              <div className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8]">
+              <button
+                onClick={() => handleShare('instagram')}
+                className="w-14 h-14 rounded-full bg-[#f9f0e3] flex items-center justify-center mb-2 cursor-pointer hover:bg-[#f2e7d8] transition-colors"
+              >
                 <div className="text-[#4abe9c] text-xl">
                   <FaInstagram />
                 </div>
-              </div>
+              </button>
               <span className="text-xs text-[#4abe9c]">Instagram</span>
             </div>
           </div>
@@ -75,16 +129,25 @@ export default function ShareModal({ show, onClose }) {
               <input
                 type="text"
                 readOnly
-                value={window.location.href}
+                value={shareContent.url}
                 className="flex-1 px-3 py-2 text-sm outline-none text-gray-500"
               />
               <button
-                className="px-3 py-2 bg-white text-[#4abe9c] hover:text-[#3a9880]"
+                className="px-3 py-2 bg-white text-[#4abe9c] hover:text-[#3a9880] transition-colors"
                 onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
+                  navigator.clipboard.writeText(shareContent.url);
+                  // Show a temporary success message
+                  const button = document.querySelector('.copy-button');
+                  if (button) {
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '✓ Copied!';
+                    setTimeout(() => {
+                      button.innerHTML = originalText;
+                    }, 2000);
+                  }
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="copy-button">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
