@@ -83,6 +83,7 @@ export default function MobileDashboard() {
     happiness: 50,
     energy: 0,
     health: 100,
+    xpToNextLevel: 100, 
   });
   const [petName, setPetName] = useState("No Pet");
   const [petType, setPetType] = useState("cat");
@@ -203,17 +204,17 @@ export default function MobileDashboard() {
   const getPetStatusMessage = () => {
     const { happiness, health, energy } = petStats;
     
-    // Happiness levels based on percentage:
-    // 90-100% = Ecstatic
-    // 80-89% = Thriving
-    // 70-79% = Great spirits
-    // 60-69% = Happy
-    // 50-59% = Content
-    // 40-49% = Okay
-    // 30-39% = Down
-    // 20-29% = Sad
-    // 10-19% = Struggling
-    // 0-9% = Critical
+    // If energy is 0 but happiness and health are high, it's likely a level up
+    if (energy === 0 && happiness >= 50 && health >= 50) {
+      return "Your pet has leveled up! They're ready for new adventures! 🎉";
+    }
+    
+    // Happiness is on a 0-100 scale where:
+    // 0-20% = Very Sad
+    // 21-40% = Sad
+    // 41-60% = Neutral
+    // 61-80% = Happy
+    // 81-100% = Very Happy
     if (happiness >= 90 && health >= 90 && energy >= 90) {
       return "Your pet is absolutely ecstatic! They're jumping with joy! 🌟";
     } else if (happiness >= 80 && health >= 80 && energy >= 80) {
@@ -300,10 +301,14 @@ export default function MobileDashboard() {
         setPetName(data.pet.name || "No Pet")
         setPetType(data.pet.type || "cat")
         setPetLevel(data.pet.lvl || 0)
+        
+        const xpToNextLevel = calculateXPForNextLevel(data.pet.lvl || 0)
+        
         setPetStats({
           happiness: data.pet.happiness || 50,
           energy: data.pet.xp || 0,
           health: data.pet.health || 100,
+          xpToNextLevel: xpToNextLevel
         })
       }
 
@@ -523,6 +528,16 @@ export default function MobileDashboard() {
     fetchHabits();
   }, [navigate]);
 
+  const calculateXPForNextLevel = (currentLevel) => {
+    // Base XP requirement increases by 50 XP each level
+    // Level 1: 100 XP
+    // Level 2: 150 XP
+    // Level 3: 200 XP
+    // Level 4: 250 XP
+    // And so on...
+    return 100 + (currentLevel * 50);
+  };
+
   const toggleHabitCompletion = async (id) => {
     if (isCompletingHabit) return; // Prevent multiple clicks
     
@@ -538,13 +553,35 @@ export default function MobileDashboard() {
       );
       setHabits(sortHabits(updatedHabits));
 
+      // Calculate happiness increase based on completion rate
+      const todaysHabits = habits.filter(isHabitDueToday);
+      const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+      const totalHabits = todaysHabits.length;
+      const completionRate = (completedHabits + 1) / totalHabits;
+      
+      let happinessIncrease;
+      if (completionRate >= 0.8) {
+        happinessIncrease = 15;
+      } else if (completionRate >= 0.5) {
+        happinessIncrease = 12;
+      } else if (completionRate >= 0.25) {
+        happinessIncrease = 8;
+      } else {
+        happinessIncrease = 5;
+      }
+
+      const newHappiness = Math.min(100, Math.max(0, petStats.happiness + happinessIncrease));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ habit_id: id }),
+        body: JSON.stringify({ 
+          habit_id: id,
+          happiness: newHappiness 
+        }),
       });
 
       if (!response.ok) {
@@ -559,37 +596,31 @@ export default function MobileDashboard() {
 
       const data = await response.json();
 
-      // Calculate happiness increase based on completion rate
-      // Happiness is on a 0-100 scale where:
-      // 0-20% = Very Sad
-      // 21-40% = Sad
-      // 41-60% = Neutral
-      // 61-80% = Happy
-      // 81-100% = Very Happy
-      const completionRate = (completedHabits + 1) / totalHabits;
-      let happinessIncrease;
-      
-      if (completionRate >= 0.8) {
-        // Completing 80% or more of daily habits
-        happinessIncrease = 15; // +15% happiness
-      } else if (completionRate >= 0.5) {
-        // Completing 50-79% of daily habits
-        happinessIncrease = 12; // +12% happiness
-      } else if (completionRate >= 0.25) {
-        // Completing 25-49% of daily habits
-        happinessIncrease = 8; // +8% happiness
-      } else {
-        // Completing less than 25% of daily habits
-        happinessIncrease = 5; // +5% happiness
-      }
+      // Calculate XP gain (10 XP per habit completion)
+      const xpGain = 10;
+      const newEnergy = petStats.energy + xpGain;
+      const xpToNextLevel = petStats.xpToNextLevel;
 
-      // Update pet stats with increased happiness
-      setPetStats(prevStats => ({
-        ...prevStats,
-        // Ensure happiness stays between 0-100%
-        happiness: Math.min(100, Math.max(0, prevStats.happiness + happinessIncrease)),
-        energy: Math.min(100, prevStats.energy + 10)
-      }));
+      // Check for level up
+      if (newEnergy >= xpToNextLevel) {
+        const newLevel = petLevel + 1;
+        const remainingXP = newEnergy - xpToNextLevel;
+        const nextLevelXP = calculateXPForNextLevel(newLevel);
+
+        setPetLevel(newLevel);
+        setPetStats(prevStats => ({
+          ...prevStats,
+          happiness: newHappiness,
+          energy: remainingXP,
+          xpToNextLevel: nextLevelXP
+        }));
+      } else {
+        setPetStats(prevStats => ({
+          ...prevStats,
+          happiness: newHappiness,
+          energy: newEnergy
+        }));
+      }
 
       // After successful completion, fetch the updated habits list
       const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
@@ -612,9 +643,6 @@ export default function MobileDashboard() {
 
       // Update streak
       setStreak(data.streak);
-
-      // Refresh profile data to update stats including streak
-      await fetchProfileData();
     } catch (err) {
       console.error("Error completing habit:", err);
       // Revert optimistic update on error
@@ -1102,6 +1130,34 @@ export default function MobileDashboard() {
     }
   };
 
+  useEffect(() => {
+    // Sync with backend every 5 minutes to keep profile stats updated
+    const syncInterval = setInterval(() => {
+      fetchProfileData();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
+
+  // Also sync when switching to the profile tab
+  useEffect(() => {
+    if (activeTab === "profile") {
+      fetchProfileData();
+    }
+  }, [activeTab]);
+
+  // Add periodic sync with backend
+  useEffect(() => {
+    // Sync with backend every 15 minutes to keep profile stats updated
+    // We use a longer interval to avoid overwriting local state changes
+    // with potentially stale data from the backend
+    const syncInterval = setInterval(() => {
+      fetchProfileData();
+    }, 15 * 60 * 1000); // 15 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
@@ -1238,10 +1294,10 @@ export default function MobileDashboard() {
                             <Star size={14} className="text-yellow-500" />
                             <span className="text-xs font-sniglet">XP</span>
                           </div>
-                          <span className="text-xs font-sniglet">{petStats.energy}/100</span>
+                          <span className="text-xs font-sniglet">{petStats.energy}/{petStats.xpToNextLevel}</span>
                         </div>
                         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: `${petStats.energy}%` }}></div>
+                          <div className="h-full bg-yellow-400" style={{ width: `${(petStats.energy / petStats.xpToNextLevel) * 100}%` }}></div>
                         </div>
                       </div>
 

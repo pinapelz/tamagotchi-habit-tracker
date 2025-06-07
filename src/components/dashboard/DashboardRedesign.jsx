@@ -143,6 +143,17 @@ export default function DashboardRedesign() {
     });
   };
 
+  // Add function to calculate XP needed for next level
+  const calculateXPForNextLevel = (currentLevel) => {
+    // Base XP requirement increases by 50 XP each level
+    // Level 1: 100 XP
+    // Level 2: 150 XP
+    // Level 3: 200 XP
+    // Level 4: 250 XP
+    // And so on...
+    return 100 + (currentLevel * 50);
+  };
+
   const fetchProfileData = async () => {
     try {
       const response = await fetch(
@@ -162,6 +173,13 @@ export default function DashboardRedesign() {
       }
 
       const { data } = await response.json();
+      
+      // Calculate XP needed for next level based on current level
+      if (data.pet) {
+        const xpToNextLevel = calculateXPForNextLevel(data.pet.lvl || 0);
+        data.pet.xpToNextLevel = xpToNextLevel;
+      }
+      
       setProfile(data);
 
       // Initialize habits from backend data
@@ -408,13 +426,35 @@ export default function DashboardRedesign() {
       );
       setHabits(sortHabits(updatedHabits));
 
+      // Calculate happiness increase based on completion rate
+      const todaysHabits = habits.filter(isHabitDueToday);
+      const completedHabits = todaysHabits.filter(isHabitCompletedToday).length;
+      const totalHabits = todaysHabits.length;
+      const completionRate = (completedHabits + 1) / totalHabits;
+      
+      let happinessIncrease;
+      if (completionRate >= 0.8) {
+        happinessIncrease = 15;
+      } else if (completionRate >= 0.5) {
+        happinessIncrease = 12;
+      } else if (completionRate >= 0.25) {
+        happinessIncrease = 8;
+      } else {
+        happinessIncrease = 5;
+      }
+
+      const newHappiness = Math.min(100, Math.max(0, profile?.pet?.happiness + happinessIncrease));
+
       const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits/complete`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ habit_id: id }),
+        body: JSON.stringify({ 
+          habit_id: id,
+          happiness: newHappiness 
+        }),
       });
 
       if (!response.ok) {
@@ -425,6 +465,40 @@ export default function DashboardRedesign() {
           error: errorData
         });
         throw new Error(errorData.message || `Failed to complete habit: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Calculate XP gain (10 XP per habit completion)
+      const xpGain = 10;
+      const newEnergy = profile?.pet?.xp + xpGain;
+      const xpToNextLevel = calculateXPForNextLevel(profile?.pet?.lvl || 0);
+
+      // Check for level up
+      if (newEnergy >= xpToNextLevel) {
+        const newLevel = (profile?.pet?.lvl || 0) + 1;
+        const remainingXP = newEnergy - xpToNextLevel;
+        const nextLevelXP = calculateXPForNextLevel(newLevel);
+
+        setProfile(prevProfile => ({
+          ...prevProfile,
+          pet: {
+            ...prevProfile.pet,
+            lvl: newLevel,
+            xp: remainingXP,
+            happiness: newHappiness,
+            xpToNextLevel: nextLevelXP
+          }
+        }));
+      } else {
+        setProfile(prevProfile => ({
+          ...prevProfile,
+          pet: {
+            ...prevProfile.pet,
+            xp: newEnergy,
+            happiness: newHappiness
+          }
+        }));
       }
 
       // After successful completion, fetch the updated habits list
@@ -446,8 +520,14 @@ export default function DashboardRedesign() {
       const habitsData = await habitsResponse.json();
       setHabits(sortHabits(habitsData));
 
-      // Refresh profile data to update stats including streak
-      await fetchProfileData();
+      // Update streak
+      setProfile(prevProfile => ({
+        ...prevProfile,
+        stats: {
+          ...prevProfile.stats,
+          current_streak: data.streak
+        }
+      }));
     } catch (err) {
       console.error("Error completing habit:", err);
       // Revert optimistic update on error
@@ -792,6 +872,17 @@ export default function DashboardRedesign() {
     }
   }
 
+  useEffect(() => {
+    // Sync with backend every 15 minutes to keep profile stats updated
+    // We use a longer interval to avoid overwriting local state changes
+    // with potentially stale data from the backend
+    const syncInterval = setInterval(() => {
+      fetchProfileData();
+    }, 15 * 60 * 1000); // 15 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#eaf6f0] to-[#fdfbef] flex items-center justify-center">
@@ -827,8 +918,9 @@ export default function DashboardRedesign() {
   const petLevel = profile?.pet?.lvl || 0;
   const petStats = {
     happiness: profile?.pet?.happiness || 50,
-    energy: profile?.pet?.energy || 50, // Not in your schema, fallback value
+    energy: profile?.pet?.xp || 0, 
     health: profile?.pet?.health || 100,
+    xpToNextLevel: calculateXPForNextLevel(petLevel) // Add xpToNextLevel calculation
   };
   const userName = profile?.user?.display_name || "User";
   const streak = profile?.stats?.current_streak || 0;
