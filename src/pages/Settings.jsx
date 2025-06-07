@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Layout from "../components/layout/Layout";
 import MobileLayout from "../components/layout/MobileLayout";
-import { Bell, Moon, Sun, User, MapPin, Volume2, VolumeX, AlertCircle, Loader2, Download } from "lucide-react";
+import { Bell, Moon, Sun, User, MapPin, Volume2, VolumeX, AlertCircle, Loader2, Download, Camera, Image } from "lucide-react";
 import LoadingPage from './Loading';
 
 export default function Settings() {
@@ -21,6 +21,10 @@ export default function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [avatarSeed, setAvatarSeed] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -176,6 +180,71 @@ export default function Settings() {
     }
   };
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setError("File size must be less than 5MB");
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setError("Please select an image file");
+        return;
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setAvatarSeed(""); // Clear seed when file is selected
+    }
+  };
+
+  const handleSaveAvatar = async () => {
+    try {
+      let avatarUrl;
+      
+      if (selectedFile) {
+        // Convert file to base64
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve) => {
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(selectedFile);
+        });
+        avatarUrl = await base64Promise;
+      } else if (avatarSeed) {
+        avatarUrl = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${avatarSeed}`;
+      } else {
+        throw new Error("Please either upload an image or enter a seed");
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile/avatar`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ avatar_url: avatarUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update avatar");
+      }
+
+      // Update local state
+      const updatedProfile = { ...userProfile };
+      updatedProfile.user.avatar_url = avatarUrl;
+      setUserProfile(updatedProfile);
+      
+      setIsEditingAvatar(false);
+      setAvatarSeed("");
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setError(null);
+    } catch (err) {
+      console.error("Error updating avatar:", err);
+      setError(err.message);
+    }
+  };
+
   const settingOptions = [
     {
       icon: <Bell className="text-[#4abe9c]" size={24} />,
@@ -239,6 +308,90 @@ export default function Settings() {
               <p className="text-red-600">{error}</p>
             </div>
           )}
+
+          {/* Avatar Section */}
+          <div className="bg-white rounded-xl border border-[#4abe9c] shadow-sm p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <Camera className="text-[#4abe9c]" size={24} />
+                <div>
+                  <h3 className="font-medium text-[#486085]">Profile Picture</h3>
+                  <p className="text-sm text-gray-600">Customize your avatar</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditingAvatar(!isEditingAvatar)}
+                className="text-[#4abe9c] hover:text-[#3aa87c] transition-colors"
+              >
+                {isEditingAvatar ? "Cancel" : "Edit"}
+              </button>
+            </div>
+
+            {isEditingAvatar && (
+              <div className="mt-4 space-y-4">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <img
+                      src={previewUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${avatarSeed || userProfile.user.display_name}`}
+                      alt="avatar preview"
+                      className="w-24 h-24 rounded-full border-4 border-[#4abe9c] bg-white shadow-lg"
+                    />
+                  </div>
+                  
+                  <div className="w-full space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Image
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <label className="flex-1">
+                          <div className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <Image className="w-5 h-5 text-gray-500 mr-2" />
+                            <span className="text-sm text-gray-600">Choose file</span>
+                          </div>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                        {selectedFile && (
+                          <span className="text-sm text-gray-500">
+                            {selectedFile.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Or use DiceBear
+                      </label>
+                      <input
+                        type="text"
+                        value={avatarSeed}
+                        onChange={(e) => {
+                          setAvatarSeed(e.target.value);
+                          setSelectedFile(null);
+                          setPreviewUrl(null);
+                        }}
+                        placeholder="Enter a seed for your avatar"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4abe9c]"
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleSaveAvatar}
+                      className="w-full bg-[#4abe9c] text-white px-4 py-2 rounded-lg hover:bg-[#3aa87c] transition-colors"
+                    >
+                      Save Avatar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Settings List */}
           <div className="bg-white rounded-xl border border-[#4abe9c] shadow-sm overflow-hidden">
