@@ -1509,6 +1509,121 @@ def accept_friend_request():
     finally:
         db.close()
 
+@app.route("/api/leaderboard/global", methods=["GET"])
+def global_leaderboard():
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 20))
+    offset = (page - 1) * limit
+
+    db = create_database_connection()
+    try:
+        users = db.fetchall(
+            """
+            SELECT
+                u.id,
+                u.display_name AS username,
+                COALESCE(p.name, '') AS pet_name,
+                COALESCE(p.type, '') AS pet_type,
+                COALESCE(p.lvl, 1) AS level,
+                COALESCE(us.current_streak, 0) AS streak,
+                COALESCE(us.total_habits_completed, 0) AS habits_completed,
+                u.avatar_url
+            FROM users u
+            LEFT JOIN pets p ON p.user_id = u.id
+            LEFT JOIN user_stats us ON us.user_id = u.id
+            ORDER BY streak DESC, level DESC
+            LIMIT %s OFFSET %s
+            """, (limit, offset)
+        )
+        total_count = db.fetchone("SELECT COUNT(*) AS total FROM users")["total"]
+
+        users_out = [{
+            "id": user["id"],
+            "username": user["username"],
+            "petName": user["pet_name"],
+            "petType": user["pet_type"],
+            "level": user["level"],
+            "streak": user["streak"],
+            "habitsCompleted": user["habits_completed"],
+            "avatar": user["avatar_url"]
+        } for user in users]
+
+        return jsonify({"users": users_out, "total": total_count}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
+@app.route("/api/leaderboard/friends", methods=["GET"])
+def friends_leaderboard():
+    session_cookie = request.cookies.get("session")
+    error_response, status_code, user = cookie_check(session_cookie)
+    if error_response:
+        return error_response, status_code
+
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 20))
+    offset = (page - 1) * limit
+
+    db = create_database_connection()
+    try:
+        # Get friend IDs
+        friends = db.fetchall(
+            """
+            SELECT friend_id FROM friends WHERE user_id = %s
+            UNION
+            SELECT user_id FROM friends WHERE friend_id = %s
+            """, (user["id"], user["id"])
+        )
+        friend_ids = [str(f["friend_id"]) for f in friends]
+
+        # Include self in leaderboard
+        if str(user["id"]) not in friend_ids:
+            friend_ids.append(str(user["id"]))
+
+        if not friend_ids:
+            return jsonify({"users": [], "total": 0}), 200
+
+        ids_placeholder = ",".join(["%s"] * len(friend_ids))
+
+        users = db.fetchall(
+            f"""
+            SELECT
+                u.id,
+                u.display_name AS username,
+                COALESCE(p.name, '') AS pet_name,
+                COALESCE(p.type, '') AS pet_type,
+                COALESCE(p.lvl, 1) AS level,
+                COALESCE(us.current_streak, 0) AS streak,
+                COALESCE(us.total_habits_completed, 0) AS habits_completed,
+                u.avatar_url
+            FROM users u
+            LEFT JOIN pets p ON p.user_id = u.id
+            LEFT JOIN user_stats us ON us.user_id = u.id
+            WHERE u.id IN ({ids_placeholder})
+            ORDER BY streak DESC, level DESC
+            LIMIT %s OFFSET %s
+            """, (*friend_ids, limit, offset)
+        )
+        total_count = len(friend_ids)
+
+        users_out = [{
+            "id": user["id"],
+            "username": user["username"],
+            "petName": user["pet_name"],
+            "petType": user["pet_type"],
+            "level": user["level"],
+            "streak": user["streak"],
+            "habitsCompleted": user["habits_completed"],
+            "avatar": user["avatar_url"]
+        } for user in users]
+
+        return jsonify({"users": users_out, "total": total_count}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
 @app.route("/api/pet/update-status", methods=["POST"])
 def update_pet_status():
     session_cookie = request.cookies.get("session")
