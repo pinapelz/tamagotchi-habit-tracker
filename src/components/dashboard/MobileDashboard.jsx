@@ -767,8 +767,23 @@ export default function MobileDashboard() {
     }
   }
 
-  const handleLogout = () => {
-    navigate("/")
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/');
+    }
   }
 
   const menuItems = [
@@ -1739,6 +1754,11 @@ export default function MobileDashboard() {
       <ShareModal
         show={showShareModal}
         onClose={() => setShowShareModal(false)}
+        shareData={{
+          title: "My Tamagotchi Progress",
+          text: `I've completed ${habits.filter(h => isHabitCompletedToday(h)).length} out of ${habits.length} habits today! Check out my progress on Tamagotchi!`,
+          url: window.location.href
+        }}
       />
 
       {/* Export Confirmation Modal */}
