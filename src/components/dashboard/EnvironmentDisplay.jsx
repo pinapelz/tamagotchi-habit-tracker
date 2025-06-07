@@ -6,6 +6,29 @@ export default function EnvironmentDisplay({
   currentWeather,
   weatherImage,
 }) {
+  const getWeatherMessage = (weather) => {
+    const weatherType = weather.toLowerCase();
+    
+    switch (weatherType) {
+      case 'sunny':
+        return "Your pet is basking in the sunshine!";
+      case 'rainy':
+        return "Your pet is staying dry and cozy inside!";
+      case 'cloudy':
+        return "Your pet is enjoying the cool, cloudy day!";
+      case 'snowy':
+        return "Your pet is watching the snowflakes fall!";
+      case 'windy':
+        return "Your pet's fur is blowing in the breeze!";
+      case 'thunder':
+        return "Your pet is safe and sound during the storm!";
+      case 'foggy':
+        return "Your pet is exploring the misty morning!";
+      default:
+        return `Your pet is enjoying the ${weatherType} weather!`;
+    }
+  };
+
   return (
     <div className="bg-gradient-to-b from-[#e6f7ff] to-[#f0f9ff] rounded-3xl p-4 flex-1 flex flex-col justify-between relative w-full h-full min-h-[300px] md:min-h-[250px] lg:min-h-[350px] 2xl:h-[55vh]">
       {/* Weather background image */}
@@ -32,8 +55,7 @@ export default function EnvironmentDisplay({
       {/* Weather Message */}
       <div className="relative z-10 bg-white/70 backdrop-blur-sm px-3 py-2 md:px-3 md:py-1.5 lg:px-4 lg:py-3 2xl:px-6 2xl:py-4 rounded-lg">
         <p className="font-sniglet text-xs md:text-xs lg:text-sm 2xl:text-lg text-center">
-          Your pet {currentWeather.toLowerCase().includes('rain') ? 'is staying dry during the' : 'enjoys the'}{' '}
-          {currentWeather.toLowerCase()} weather!
+          {getWeatherMessage(currentWeather)}
         </p>
       </div>
     </div>

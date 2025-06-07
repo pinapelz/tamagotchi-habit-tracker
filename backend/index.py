@@ -671,7 +671,9 @@ def get_weather():
             return "sunny"
         elif code == 45 or code == 48:
             return "cloudy"
-        elif (code >= 51 and code <= 67) or (code >= 80 and code <= 82) or (code >= 95):
+        elif code >= 95 and code <= 99:
+            return "thunder"
+        elif (code >= 51 and code <= 67) or (code >= 80 and code <= 82):
             return "rainy"
         elif code >= 71 and code <= 77:
             return "snowy"
