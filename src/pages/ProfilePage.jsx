@@ -80,6 +80,7 @@ export default function ProfilePage() {
         // Update profile data with accurate habit stats
         const totalCompleted = habitsData.filter(habit => habit.last_completed_at).length;
         profileData.data.stats.total_habits_completed = totalCompleted;
+        profileData.data.stats.lifetime_habits_completed = totalCompleted;
 
         // Update user_stats table with accurate count
         await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/stats/update`, {
@@ -88,7 +89,10 @@ export default function ProfilePage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ total_habits_completed: totalCompleted }),
+          body: JSON.stringify({ 
+            total_habits_completed: totalCompleted,
+            lifetime_habits_completed: totalCompleted 
+          }),
         });
       }
 
