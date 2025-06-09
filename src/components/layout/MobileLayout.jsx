@@ -1,12 +1,32 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, Home, User, Users, Trophy, Bell, HelpCircle, Settings, LogOut, Cloud, CloudRain, Sun, Moon } from 'lucide-react'
 
 export default function MobileLayout({ children, userName, onToggleSettings }) {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
   const [currentWeather, setCurrentWeather] = useState("")
   const [timeOfDay, setTimeOfDay] = useState("morning")
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/');
+    }
+  };
 
   // Update time in real-time
   useEffect(() => {
@@ -90,14 +110,14 @@ export default function MobileLayout({ children, userName, onToggleSettings }) {
   }
 
   const menuItems = [
-    { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
-    { icon: <User size={20} />, label: 'Profile', href: '/profile' },
-    { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
-    { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
-    { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
-    { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
-    { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
+    { icon: <Home size={20} />, label: 'Dashboard', action: () => navigate('/dashboard') },
+    { icon: <User size={20} />, label: 'Profile', action: () => navigate('/profile') },
+    { icon: <Users size={20} />, label: 'Friends', action: () => navigate('/friends') },
+    { icon: <Trophy size={20} />, label: 'Leaderboard', action: () => navigate('/leaderboard') },
+    { icon: <Bell size={20} />, label: 'Notifications', action: () => navigate('/notifications') },
+    { icon: <HelpCircle size={20} />, label: 'Help', action: () => navigate('/help') },
+    { icon: <Settings size={20} />, label: 'Settings', action: () => navigate('/settings') },
+    { icon: <LogOut size={20} />, label: 'Logout', action: handleLogout },
   ]
 
   return (
@@ -139,14 +159,27 @@ export default function MobileLayout({ children, userName, onToggleSettings }) {
                 <ul className="space-y-2">
                   {menuItems.map((item, index) => (
                     <li key={index}>
-                      <Link
-                        to={item.href}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors flex items-center gap-3"
-                        onClick={() => setShowMenu(false)}
-                      >
-                        {item.icon}
-                        <span className="font-sniglet">{item.label}</span>
-                      </Link>
+                      {item.action ? (
+                        <button
+                          onClick={() => {
+                            item.action();
+                            setShowMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors flex items-center gap-3"
+                        >
+                          {item.icon}
+                          <span className="font-sniglet">{item.label}</span>
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.href}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors flex items-center gap-3"
+                          onClick={() => setShowMenu(false)}
+                        >
+                          {item.icon}
+                          <span className="font-sniglet">{item.label}</span>
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

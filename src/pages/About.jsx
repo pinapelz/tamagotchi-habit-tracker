@@ -39,12 +39,12 @@ function About() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl text-center border border-gray-200">
-          <h1 className="text-4xl font-bold mb-6">About Tamagotchi Habit Tracker</h1>
+          <h1 className="text-4xl font-medium mb-6">About Tamagotchi Habit Tracker</h1>
           <p className="text-lg max-w-2xl text-center mb-4">
-            We are a team of 4 students at the University of California, Irvine (UCI), currently taking <strong>Informatics 124</strong>.
+            We are a team of 4 students at the University of California, Irvine (UCI), currently taking <span className="text-sky-600">Informatics 124</span>.
           </p>
           <p className="text-lg max-w-2xl text-center mb-4">
-            As part of our coursework, we created the <strong>Tamagotchi Habit Tracker</strong>, a fun and motivational way to help users build better habits. Your digital pet’s mood and wellness reflects how well you stick to your daily goals, encouraging you to stay consistent and take care of both yourself and your Tamagotchi Pet!
+            As part of our coursework, we created the <span className="text-sky-600">Tamagotchi Habit Tracker</span>, a fun and motivational way to help users build better habits. Your digital pet's mood and wellness reflects how well you stick to your daily goals, encouraging you to stay consistent and take care of both yourself and your Tamagotchi Pet!
           </p>
           <p className="text-lg max-w-2xl text-center">
             We hope this app helps make building habits more enjoyable and rewarding. Thank you for visiting and learning more about our project!

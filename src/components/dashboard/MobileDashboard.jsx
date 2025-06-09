@@ -806,26 +806,45 @@ export default function MobileDashboard() {
       });
       
       if (response.ok) {
-        navigate('/');
+        // Clear any local state
+        setHabits([]);
+        setPetStats({
+          happiness: 50,
+          energy: 0,
+          health: 100,
+          xpToNextLevel: 100
+        });
+        setPetName("No Pet");
+        setPetType("cat");
+        setPetLevel(0);
+        setStreak(0);
+        
+        navigate('/login');
       } else {
         console.error('Logout failed');
-        navigate('/');
+        navigate('/login');
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      navigate('/');
+      navigate('/login');
     }
   }
 
   const menuItems = [
-    { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
-    { icon: <User size={20} />, label: 'Profile', href: '/profile' },
-    { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
-    { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
-    { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
-    { icon: <Settings size={20} />, label: 'Settings', href: '#', action: () => setActiveTab('settings') },
-    { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
+    { icon: <Home size={20} />, label: 'Dashboard', action: () => {
+      if (activeTab === 'settings') {
+        setActiveTab('home');
+      } else {
+        navigate('/dashboard');
+      }
+    }},
+    { icon: <User size={20} />, label: 'Profile', action: () => navigate('/profile') },
+    { icon: <Users size={20} />, label: 'Friends', action: () => navigate('/friends') },
+    { icon: <Trophy size={20} />, label: 'Leaderboard', action: () => navigate('/leaderboard') },
+    { icon: <Bell size={20} />, label: 'Notifications', action: () => navigate('/notifications') },
+    { icon: <HelpCircle size={20} />, label: 'Help', action: () => navigate('/help') },
+    { icon: <Settings size={20} />, label: 'Settings', action: () => setActiveTab('settings') },
+    { icon: <LogOut size={20} />, label: 'Logout', action: handleLogout },
   ]
 
   const getTimeOfDayBackground = () => {
