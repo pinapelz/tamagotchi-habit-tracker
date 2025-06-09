@@ -753,6 +753,9 @@ export default function DashboardRedesign() {
     
     // If energy is 0 but happiness and health are high, it's likely a level up
     if (energy === 0 && happiness >= 50 && health >= 50) {
+      if (petLevel === 0) {
+        return "Your pet is ready to start their adventure! Complete habits to help them grow! 🌱";
+      }
       return "Your pet has leveled up! They're ready for new adventures! 🎉";
     }
     
