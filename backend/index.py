@@ -2425,6 +2425,49 @@ def reset_achievements():
     finally:
         db.close()
 
+@app.route("/api/auth/logout", methods=["POST"])
+def logout():
+    """
+    Logs out a user by clearing their session cookie and removing it from the database.
+    Returns a success message or an error message.
+    """
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        return jsonify({
+            "status": "error",
+            "message": "No active session."
+        }), 400
+
+    db = create_database_connection()
+    try:
+        # Delete the cookie from the database
+        db.execute("DELETE FROM cookies WHERE cookie_value = %s", (session_cookie,))
+        
+        # Create response with cleared cookie
+        response = jsonify({
+            "status": "ok",
+            "message": "Logged out successfully"
+        })
+        
+        # Clear the session cookie
+        response.set_cookie(
+            "session",
+            "",
+            expires=0,
+            secure=True,
+            httponly=True,
+            samesite="None"
+        )
+        
+        return response, 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
 
