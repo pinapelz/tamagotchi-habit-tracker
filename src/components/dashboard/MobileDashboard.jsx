@@ -818,14 +818,20 @@ export default function MobileDashboard() {
   }
 
   const menuItems = [
-    { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
-    { icon: <User size={20} />, label: 'Profile', href: '/profile' },
-    { icon: <Users size={20} />, label: 'Friends', href: '/friends' },
-    { icon: <Trophy size={20} />, label: 'Leaderboard', href: '/leaderboard' },
-    { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
-    { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
-    { icon: <Settings size={20} />, label: 'Settings', href: '#', action: () => setActiveTab('settings') },
-    { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
+    { icon: <Home size={20} />, label: 'Dashboard', action: () => {
+      if (activeTab === 'settings') {
+        setActiveTab('home');
+      } else {
+        navigate('/dashboard');
+      }
+    }},
+    { icon: <User size={20} />, label: 'Profile', action: () => navigate('/profile') },
+    { icon: <Users size={20} />, label: 'Friends', action: () => navigate('/friends') },
+    { icon: <Trophy size={20} />, label: 'Leaderboard', action: () => navigate('/leaderboard') },
+    { icon: <Bell size={20} />, label: 'Notifications', action: () => navigate('/notifications') },
+    { icon: <HelpCircle size={20} />, label: 'Help', action: () => navigate('/help') },
+    { icon: <Settings size={20} />, label: 'Settings', action: () => setActiveTab('settings') },
+    { icon: <LogOut size={20} />, label: 'Logout', action: handleLogout },
   ]
 
   const getTimeOfDayBackground = () => {
