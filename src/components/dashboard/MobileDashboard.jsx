@@ -806,14 +806,27 @@ export default function MobileDashboard() {
       });
       
       if (response.ok) {
-        navigate('/');
+        // Clear any local state
+        setHabits([]);
+        setPetStats({
+          happiness: 50,
+          energy: 0,
+          health: 100,
+          xpToNextLevel: 100
+        });
+        setPetName("No Pet");
+        setPetType("cat");
+        setPetLevel(0);
+        setStreak(0);
+        
+        navigate('/login');
       } else {
         console.error('Logout failed');
-        navigate('/');
+        navigate('/login');
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      navigate('/');
+      navigate('/login');
     }
   }
 
