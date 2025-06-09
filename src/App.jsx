@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Loading from './pages/Loading';
 import ProfilePage from './pages/ProfilePage'
 import PetCreation from './pages/PetCreation';
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/about" element={<About />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/loading" element={<Loading />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/profile/:userId" element={<ViewProfile />} />
