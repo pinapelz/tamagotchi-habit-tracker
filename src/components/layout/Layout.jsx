@@ -10,6 +10,7 @@ export default function Layout({ children, userName }) {
   const [showSettings, setShowSettings] = useState(false)
   const [theme, setTheme] = useState("light")
   const [colonVisible, setColonVisible] = useState(true)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Update time in real-time
   useEffect(() => {
@@ -58,6 +59,14 @@ export default function Layout({ children, userName }) {
       console.error('Error during logout:', error);
       navigate('/');
     }
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   const menuItems = [
@@ -119,8 +128,8 @@ export default function Layout({ children, userName }) {
             <Settings size={32} className="text-gray-600" />
           </button>
           <button 
-            onClick={handleLogout}
-            className="bg-[#ff7f7f] text-black px-4 py-2 rounded-full font-sniglet text-base"
+            onClick={confirmLogout}
+            className="bg-[#ff7f7f] text-black px-4 py-2 rounded-full font-sniglet text-base hover:bg-[#ff6b6b] transition-colors"
           >
             Logout
           </button>
@@ -200,6 +209,34 @@ export default function Layout({ children, userName }) {
         onSave={handleSaveSettings}
         onReset={handleResetSettings}
       />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-50"
+            onClick={cancelLogout}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-lg z-50 w-96">
+            <h3 className="text-xl font-sniglet mb-4">Confirm Logout</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to log out?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-[#ff7f7f] text-black rounded-lg hover:bg-[#ff6b6b] transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
