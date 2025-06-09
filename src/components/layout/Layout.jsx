@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Menu, Settings, Home, User, Users, Trophy, Bell, HelpCircle, LogOut } from 'lucide-react'
 import SettingsModal from '../SettingsModal'
 
 export default function Layout({ children, userName }) {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
   const [showSettings, setShowSettings] = useState(false)
@@ -40,6 +41,25 @@ export default function Layout({ children, userName }) {
     return () => clearInterval(blinkInterval);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/');
+    }
+  };
+
   const menuItems = [
     { icon: <Home size={20} />, label: 'Dashboard', href: '/dashboard' },
     { icon: <User size={20} />, label: 'Profile', href: '/profile' },
@@ -48,7 +68,7 @@ export default function Layout({ children, userName }) {
     { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
     { icon: <HelpCircle size={20} />, label: 'Help', href: '/help' },
     { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
-    { icon: <LogOut size={20} />, label: 'Logout', href: '/logout' },
+    { icon: <LogOut size={20} />, label: 'Logout', action: handleLogout },
   ]
 
   const toggleSettings = () => {
@@ -98,9 +118,12 @@ export default function Layout({ children, userName }) {
           >
             <Settings size={32} className="text-gray-600" />
           </button>
-          <Link to="/" className="bg-[#ff7f7f] text-black px-4 py-2 rounded-full font-sniglet text-base">
+          <button 
+            onClick={handleLogout}
+            className="bg-[#ff7f7f] text-black px-4 py-2 rounded-full font-sniglet text-base"
+          >
             Logout
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -132,14 +155,27 @@ export default function Layout({ children, userName }) {
               <ul className="space-y-2">
                 {menuItems.map((item, index) => (
                   <li key={index}>
-                    <Link
-                      to={item.href}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
+                    {item.action ? (
+                      <button
+                        onClick={() => {
+                          item.action();
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors"
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        to={item.href}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-50 text-gray-700 hover:text-purple-600 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

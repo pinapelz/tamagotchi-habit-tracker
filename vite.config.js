@@ -27,7 +27,36 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,jpg,svg}'],
+       globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.destination === 'document',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-cache',
+              },
+            },
+            {
+              urlPattern: ({ request }) =>
+                ['style', 'script', 'worker'].includes(request.destination),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'static-resources',
+              },
+            },
+            {
+              urlPattern: ({ request }) =>
+                ['image', 'font'].includes(request.destination),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'asset-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 30 * 24 * 60 * 60,
+                },
+              },
+            },
+          ],
       },
     }),
   ],
