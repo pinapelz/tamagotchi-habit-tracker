@@ -45,45 +45,43 @@ export default function ProfilePage() {
 
   const fetchProfileData = async () => {
     try {
-      // First initialize achievements
-      await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/initialize`, {
-        method: "POST",
-        credentials: "include",
-      });
+      setLoading(true);
+      
+      // Make parallel API calls
+      const [profileResponse, habitsResponse] = await Promise.all([
+        // Fetch profile data
+        fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
+          method: "GET",
+          credentials: "include",
+        }),
+        // Fetch habits data
+        fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
+          method: "GET",
+          credentials: "include",
+        })
+      ]);
 
-      // Then fetch profile data
-      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/profile`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 401) {
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.json();
+        if (profileResponse.status === 401) {
           navigate('/login');
           return;
         }
         throw new Error(errorData.message || "Failed to fetch profile data.");
       }
 
-      const profileData = await response.json();
+      const profileData = await profileResponse.json();
       console.log("Profile data received:", profileData);
 
-      // Also fetch habits to get accurate completion stats
-      const habitsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/habits`, {
-        method: "GET",
-        credentials: "include",
-      });
-
+      // Process habits data if available
       if (habitsResponse.ok) {
         const habitsData = await habitsResponse.json();
-        // Update profile data with accurate habit stats
         const totalCompleted = habitsData.filter(habit => habit.last_completed_at).length;
         profileData.data.stats.total_habits_completed = totalCompleted;
         profileData.data.stats.lifetime_habits_completed = totalCompleted;
 
-        // Update user_stats table with accurate count
-        await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/stats/update`, {
+        // Update stats in the background
+        fetch(`${import.meta.env.VITE_API_DOMAIN}/api/stats/update`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -93,25 +91,32 @@ export default function ProfilePage() {
             total_habits_completed: totalCompleted,
             lifetime_habits_completed: totalCompleted 
           }),
-        });
+        }).catch(err => console.error("Error updating stats:", err));
       }
 
-      // Check for any new achievements based on current stats and pet level
-      const achievementsResponse = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/check`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (achievementsResponse.ok) {
-        const achievementsData = await achievementsResponse.json();
-        if (achievementsData.status === "ok") {
-          // Update profile data with latest achievements
-          profileData.data.achievements = achievementsData.achievements;
+      // Initialize achievements and check for new ones in the background
+      Promise.all([
+        fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/initialize`, {
+          method: "POST",
+          credentials: "include",
+        }),
+        fetch(`${import.meta.env.VITE_API_DOMAIN}/api/achievements/check`, {
+          method: "POST",
+          credentials: "include",
+        })
+      ]).then(async ([initResponse, checkResponse]) => {
+        if (checkResponse.ok) {
+          const achievementsData = await checkResponse.json();
+          if (achievementsData.status === "ok") {
+            setUserProfile(prev => ({
+              ...prev,
+              achievements: achievementsData.achievements
+            }));
+          }
         }
-      }
+      }).catch(err => console.error("Error processing achievements:", err));
 
       setUserProfile(profileData.data);
-      // Set bio from profile data if it exists, otherwise use default
       setBio(profileData.data.profile?.bio || "Hi! I'm building good habits with my Tamagotchi. Let's grow together!");
       setLoading(false);
     } catch (err) {
