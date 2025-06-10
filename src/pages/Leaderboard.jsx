@@ -159,7 +159,8 @@ export default function LeaderboardPage() {
                 {leaderboardData.map((user, index) => (
                   <div
                     key={user.id}
-                    className="flex flex-col sm:flex-row sm:items-center p-4 hover:bg-gray-50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/profile/${user.id}`)}
                   >
                     {/* Rank + User Info */}
                     <div className="flex items-center gap-4 mb-3 sm:mb-0 sm:flex-1">

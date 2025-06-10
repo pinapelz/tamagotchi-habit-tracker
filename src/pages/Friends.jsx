@@ -5,6 +5,15 @@ import { Link } from "react-router-dom";
 import { UserPlus, Search, MessageSquare, Award, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+function formatDateOnly(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (!isNaN(d)) {
+    return d.toLocaleDateString();
+  }
+  return value;
+}
+
 export default function FriendsPage() {
     const [friends, setFriends] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -394,7 +403,11 @@ export default function FriendsPage() {
                                     ) : filteredFriends.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {filteredFriends.map(friend => (
-                                                <div key={friend.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                                                <div
+                                                    key={friend.id}
+                                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 cursor-pointer"
+                                                    onClick={() => navigate(`/profile/${friend.id}`)}
+                                                >
                                                     <div className="flex gap-3">
                                                         {/* Avatar */}
                                                         <div className="w-14 h-14 rounded-full border-2 border-[#4abe9c] overflow-hidden shadow-sm flex-shrink-0">
@@ -409,7 +422,7 @@ export default function FriendsPage() {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex justify-between items-start gap-3">
                                                                 <h3 className="text-base text-[#486085] font-medium truncate">{friend.username}</h3>
-                                                                <span className="text-xs text-gray-500 whitespace-nowrap">{friend.lastActive}</span>
+                                                                <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateOnly(friend.lastActive)}</span>
                                                             </div>
                                                             <p className="text-sm text-[#4abe9c] mt-1">
                                                                 {friend.petName} the {friend.petType}
@@ -425,16 +438,6 @@ export default function FriendsPage() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-
-                                                    {/* Action Buttons */}
-                                                    <div className="flex justify-between mt-3 pt-3 border-t border-gray-100">
-                                                        <Link
-                                                            to={`/profile/${friend.id}`}
-                                                            className="text-[#486085] hover:text-[#31415e] text-sm font-medium hover:underline transition-colors"
-                                                        >
-                                                            View Profile
-                                                        </Link>
                                                     </div>
                                                 </div>
                                             ))}
@@ -461,10 +464,18 @@ export default function FriendsPage() {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {incomingRequests.map(req => (
-                                                <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                                                <div
+                                                    key={req.id}
+                                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 cursor-pointer"
+                                                    onClick={() => navigate(`/profile/${req.from_user_id}`)}
+                                                >
                                                     <div className="flex gap-3 items-center">
                                                         <div className="w-14 h-14 rounded-full border-2 border-[#4abe9c] overflow-hidden shadow-sm flex-shrink-0">
-                                                            <img src={req.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                            <img
+                                                                src={req.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${req.username}`}
+                                                                alt={`${req.username}'s avatar`}
+                                                                className="w-full h-full object-cover"
+                                                            />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <h3 className="text-base text-[#486085] font-medium truncate">{req.username}</h3>
@@ -495,12 +506,16 @@ export default function FriendsPage() {
                                     {sentRequests.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {sentRequests.map(request => (
-                                                <div key={request.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                                                <div
+                                                    key={request.id}
+                                                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 cursor-pointer"
+                                                    onClick={() => navigate(`/profile/${request.userId}`)}
+                                                >
                                                     <div className="flex gap-3">
                                                         {/* Avatar */}
                                                         <div className="w-14 h-14 rounded-full border-2 border-[#4abe9c] overflow-hidden shadow-sm flex-shrink-0">
                                                             <img
-                                                                src={request.avatar}
+                                                                src={request.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${request.username}`}
                                                                 alt={`${request.username}'s avatar`}
                                                                 className="w-full h-full object-cover"
                                                             />
@@ -510,7 +525,7 @@ export default function FriendsPage() {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex justify-between items-start gap-3">
                                                                 <h3 className="text-base text-[#486085] font-medium truncate">{request.username}</h3>
-                                                                <span className="text-xs text-gray-500 whitespace-nowrap">{request.sentAt}</span>
+                                                                <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateOnly(request.sentAt)}</span>
                                                             </div>
                                                             <p className="text-sm text-[#4abe9c] mt-1">
                                                                 {request.petName} the {request.petType}

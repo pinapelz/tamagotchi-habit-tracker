@@ -1433,6 +1433,7 @@ def get_sent_friend_requests():
             "username": req["username"],
             "avatar": req["avatar_url"],
             "sentAt": req["created_at"].isoformat() if req["created_at"] else "",
+            "userId": req["to_user_id"],
         } for req in sent]
         return jsonify(sent_list), 200
     except Exception as e:
@@ -1454,6 +1455,35 @@ def lookup_user():
             return jsonify({"user": user}), 200
         else:
             return jsonify({"message": "User not found"}), 404
+    finally:
+        db.close()
+
+@app.route("/api/users/<user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    db = create_database_connection()
+    try:
+        user = db.fetchone("SELECT id, display_name, email FROM users WHERE id = %s", (user_id,))
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        pet = db.fetchone("SELECT name, type, lvl FROM pets WHERE user_id = %s", (user_id,))
+        profile = db.fetchone("SELECT bio, location, interests, favorite_pet_type FROM user_descriptions WHERE user_id = %s", (user_id,))
+        stats = db.fetchone(
+            "SELECT total_habits_completed, current_streak, longest_streak FROM user_stats WHERE user_id = %s", 
+            (user_id,)
+        )
+        achievements = db.fetchall("""
+            SELECT a.id, a.name, a.description, a.icon, ua.unlocked_at
+            FROM user_achievements ua
+            JOIN achievements a ON ua.achievement_id = a.id
+            WHERE ua.user_id = %s
+        """, (user_id,))
+        return jsonify({
+            "user": user,
+            "pet": pet,
+            "profile": profile,
+            "stats": stats,
+            "achievements": achievements
+        })
     finally:
         db.close()
 

@@ -31,56 +31,12 @@ export default function ViewProfile() {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      // Mock data for testing
-      const mockUserProfile = {
-        user: {
-          id: userId,
-          display_name: "PetLover123",
-          email: "petlover@example.com"
-        },
-        pet: {
-          name: "Toto",
-          type: "cat",
-          lvl: 5,
-          xp: 250,
-          hunger: 80,
-          happiness: 90,
-          health: 100
-        },
-        profile: {
-          bio: "I love taking care of my virtual pets!",
-          location: "New York, USA",
-          interests: ["Gaming", "Pets", "Technology"],
-          favorite_pet_type: "cat"
-        },
-        stats: {
-          total_habits_completed: 45,
-          current_streak: 12,
-          longest_streak: 15,
-          total_xp_earned: 1250
-        },
-        achievements: [
-          {
-            id: 1,
-            name: "First Pet",
-            description: "Created your first pet",
-            icon: "🎉",
-            unlocked_at: "2024-03-15T10:00:00Z"
-          },
-          {
-            id: 2,
-            name: "Habit Master",
-            description: "Completed 10 habits",
-            icon: "⭐",
-            unlocked_at: "2024-03-16T15:30:00Z"
-          }
-        ]
-      };
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUserProfile(mockUserProfile);
+      const response = await fetch(`${import.meta.env.VITE_API_DOMAIN}/api/users/${userId}`, {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Profile not found");
+      const data = await response.json();
+      setUserProfile(data);
     } catch (err) {
       console.error("Error fetching user profile:", err);
       setError(err.message);
