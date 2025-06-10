@@ -142,8 +142,8 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      // case 'friend':
-      //   return <Users className="text-[#4abe9c]" size={20} />;
+      case 'friend':
+        return <Users className="text-[#4abe9c]" size={20} />;
       case 'achievement':
         return <Star className="text-yellow-400" size={20} />;
       case 'pet':
@@ -175,7 +175,7 @@ export default function NotificationsPage() {
               >
                 All
               </button>
-              {/* <button
+              <button
                 onClick={() => setActiveFilter('friend')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   activeFilter === 'friend'
@@ -184,7 +184,7 @@ export default function NotificationsPage() {
                 }`}
               >
                 Friends
-              </button> */}
+              </button>
               <button
                 onClick={() => setActiveFilter('achievement')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${

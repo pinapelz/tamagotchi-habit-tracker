@@ -34,3 +34,6 @@ class PostgresHandler:
     def close(self):
         if self.conn:
             self.conn.close()
+
+    def commit(self):
+        self.conn.commit()
