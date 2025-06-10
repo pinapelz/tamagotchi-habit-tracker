@@ -1392,19 +1392,14 @@ def send_friend_request():
             (user["id"], friend_id)
         )
 
-        db.execute(
-            "INSERT INTO notifications (user_id, type, message) VALUES (%s, %s, %s)",
-            (friend_id, 'friend', f"{user['display_name']} sent you a friend request!")
+        # Create notification for friend
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"{user['display_name']} sent you a friend request!"
         )
         db.commit()
-
-        # Create notification for friend
-        # create_notification(
-        #     db,
-        #     friend_id,
-        #     "friend",
-        #     f"{user['display_name']} sent you a friend request!"
-        # )
 
         return jsonify({
             "status": "ok",
@@ -1613,6 +1608,14 @@ def accept_friend_request():
         db.execute(
             "INSERT INTO friends (user_id, friend_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
             (friend_id, user["id"])
+        )
+
+        # Create notification for the friend who sent the request
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"{user['display_name']} accepted your friend request!"
         )
         db.commit()
 
@@ -1935,12 +1938,13 @@ def send_friend_message():
             }), 404
 
         # Create notification for friend
-        # create_notification(
-        #     db,
-        #     friend_id,
-        #     "friend",
-        #     f"New message from {user['display_name']}: '{message}'"
-        # )
+        create_notification(
+            db,
+            friend_id,
+            "friend",
+            f"New message from {user['display_name']}: '{message}'"
+        )
+        db.commit()
 
         return jsonify({
             "status": "ok",
