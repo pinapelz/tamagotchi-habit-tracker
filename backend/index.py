@@ -1320,7 +1320,7 @@ def get_friends_list():
             "avatar": f["avatar_url"],
             "petName": f["pet_name"],
             "petType": f["pet_type"],
-            "petLevel": f["pet_level"] or 1,
+            "petLevel": f["pet_level"] or 0,
             "streak": f["current_streak"] or 0,
             "lastActive": "Unknown"
         } for f in friends]
@@ -1486,9 +1486,10 @@ def get_sent_friend_requests():
         sent = db.fetchall(
             """
             SELECT fr.id, fr.to_user_id, u.display_name AS username, u.avatar_url,
-                fr.created_at
+                fr.created_at, p.name AS pet_name, p.type AS pet_type
             FROM friend_requests fr
             JOIN users u ON u.id = fr.to_user_id
+            LEFT JOIN pets p ON p.user_id = fr.to_user_id
             WHERE fr.from_user_id = %s AND fr.status = 'pending'
             """,
             (user["id"],)
@@ -1499,6 +1500,8 @@ def get_sent_friend_requests():
             "avatar": req["avatar_url"],
             "sentAt": req["created_at"].isoformat() if req["created_at"] else "",
             "userId": req["to_user_id"],
+            "petName": req["pet_name"],
+            "petType": req["pet_type"]
         } for req in sent]
         return jsonify(sent_list), 200
     except Exception as e:
@@ -1532,10 +1535,31 @@ def get_user_profile(user_id):
             return jsonify({"message": "User not found"}), 404
         pet = db.fetchone("SELECT name, type, lvl FROM pets WHERE user_id = %s", (user_id,))
         profile = db.fetchone("SELECT bio, location, interests, favorite_pet_type FROM user_descriptions WHERE user_id = %s", (user_id,))
-        stats = db.fetchone(
-            "SELECT total_habits_completed, current_streak, longest_streak FROM user_stats WHERE user_id = %s", 
+        
+        # Get accurate habit completion count
+        habits = db.fetchall(
+            "SELECT last_completed_at FROM habits WHERE user_id = %s",
             (user_id,)
         )
+        total_completed = sum(1 for habit in habits if habit["last_completed_at"] is not None)
+        
+        stats = db.fetchone(
+            "SELECT current_streak, longest_streak FROM user_stats WHERE user_id = %s", 
+            (user_id,)
+        )
+        
+        # Add total_habits_completed to stats
+        if stats:
+            stats["total_habits_completed"] = total_completed
+            stats["lifetime_habits_completed"] = total_completed
+        else:
+            stats = {
+                "current_streak": 0,
+                "longest_streak": 0,
+                "total_habits_completed": total_completed,
+                "lifetime_habits_completed": total_completed
+            }
+            
         achievements = db.fetchall("""
             SELECT a.id, a.name, a.description, a.icon, ua.unlocked_at
             FROM user_achievements ua
@@ -1548,7 +1572,7 @@ def get_user_profile(user_id):
             "profile": profile,
             "stats": stats,
             "achievements": achievements
-        })
+        }), 200
     finally:
         db.close()
 
@@ -1621,7 +1645,11 @@ def global_leaderboard():
                 COALESCE(p.type, '') AS pet_type,
                 COALESCE(p.lvl, 1) AS level,
                 COALESCE(us.current_streak, 0) AS streak,
-                COALESCE(us.total_habits_completed, 0) AS habits_completed,
+                (
+                    SELECT COUNT(*) 
+                    FROM habits h 
+                    WHERE h.user_id = u.id AND h.last_completed_at IS NOT NULL
+                ) AS habits_completed,
                 u.avatar_url
             FROM users u
             LEFT JOIN pets p ON p.user_id = u.id
@@ -1690,7 +1718,11 @@ def friends_leaderboard():
                 COALESCE(p.type, '') AS pet_type,
                 COALESCE(p.lvl, 1) AS level,
                 COALESCE(us.current_streak, 0) AS streak,
-                COALESCE(us.total_habits_completed, 0) AS habits_completed,
+                (
+                    SELECT COUNT(*) 
+                    FROM habits h 
+                    WHERE h.user_id = u.id AND h.last_completed_at IS NOT NULL
+                ) AS habits_completed,
                 u.avatar_url
             FROM users u
             LEFT JOIN pets p ON p.user_id = u.id
